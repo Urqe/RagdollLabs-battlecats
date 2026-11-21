@@ -24,13 +24,14 @@ export function updateArmy(state, dt, sprinkle, end, notify = () => {}) {
     }
   }
 
-  // The horde recruits throughout the siege. As blue takes the approach, fewer
-  // reds can reach the line. Only clearing the entry closes it completely.
-  const access = clamp(
-    (state.front - LEVEL.clearedFront) / LEVEL.reinforcementApproach,
-    0,
-    1,
-  );
+  // Taking the entrance cuts off new arrivals. The existing army stays in combat.
+  const access = state.redEntryOpen
+    ? clamp(
+        (state.front - LEVEL.reinforcementCutoff) / LEVEL.reinforcementApproach,
+        0,
+        1,
+      )
+    : 0;
   state.redEntryRate =
     access *
     Math.min(
@@ -78,10 +79,14 @@ export function updateArmy(state, dt, sprinkle, end, notify = () => {}) {
   }
 
   if (
-    state.redTotal === 0 &&
-    state.front <= LEVEL.clearedFront &&
-    state.blueTotal > 0
+    state.redEntryOpen &&
+    state.blueTotal > 0 &&
+    state.front <= LEVEL.reinforcementCutoff
   ) {
+    state.redEntryOpen = false;
+    state.redEntryRate = 0;
+  }
+  if (!state.redEntryOpen && state.redTotal === 0) {
     end(true);
   } else if (state.front >= LEVEL.castleFront) {
     end(false);

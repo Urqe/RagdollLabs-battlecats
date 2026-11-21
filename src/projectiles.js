@@ -21,7 +21,7 @@ export function updateProjectiles(state, dt, spawnSquad, sprinkle, notify) {
     if (!(shot.y < hitY && (gate.open || previousY >= hitY))) continue;
     state.shots.splice(j, 1);
     if (gate.open) {
-      spawnSquad(gate, shot.x);
+      spawnSquad(gate, shot.x, Math.min(previousY, hitY), shot.slot);
       continue;
     }
     hitBarricade(state, gateIndex, shot, sprinkle, notify);
@@ -30,6 +30,7 @@ export function updateProjectiles(state, dt, spawnSquad, sprinkle, notify) {
 export function fire(state, sprinkle) {
   // Three physical cats fly up the lane. A gate multiplies each one on contact.
   for (let i = -1; i <= 1; i++)
-    state.shots.push({ x: state.gunX + i * 9, y: 608 });
+    state.shots.push({ x: state.gunX + i * 9, y: 608, slot: i });
+  state.recoil = 1;
   sprinkle(state.gunX, 615, "#c7f5ff", 3);
 }

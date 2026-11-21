@@ -157,3 +157,17 @@ button:active {
 [hidden] {
   display: none !important;
 }
+
+#result.won {
+  place-items: end center;
+  padding-bottom: max(28px, calc(env(safe-area-inset-bottom) + 16px));
+  background: linear-gradient(transparent 30%, #101c2c3a 57%, #101c2cdb);
+  backdrop-filter: none;
+}
+#result.won .panel {
+  padding-top: 15px;
+  background: linear-gradient(145deg, #254963f5, #142436f5);
+}
+#result.won .logo {
+  font-size: 38px;
+}

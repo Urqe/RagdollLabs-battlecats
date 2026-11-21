@@ -11,11 +11,12 @@ export function hitBarricade(state, gateIndex, shot, sprinkle, notify) {
   sprinkle(shot.x, BARRICADE_HIT_Y, "#e9b779", 6);
   if (state.work[barrierIndex] === workNeeded[barrierIndex]) {
     gate.open = true;
+    state.barricadeFlashes[barrierIndex] = 0.48;
     notify(
       gate.mult === 99 ? "×99 OPEN — AIM LEFT!" : "×999 OPEN — AIM RIGHT!",
       3,
     );
-    sprinkle(gate.x, gate.y, "#ffd276", 38);
+    sprinkle(gate.x, BARRICADE_HIT_Y, "#d48b4b", 24);
   }
 }
 

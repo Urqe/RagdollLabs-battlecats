@@ -3,11 +3,13 @@
   "milestones": [
     {
       "event": "×99 unlocked",
-      "seconds": 17.992999999999792,
-      "front": 376.87277494694814,
-      "red": 9873.832042058106,
+      "seconds": 17.998999999999793,
+      "front": 376.93447169554145,
+      "red": 9878.131228672723,
       "blue": 0,
-      "redEntryRate": 763.5612999999929,
+      "redEntryRate": 763.7658999999929,
+      "redEntryOpen": true,
+      "victoryElapsed": 0,
       "work": [
         90,
         0
@@ -16,11 +18,13 @@
     },
     {
       "event": "×99 reverses the battle",
-      "seconds": 29.944999999998476,
-      "front": 298.3890637051866,
-      "red": 18338.254933980825,
-      "blue": 1662.3098055520609,
-      "redEntryRate": 1171.124499999948,
+      "seconds": 29.934999999998478,
+      "front": 298.2681159635453,
+      "red": 18329.018907024634,
+      "blue": 1667.3696743981238,
+      "redEntryRate": 1170.7834999999482,
+      "redEntryOpen": true,
+      "victoryElapsed": 0,
       "work": [
         90,
         33
@@ -28,56 +32,124 @@
       "marching": 2079
     },
     {
+      "event": "renewed red pressure",
+      "seconds": 55.43899999999567,
+      "front": 501.046068065663,
+      "red": 57080.66152211508,
+      "blue": 574.095407719087,
+      "redEntryRate": 2040.4698999998525,
+      "redEntryOpen": true,
+      "victoryElapsed": 0,
+      "work": [
+        90,
+        207
+      ],
+      "marching": 297
+    },
+    {
       "event": "×999 unlocked",
-      "seconds": 57.44899999999545,
-      "front": 547.0461506372006,
-      "red": 61271.16246126542,
+      "seconds": 57.694999999995424,
+      "front": 542.6369694939592,
+      "red": 61725.74488314536,
       "blue": 0,
-      "redEntryRate": 2109.0108999998447,
+      "redEntryRate": 2117.399499999844,
+      "redEntryOpen": true,
+      "victoryElapsed": 0,
       "work": [
         90,
         231
       ],
       "marching": 0
+    },
+    {
+      "event": "×999 multiplying at the gate",
+      "seconds": 58.09499999999538,
+      "front": 551.076969493958,
+      "red": 62575.541803145294,
+      "blue": 0,
+      "redEntryRate": 2131.0394999998425,
+      "redEntryOpen": true,
+      "victoryElapsed": 0,
+      "work": [
+        90,
+        231
+      ],
+      "marching": 2997
     },
     {
       "event": "×999 reaches the frontline",
-      "seconds": 58.44099999999534,
-      "front": 554.054589929563,
-      "red": 63107.23857540898,
-      "blue": 8120.662279524684,
-      "redEntryRate": 2142.8380999998412,
+      "seconds": 59.08699999999527,
+      "front": 547.6424636947074,
+      "red": 64080.26022437752,
+      "blue": 10289.350932481791,
+      "redEntryRate": 2164.8666999998386,
+      "redEntryOpen": true,
+      "victoryElapsed": 0,
       "work": [
         90,
         231
       ],
-      "marching": 0
+      "marching": 2997
     },
     {
       "event": "×999 counterattack",
-      "seconds": 75.44899999999855,
-      "front": 349.701009073937,
-      "red": 38540.782466361256,
-      "blue": 56221.62538262754,
-      "redEntryRate": 2722.810899999951,
+      "seconds": 76.09499999999876,
+      "front": 341.6030031876034,
+      "red": 38641.42207187296,
+      "blue": 59227.6206938712,
+      "redEntryRate": 2744.8394999999578,
+      "redEntryOpen": true,
+      "victoryElapsed": 0,
       "work": [
         90,
         231
       ],
-      "marching": 17982
+      "marching": 14985
     },
     {
-      "event": "victory",
-      "seconds": 99.43300000000656,
-      "front": 27.442268776019464,
-      "red": 0,
-      "blue": 191601.7915164865,
+      "event": "supply entrance secured",
+      "seconds": 95.0870000000051,
+      "front": 87.53276081207642,
+      "red": 9559.550108660502,
+      "blue": 152843.34186871638,
       "redEntryRate": 0,
+      "redEntryOpen": false,
+      "victoryElapsed": 0,
       "work": [
         90,
         231
       ],
-      "marching": 50949
+      "marching": 41958
+    },
+    {
+      "event": "cleared battlefield celebration",
+      "seconds": 97.26300000000583,
+      "front": 57.79314608378806,
+      "red": 0,
+      "blue": 168984.16555830205,
+      "redEntryRate": 0,
+      "redEntryOpen": false,
+      "victoryElapsed": 0.8800000000000007,
+      "work": [
+        90,
+        231
+      ],
+      "marching": 47952
+    },
+    {
+      "event": "victory result",
+      "seconds": 97.26300000000583,
+      "front": 57.79314608378806,
+      "red": 0,
+      "blue": 168984.16555830205,
+      "redEntryRate": 0,
+      "redEntryOpen": false,
+      "victoryElapsed": 1.5,
+      "work": [
+        90,
+        231
+      ],
+      "marching": 47952
     }
   ]
 }

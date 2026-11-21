@@ -3,6 +3,7 @@
     "hz": 30,
     "strategy": "A",
     "won": false,
+    "cutoff": null,
     "seconds": 48.9,
     "furthest": 690.3,
     "activation": null,
@@ -31,6 +32,7 @@
     "hz": 60,
     "strategy": "A",
     "won": false,
+    "cutoff": null,
     "seconds": 49.02,
     "furthest": 690.24,
     "activation": null,
@@ -59,6 +61,7 @@
     "hz": 120,
     "strategy": "A",
     "won": false,
+    "cutoff": null,
     "seconds": 49.07,
     "furthest": 690.13,
     "activation": null,
@@ -87,6 +90,7 @@
     "hz": 30,
     "strategy": "B",
     "won": false,
+    "cutoff": null,
     "seconds": 34.23,
     "furthest": 690.35,
     "activation": null,
@@ -130,6 +134,7 @@
     "hz": 60,
     "strategy": "B",
     "won": false,
+    "cutoff": null,
     "seconds": 34.25,
     "furthest": 690.08,
     "activation": null,
@@ -173,6 +178,7 @@
     "hz": 120,
     "strategy": "B",
     "won": false,
+    "cutoff": null,
     "seconds": 34.27,
     "furthest": 690.04,
     "activation": null,
@@ -216,10 +222,11 @@
     "hz": 30,
     "strategy": "C",
     "won": true,
-    "seconds": 98.57,
+    "cutoff": 93.47,
+    "seconds": 95.7,
     "furthest": 559.76,
     "activation": 57.03,
-    "pushback": 529.8,
+    "pushback": 490.65,
     "milestones": [
       {
         "gate": 99,
@@ -274,16 +281,17 @@
       }
     ],
     "red": 0,
-    "blue": 202132
+    "blue": 178542
   },
   {
     "hz": 60,
     "strategy": "C",
     "won": true,
-    "seconds": 98.95,
+    "cutoff": 93.82,
+    "seconds": 96.27,
     "furthest": 560.13,
     "activation": 57.33,
-    "pushback": 530.29,
+    "pushback": 493.66,
     "milestones": [
       {
         "gate": 99,
@@ -352,16 +360,17 @@
       }
     ],
     "red": 0,
-    "blue": 197711
+    "blue": 177469
   },
   {
     "hz": 120,
     "strategy": "C",
     "won": true,
-    "seconds": 98.83,
+    "cutoff": 93.7,
+    "seconds": 96.19,
     "furthest": 558.55,
     "activation": 57.32,
-    "pushback": 528.55,
+    "pushback": 492.61,
     "milestones": [
       {
         "gate": 99,
@@ -430,16 +439,17 @@
       }
     ],
     "red": 0,
-    "blue": 198062
+    "blue": 177872
   },
   {
     "hz": 30,
     "strategy": "D",
     "won": true,
-    "seconds": 101.33,
+    "cutoff": 96.2,
+    "seconds": 96.63,
     "furthest": 619.56,
     "activation": 55.63,
-    "pushback": 589.84,
+    "pushback": 525.46,
     "milestones": [
       {
         "gate": 99,
@@ -494,16 +504,17 @@
       }
     ],
     "red": 0,
-    "blue": 259672
+    "blue": 215050
   },
   {
     "hz": 60,
     "strategy": "D",
     "won": true,
-    "seconds": 101.65,
+    "cutoff": 96.53,
+    "seconds": 96.9,
     "furthest": 623.74,
     "activation": 55.65,
-    "pushback": 593.91,
+    "pushback": 528.85,
     "milestones": [
       {
         "gate": 99,
@@ -558,16 +569,17 @@
       }
     ],
     "red": 0,
-    "blue": 262238
+    "blue": 217538
   },
   {
     "hz": 120,
     "strategy": "D",
     "won": true,
-    "seconds": 101.54,
+    "cutoff": 96.43,
+    "seconds": 96.83,
     "furthest": 622.43,
     "activation": 55.65,
-    "pushback": 592.43,
+    "pushback": 527.81,
     "milestones": [
       {
         "gate": 99,
@@ -622,12 +634,13 @@
       }
     ],
     "red": 0,
-    "blue": 262387
+    "blue": 217700
   },
   {
     "hz": 30,
     "strategy": "99",
     "won": false,
+    "cutoff": null,
     "seconds": 100.73,
     "furthest": 690.39,
     "activation": null,
@@ -678,6 +691,7 @@
     "hz": 60,
     "strategy": "99",
     "won": false,
+    "cutoff": null,
     "seconds": 100.95,
     "furthest": 690.25,
     "activation": null,
@@ -728,6 +742,7 @@
     "hz": 120,
     "strategy": "99",
     "won": false,
+    "cutoff": null,
     "seconds": 101.06,
     "furthest": 690.07,
     "activation": null,
@@ -778,6 +793,7 @@
     "hz": 30,
     "strategy": "Rush",
     "won": false,
+    "cutoff": null,
     "seconds": 16.83,
     "furthest": 690.18,
     "activation": null,
@@ -791,6 +807,7 @@
     "hz": 60,
     "strategy": "Rush",
     "won": false,
+    "cutoff": null,
     "seconds": 16.83,
     "furthest": 690.18,
     "activation": null,
@@ -804,6 +821,7 @@
     "hz": 120,
     "strategy": "Rush",
     "won": false,
+    "cutoff": null,
     "seconds": 16.82,
     "furthest": 690.01,
     "activation": null,
