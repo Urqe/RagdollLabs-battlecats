@@ -23,10 +23,39 @@ Cats do not instantly teleport to the front. Each gate creates a visible **march
 
 **Victory:** After firing through ×999, eliminate the red army and push the frontline beyond the top of the screen. **Defeat:** Allow the red horde to reach the castle. There is no arbitrary countdown.
 
-## Technology
+## Local development
 
-One HTML file with HTML5 Canvas and vanilla JavaScript. No dependencies, backend, assets, accounts, or tracking. 2D perspective effects and formation aggregation support mobile browsers.
+Requires Node.js 22 or newer. The production game has no dependencies or build step; serve the repository over HTTP (ES modules do not run from `file://`).
 
-## Next
+```sh
+npm ci
+npm run dev
+```
 
-Playtest the timing and risk/reward of barricade clearing, animation smoothness, and the satisfaction of visible reinforcements. Keep the core one-finger controls.
+Open http://127.0.0.1:4173. Edit the files and refresh the browser. GitHub Pages can serve this repository directly.
+
+## Tests
+
+```sh
+npx playwright install --with-deps chromium
+npm run test:all
+```
+
+`npm test` runs fast Node regression tests for startup/restart, scaled mouse and relative touch controls, automatic volleys, direct-hit barricades, all three multipliers, rendered marching formations, and victory/defeat. Tests create isolated state and advance simulated time without real timers.
+
+`npm run test:browser` runs the Playwright mobile viewport smoke test: start from the menu, click the start button, wait for reinforcements, and check for JavaScript and console errors. It starts its own local server. To use an installed Chromium, set `CHROMIUM_PATH=/path/to/chromium`. GitHub Actions runs both suites on pushes and pull requests and saves browser failure artifacts.
+
+## Code map
+
+- `index.html` / `styles.css`: page structure and mobile-first layout.
+- `src/main.js`: DOM, HUD, results, and one animation loop.
+- `src/state.js`: fresh per-game state and restart defaults.
+- `src/config.js`: original level geometry and tuning constants.
+- `src/controls.js`: touch, mouse, and keyboard controls.
+- `src/projectiles.js`: three-cat volleys, flight, and swept gate collisions.
+- `src/barricades.js`: direct-hit damage and gate unlocking.
+- `src/multipliers.js`: multiplied marching formations.
+- `src/army.js`: marching, combat, frontline movement, and outcomes.
+- `src/render.js`: Canvas drawing, formation aggregation, and resizing.
+
+For AI-assisted changes, keep simulation code independent of DOM and animation timing. Add a regression test for gameplay changes, run `npm run test:all`, and review mobile behavior. Preserve the single level, original balance, three-cat automatic volleys, manually destroyed barricades, and travel time before combat. No runtime libraries, backend, monetization, or additional levels are needed.
