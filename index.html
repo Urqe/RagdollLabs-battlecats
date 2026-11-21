@@ -21,8 +21,8 @@ button{cursor:pointer;width:100%;min-height:54px;border:0;border-radius:15px;bac
 <div id="banner" aria-live="polite"></div>
 <div id="menu" class="overlay"><div class="panel">
 <div class="logo">🐱⚔️</div><div class="brand">RAGDOLLLABS PRESENTS</div><h1>SiegeDolls</h1>
-<p>Level 1 · The Last Stand<br>Hold the chokepoint. Unlock the gates. Turn the tide.</p>
-<div class="tip"><strong>ONE-FINGER CONTROLS</strong><br>Slide left or right to move your cannon. It fires automatically — never tap to shoot.<br><br>🔵 <strong>×20</strong> holds the horde.<br>🟠 <strong>×99</strong> unlocks when your cats break its barricade.<br>🟡 <strong>×999</strong> takes longer, but wins the war.<br><br>Every active gate sends a few cats to break the next barricade. Choose the stronger gate as soon as it opens!</div>
+<p>Level 1 · The Last Stand<br>Fire three tiny cats at a time. Multiply your army or break barricades to open stronger gates.</p>
+<div class="tip"><strong>ONE-FINGER CONTROLS</strong><br>Slide left or right to move your cannon. It fires automatically — never tap to shoot.<br><br>🔵 <strong>×20</strong> holds the horde.<br>🟠 <strong>×99</strong> unlocks when your cats break its barricade.<br>🟡 <strong>×999</strong> takes longer, but wins the war.<br><br><strong>YOU must break the barricades:</strong> aim at the locked ×99 or ×999 gate to damage its wooden barrier. Those shots produce no soldiers. Time the trade-off: defend through an open gate or spend precious shots opening the next one.</div>
 <button id="play">DEFEND THE CASTLE</button><div class="fine">No ads · No energy system · Just cats</div>
 </div></div>
 <div id="result" class="overlay" hidden><div class="panel"><div class="logo" id="resultEmoji">🏆</div><h2 id="resultTitle">Victory!</h2><p id="resultText"></p><button id="replay">TRY AGAIN</button><div class="fine">SiegeDolls · Level 1</div></div></div>
@@ -31,13 +31,15 @@ button{cursor:pointer;width:100%;min-height:54px;border:0;border-radius:15px;bac
 (()=>{
 'use strict';
 const W=420,H=760,TAU=Math.PI*2,canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),el=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-let mode='menu',last=0,t=0,gunX=210,dragId=null,dragStart=0,gunStart=0,nextShot=0,front=283,redTotal=22000,blueTotal=0,stage=0,work=[0,0],impact=0,flash=0,shots=[],burst=[],fireCount=0,frame=0,finalActivated=false,shown='',bannerUntil=0;
+let mode='menu',last=0,t=0,gunX=210,dragId=null,dragStart=0,gunStart=0,nextShot=0,front=283,redTotal=22000,blueTotal=0,work=[0,0],flash=0,shots=[],squads=[],burst=[],finalActivated=false,bannerUntil=0;
 const gates=[
  {x:210,width:98,y:555,mult:20,name:'×20',color:'#399be9',open:true},
  {x:90,width:96,y:555,mult:99,name:'×99',color:'#ffb740',open:false},
  {x:329,width:106,y:555,mult:999,name:'×999',color:'#ffd561',open:false}
 ];
-const workNeeded=[180,730];
+// Each shot against a locked gate chips the barricade. No passive unlocking.
+const workNeeded=[95,210];
+const SHOT_INTERVAL=.28,BLUE_SPEED=104,MAX_SQUADS=32;
 const rand=(a,b)=>a+Math.random()*(b-a);
 function notify(s,seconds=2){shown=s;bannerUntil=t+seconds;el('banner').textContent=s;el('banner').style.opacity=1}
 function mapY(y){return y} // battlefield projection is applied in path geometry and perspective scaling
@@ -71,37 +73,59 @@ function cat(x,y,color,size,phase=0){
 }
 // Packed formation silhouettes: hundreds of visible cats, tens of thousands simulated logically.
 function army(){
- const redStrength=clamp(redTotal/22000,0,1),blueStrength=clamp(blueTotal/18000,0,1);
- // Red crowd extends beyond screen, slides with the combat front.
- const rows=Math.ceil(13+redStrength*27),cols=31;
- for(let r=0;r<rows;r++){let y=front-r*7.1;if(y<-10||y>685)continue;
- const spread=clamp((y-120)/270,0,1);
- const half=31+spread*130;
- for(let c=0;c<cols;c++){if((r*11+c*7)%29>Math.floor(29*redStrength)+1)continue;
- let x=210+(c-(cols-1)/2)*half*2/(cols-1)+(r%2?2.3:0);
- const size=clamp(3.4+y*.004,3.6,6.4);
- cat(x,y,'#d8504d',size,r*.4+c*.13)}
+ const redStrength=clamp(redTotal/22000,0,1);
+ // An enormous enemy reserve approaches slowly through the stone funnel.
+ const rows=Math.ceil(12+redStrength*34),cols=30;
+ for(let r=0;r<rows;r++){
+  const y=front-r*7;
+  if(y<-15||y>705)continue;
+  const half=y<260?clamp(29+(260-y)*.36,30,100):clamp(38+(y-260)*.29,38,148);
+  for(let c=0;c<cols;c++){
+   if((r*11+c*7)%31>Math.floor(31*redStrength))continue;
+   const x=210+(c-14.5)*half/14.5+(r%2?2:0);
+   cat(x,y,'#d8504d',clamp(3.6+y*.004,3.7,6.2),r*.4+c*.13);
+  }
  }
- // Friendly army visibly pushes at the front. Front cats are closer to red position.
- const n=Math.min(320,Math.max(0,Math.floor(blueTotal/24))),columns=25;
- for(let i=0;i<n;i++){
- const row=Math.floor(i/columns),col=i%columns,y=front+10+row*9;
- if(y>660)continue;
- const half=clamp(33+(y-120)*.28,45,150);
- const x=210+(col-12)*half/12+(row%2?2:0);
- cat(x,y,'#379aff',clamp(3.8+y*.005,4,7),i*.31)
+ // Blue cats actually march from the gate: each squad travels from y=540 to the frontline.
+ for(const q of squads){
+  const show=Math.min(q.count, q.mult===20?60:q.mult===99?105:150);
+  const cols=Math.min(15,Math.ceil(Math.sqrt(show*1.35)));
+  const rows=Math.ceil(show/cols),spacing=clamp(7.5+q.y*.004,8,10);
+  const cx=q.x+(210-q.x)*clamp((555-q.y)/330,0,1);
+  for(let i=0;i<show;i++){
+   const row=Math.floor(i/cols),col=i%cols;
+   const xx=cx+(col-(cols-1)/2)*spacing;
+   const yy=q.y+row*spacing*.75;
+   cat(xx,yy,'#379aff',clamp(4+yy*.004,4.5,6.8),q.phase+i*.25);
+  }
+  if(q.count>show){
+   round(cx-22,q.y+rows*spacing*.75+3,44,17,5,'#183f72d9');
+   ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='bold 11px system-ui';ctx.fillText('×'+Math.round(q.count/show),cx,q.y+rows*spacing*.75+15);
+  }
+ }
+ // All troops reaching the front become a persistent formation that fights the horde.
+ const count=Math.min(300,Math.floor(blueTotal/28)),colsBlue=24;
+ for(let i=0;i<count;i++){
+  const row=Math.floor(i/colsBlue),col=i%colsBlue,y=front+11+row*8;
+  if(y>670)continue;
+  const half=clamp(35+(y-200)*.21,42,125);
+  cat(210+(col-11.5)*half/11.5,y,'#379aff',clamp(4+y*.005,4.5,7),i*.37);
  }
 }
 function drawBarricade(g,i){
- const xx=g.x-g.width/2,y=g.y-31;
+ const xx=g.x-g.width/2,y=g.y-28;
  const progress=clamp(work[i]/workNeeded[i],0,1);
- round(xx,y,g.width,31,5,'#4b4846');
- for(let k=0;k<5;k++){let bx=xx+k*g.width/5+2;round(bx,y+2,g.width/5-4,25,2,k%2?'#a2784b':'#c18d53')}
- round(xx+5,y+34,g.width-10,6,2,'#1f3041');round(xx+5,y+34,(g.width-10)*progress,6,2,'#ffd276');
- ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#273440';ctx.font='900 15px system-ui';ctx.strokeText(Math.round(progress*100)+'%',g.x,y-11);ctx.fillStyle='#fff';ctx.fillText(Math.round(progress*100)+'%',g.x,y-11);
- // Cats physically working on the blockage, driven by current gate production.
- const workers=stage===i?Math.min(9,Math.floor(2+blueTotal/300)):0;
- for(let k=0;k<workers;k++){cat(xx+13+k*(g.width-26)/Math.max(workers-1,1),y+47,'#3597f9',6,k)}
+ round(xx,y,g.width,30,5,'#54412f');
+ for(let k=0;k<5;k++){
+  const bx=xx+k*g.width/5+2;
+  round(bx,y+2,g.width/5-4,25,2,k%2?'#a2784b':'#c18d53');
+  if(progress>.1&&k%3===0){ctx.strokeStyle='#533b2c';ctx.beginPath();ctx.moveTo(bx+2,y+3);ctx.lineTo(bx+11+progress*5,y+17);ctx.stroke()}
+ }
+ round(xx+5,y+33,g.width-10,7,2,'#1f3041');
+ round(xx+5,y+33,(g.width-10)*progress,7,2,'#ffd276');
+ ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#273440';ctx.font='900 15px system-ui';
+ ctx.strokeText(Math.round(progress*100)+'%',g.x,y-9);ctx.fillStyle='#fff';ctx.fillText(Math.round(progress*100)+'%',g.x,y-9);
+ ctx.font='bold 10px system-ui';ctx.fillStyle='#fff3cf';ctx.fillText('SHOOT TO BREAK',g.x,y+52);
 }
 function drawGate(g,i){
  const x=g.x-g.width/2,y=g.y;
@@ -125,7 +149,7 @@ function draw(){
  landscape();army();
  // Three gates, two barricades visible at once; one live gate initially.
  for(let i=0;i<gates.length;i++)drawGate(gates[i],i);
- for(const s of shots){ctx.fillStyle='#a0efff';ctx.shadowBlur=8;ctx.shadowColor='#5acfff';ctx.beginPath();ctx.arc(s.x,s.y,5,0,TAU);ctx.fill();ctx.shadowBlur=0}
+ for(const s of shots){cat(s.x,s.y,'#8ad7ff',7,t*4+s.x)}
  for(const b of burst){ctx.globalAlpha=clamp(b.life*3,0,1);ctx.fillStyle=b.color;ctx.fillRect(b.x,b.y,3.5,3.5)}ctx.globalAlpha=1;
  drawCannon();
  if(flash>0){ctx.fillStyle='rgba(255,94,68,'+(flash*.15)+')';ctx.fillRect(0,0,W,H)}
@@ -134,7 +158,17 @@ function draw(){
 }
 function sprinkle(x,y,color,n){for(let k=0;k<n;k++)burst.push({x,y,dx:rand(-65,65),dy:rand(-95,20),life:rand(.2,.6),color})}
 function fire(){
- shots.push({x:gunX,y:609});fireCount++;sprinkle(gunX,615,'#c7f5ff',3);
+ // Three physical cats fly up the lane. A gate multiplies each one on contact.
+ for(let i=-1;i<=1;i++)shots.push({x:gunX+i*9,y:608});
+ sprinkle(gunX,615,'#c7f5ff',3);
+}
+function spawnSquad(g,fromX){
+ const count=g.mult;
+ squads.push({x:clamp(fromX,46,374),y:532,count,mult:g.mult,phase:rand(0,6)});
+ // The logical army moves together with its visual formation; no instant teleport.
+ if(squads.length>MAX_SQUADS){const older=squads.shift();blueTotal+=older.count}
+ sprinkle(fromX,g.y-10,g.color,8);
+ if(g.mult===999&&!finalActivated){finalActivated=true;notify('COUNTERATTACK! KEEP FIRING ×999!',3)}
 }
 function end(won){
  mode='end';el('result').hidden=false;el('hud').style.display='none';el('banner').style.opacity=0;
@@ -142,56 +176,63 @@ function end(won){
  el('resultText').textContent=won?'Your cat army overwhelmed the invaders and cleared the battlefield. The Last Stand is won!':'The enemy reached your castle before you could turn the tide. Keep the ×20 gate firing, and switch to unlocked multipliers!';
 }
 function reset(){
- mode='playing';t=0;gunX=210;dragId=null;nextShot=.1;front=283;redTotal=22000;blueTotal=0;stage=0;work=[0,0];impact=0;flash=0;shots=[];burst=[];fireCount=0;finalActivated=false;bannerUntil=0;shown='';
+ mode='playing';t=0;gunX=210;dragId=null;nextShot=.1;front=283;redTotal=22000;blueTotal=0;work=[0,0];flash=0;shots=[];squads=[];burst=[];finalActivated=false;bannerUntil=0;shown='';
  gates[1].open=false;gates[2].open=false;
  el('menu').hidden=true;el('result').hidden=true;el('hud').style.display='flex';
  notify('HOLD THE CHOKEPOINT!',2.2);last=performance.now();requestAnimationFrame(loop);
 }
 function update(dt){
  t+=dt;nextShot-=dt;flash=Math.max(0,flash-dt*4);
- if(nextShot<=0){fire();nextShot+=.27}
+ if(nextShot<=0){fire();nextShot+=SHOT_INTERVAL}
  for(let j=shots.length-1;j>=0;j--){
- const s=shots[j];s.y-=365*dt;if(s.y<=571){
+  const s=shots[j];s.y-=315*dt;
+  if(s.y>570)continue;
   shots.splice(j,1);
-  const g=gates.find(g=>g.open&&Math.abs(s.x-g.x)<g.width/2);
-  if(!g)continue;
-  blueTotal+=g.mult;
-  if(g.mult===999&&!finalActivated){finalActivated=true;notify('COUNTERATTACK! CLEAR THE HORDE!',3)}
-  sprinkle(s.x,g.y-7,g.color,13);
-  // Each arriving batch sends its worker quota to the next gate.
-  if(stage<2&&g.mult===gates[stage].mult){
-   const contribution=g.mult===20?6:g.mult===99?16:0;
-   work[stage]+=contribution;
-   if(work[stage]>=workNeeded[stage]){
-    gates[stage+1].open=true;
-    stage++;notify(stage===1?'×99 UNLOCKED! MOVE LEFT!':'×999 UNLOCKED! MOVE RIGHT!',3);
-    sprinkle(gates[stage].x,gates[stage].y,'#ffcf5d',38);
-   }
+  const gIndex=gates.findIndex(g=>Math.abs(s.x-g.x)<=g.width/2);
+  if(gIndex<0)continue;
+  const g=gates[gIndex];
+  if(g.open){spawnSquad(g,s.x);continue}
+  // Only direct hits by the player's cannon break barricades.
+  const i=gIndex-1;
+  work[i]+=1;
+  sprinkle(s.x,542,'#d9a46b',5);
+  if(work[i]>=workNeeded[i]){
+   work[i]=workNeeded[i];g.open=true;
+   notify(g.mult===99?'×99 OPEN! FIRE LEFT!':'×999 OPEN! FIRE RIGHT!',3.5);
+   sprinkle(g.x,g.y,'#ffd276',38);
   }
  }
+ // Each cat army physically travels across the battlefield. Deliver troops only
+ // after the formation reaches the enemy line, never when a gate is hit.
+ for(let j=squads.length-1;j>=0;j--){
+  const q=squads[j];q.y-=BLUE_SPEED*dt;
+  if(q.y<=front+17){blueTotal+=q.count;squads.splice(j,1);sprinkle(q.x+(210-q.x)*.8,front+17,'#64bbff',4)}
  }
- // Enemy: slower than blue. Mass matters, not speed. Before final gate, reinforcements
- // arrive continuously from beyond the top of the screen.
- if(!finalActivated)redTotal=Math.min(26000,redTotal+dt*(stage===0?175:125));
- // Battles cost both sides cats; pressure depends on the sizes and stage.
- const battle=blueTotal>0&&redTotal>0;
- if(battle){
- const blueLoss=Math.min(blueTotal,dt*(finalActivated?140:stage>=1?125:115));
- const redLoss=Math.min(redTotal,dt*(finalActivated?2550:stage>=1?225:130));
- blueTotal-=blueLoss;redTotal-=redLoss;
+ // Red cats are slower than blue cats, but the initial horde is overwhelmingly larger.
+ // Until ×999 is actually used, new red soldiers keep entering from beyond the screen.
+ if(!finalActivated)redTotal=Math.min(29000,redTotal+195*dt);
+ if(redTotal>0&&blueTotal>0){
+  const blueLoss=Math.min(blueTotal,(finalActivated?185:235)*dt);
+  const redLoss=Math.min(redTotal,(finalActivated?3200:165)*dt);
+  blueTotal-=blueLoss;redTotal-=redLoss;
  }
- // Red advance by default; ×20 buys time, ×99 halts the horde,
- // ×999 creates a decisive counterattack through the funnel.
- let velocity=stage===0?(blueTotal>90?0.9:2.9):!finalActivated?(blueTotal>180?-.65:1.15):(blueTotal>200?-12.5:1);
- front=clamp(front+velocity*dt,30,712);
- // Once the final gate opens, the enemy reserve becomes finite.
- if(finalActivated&&redTotal<=0){redTotal=0;front=Math.max(45,front-18*dt);if(front<=47){end(true);return}}
+ // ×20 alone cannot hold forever. ×99 allows more stable defense but the red
+ // army never runs out until the player opens and fires through ×999.
+ const power=blueTotal+(squads.reduce((sum,q)=>sum+q.count,0)*.25);
+ const velocity=finalActivated?(power>850?-12:1.1):(power>1200?-.4:power>280?2.1:5.8);
+ front=clamp(front+velocity*dt,25,712);
+ if(finalActivated&&redTotal<=0){
+  redTotal=0;front=Math.max(20,front-20*dt);
+  if(front<=30){end(true);return}
+ }
  if(front>=690){end(false);return}
- for(let j=burst.length-1;j>=0;j--){let b=burst[j];b.x+=b.dx*dt;b.y+=b.dy*dt;b.life-=dt;if(b.life<=0)burst.splice(j,1)}
+ for(let j=burst.length-1;j>=0;j--){const b=burst[j];b.x+=b.dx*dt;b.y+=b.dy*dt;b.life-=dt;if(b.life<=0)burst.splice(j,1)}
  if(t>bannerUntil)el('banner').style.opacity=0;
- el('blueCount').textContent=Math.floor(blueTotal).toLocaleString('en-US');
+ const marching=squads.reduce((n,q)=>n+q.count,0);
+ el('blueCount').textContent=Math.floor(blueTotal+marching).toLocaleString('en-US');
  el('redCount').textContent=Math.ceil(redTotal).toLocaleString('en-US');
- el('gateProgress').textContent=stage<2?('×'+gates[stage+1].mult+': '+Math.min(100,Math.floor(work[stage]/workNeeded[stage]*100))+'%'):(finalActivated?'PUSH BACK!':'USE ×999!');
+ const next=gates.findIndex((g,i)=>i>0&&!g.open);
+ el('gateProgress').textContent=next<0?(finalActivated?'PUSH BACK!':'USE ×999!'):gates[next].name+': '+Math.floor(work[next-1]/workNeeded[next-1]*100)+'%';
 }
 function loop(now){if(mode!=='playing')return;let dt=Math.min((now-last)/1000,.045);last=now;update(dt);draw();if(mode==='playing')requestAnimationFrame(loop)}
 // Touch: anchor at initial press, move continuously *relative* to drag distance.
