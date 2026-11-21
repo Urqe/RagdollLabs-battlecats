@@ -31,7 +31,7 @@ button{cursor:pointer;width:100%;min-height:54px;border:0;border-radius:15px;bac
 (()=>{
 'use strict';
 const W=420,H=760,TAU=Math.PI*2,canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),el=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-let mode='menu',last=0,t=0,gunX=210,dragId=null,dragStart=0,gunStart=0,nextShot=0,front=283,redTotal=22000,blueTotal=0,stage=0,work=[0,0],impact=0,flash=0,shots=[],burst=[],fireCount=0,frame=0,shown='',bannerUntil=0;
+let mode='menu',last=0,t=0,gunX=210,dragId=null,dragStart=0,gunStart=0,nextShot=0,front=283,redTotal=22000,blueTotal=0,stage=0,work=[0,0],impact=0,flash=0,shots=[],burst=[],fireCount=0,frame=0,finalActivated=false,shown='',bannerUntil=0;
 const gates=[
  {x:210,width:98,y:555,mult:20,name:'×20',color:'#399be9',open:true},
  {x:90,width:96,y:555,mult:99,name:'×99',color:'#ffb740',open:false},
@@ -142,7 +142,7 @@ function end(won){
  el('resultText').textContent=won?'Your cat army overwhelmed the invaders and cleared the battlefield. The Last Stand is won!':'The enemy reached your castle before you could turn the tide. Keep the ×20 gate firing, and switch to unlocked multipliers!';
 }
 function reset(){
- mode='playing';t=0;gunX=210;dragId=null;nextShot=.1;front=283;redTotal=22000;blueTotal=0;stage=0;work=[0,0];impact=0;flash=0;shots=[];burst=[];fireCount=0;bannerUntil=0;shown='';
+ mode='playing';t=0;gunX=210;dragId=null;nextShot=.1;front=283;redTotal=22000;blueTotal=0;stage=0;work=[0,0];impact=0;flash=0;shots=[];burst=[];fireCount=0;finalActivated=false;bannerUntil=0;shown='';
  gates[1].open=false;gates[2].open=false;
  el('menu').hidden=true;el('result').hidden=true;el('hud').style.display='flex';
  notify('HOLD THE CHOKEPOINT!',2.2);last=performance.now();requestAnimationFrame(loop);
@@ -156,9 +156,10 @@ function update(dt){
   const g=gates.find(g=>g.open&&Math.abs(s.x-g.x)<g.width/2);
   if(!g)continue;
   blueTotal+=g.mult;
+  if(g.mult===999&&!finalActivated){finalActivated=true;notify('COUNTERATTACK! CLEAR THE HORDE!',3)}
   sprinkle(s.x,g.y-7,g.color,13);
   // Each arriving batch sends its worker quota to the next gate.
-  if(stage<2){
+  if(stage<2&&g.mult===gates[stage].mult){
    const contribution=g.mult===20?6:g.mult===99?16:0;
    work[stage]+=contribution;
    if(work[stage]>=workNeeded[stage]){
@@ -171,26 +172,26 @@ function update(dt){
  }
  // Enemy: slower than blue. Mass matters, not speed. Before final gate, reinforcements
  // arrive continuously from beyond the top of the screen.
- if(stage<2)redTotal=Math.min(26000,redTotal+dt*(stage===0?175:125));
+ if(!finalActivated)redTotal=Math.min(26000,redTotal+dt*(stage===0?175:125));
  // Battles cost both sides cats; pressure depends on the sizes and stage.
  const battle=blueTotal>0&&redTotal>0;
  if(battle){
- const blueLoss=Math.min(blueTotal,dt*(stage===2?140:stage===1?125:115));
- const redLoss=Math.min(redTotal,dt*(stage===2?2550:stage===1?225:130));
+ const blueLoss=Math.min(blueTotal,dt*(finalActivated?140:stage>=1?125:115));
+ const redLoss=Math.min(redTotal,dt*(finalActivated?2550:stage>=1?225:130));
  blueTotal-=blueLoss;redTotal-=redLoss;
  }
  // Red advance by default; ×20 buys time, ×99 halts the horde,
  // ×999 creates a decisive counterattack through the funnel.
- let velocity=stage===0?(blueTotal>90?0.9:2.9):stage===1?(blueTotal>180?-.65:1.15):(blueTotal>200?-12.5:1);
+ let velocity=stage===0?(blueTotal>90?0.9:2.9):!finalActivated?(blueTotal>180?-.65:1.15):(blueTotal>200?-12.5:1);
  front=clamp(front+velocity*dt,30,712);
  // Once the final gate opens, the enemy reserve becomes finite.
- if(stage===2&&redTotal<=0){redTotal=0;front=Math.max(45,front-18*dt);if(front<=47){end(true);return}}
+ if(finalActivated&&redTotal<=0){redTotal=0;front=Math.max(45,front-18*dt);if(front<=47){end(true);return}}
  if(front>=690){end(false);return}
  for(let j=burst.length-1;j>=0;j--){let b=burst[j];b.x+=b.dx*dt;b.y+=b.dy*dt;b.life-=dt;if(b.life<=0)burst.splice(j,1)}
  if(t>bannerUntil)el('banner').style.opacity=0;
  el('blueCount').textContent=Math.floor(blueTotal).toLocaleString('en-US');
  el('redCount').textContent=Math.ceil(redTotal).toLocaleString('en-US');
- el('gateProgress').textContent=stage<2?('×'+gates[stage+1].mult+': '+Math.min(100,Math.floor(work[stage]/workNeeded[stage]*100))+'%'):'PUSH BACK!';
+ el('gateProgress').textContent=stage<2?('×'+gates[stage+1].mult+': '+Math.min(100,Math.floor(work[stage]/workNeeded[stage]*100))+'%'):(finalActivated?'PUSH BACK!':'USE ×999!');
 }
 function loop(now){if(mode!=='playing')return;let dt=Math.min((now-last)/1000,.045);last=now;update(dt);draw();if(mode==='playing')requestAnimationFrame(loop)}
 // Touch: anchor at initial press, move continuously *relative* to drag distance.
