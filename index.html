@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#101b2b"><meta name="description" content="SiegeDolls — an arcade game about tiny cat armies and impossible odds.">
+<title>SiegeDolls · RagDollLabs</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101b2b;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none}
+#app{position:relative;width:100%;height:100%;overflow:hidden;display:grid;place-items:center;background:radial-gradient(ellipse at center,#253f55,#101b2b 75%)}
+canvas{display:block;height:100%;max-width:100%;aspect-ratio:420/760;touch-action:none;box-shadow:0 0 70px #0007}
+#hud{position:absolute;top:max(12px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:min(100%,calc(100dvh * 420 / 760));display:none;align-items:center;justify-content:space-between;gap:8px;padding:0 18px;pointer-events:none;text-shadow:0 2px 4px #000}
+.stat{background:#13213bce;border:1px solid #ffffff38;border-radius:12px;padding:7px 11px;font-size:12px}.stat strong{display:block;font-size:20px;line-height:1.2}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;background:#0c1424ac;padding:24px;backdrop-filter:blur(5px)}
+.panel{width:min(390px,100%);max-height:95%;overflow-y:auto;text-align:center;border:1px solid #ffffff36;border-radius:26px;padding:30px 24px;background:linear-gradient(160deg,#263f5bfa,#111c30fa);box-shadow:0 20px 80px #0009}
+.logo{font-size:66px;line-height:1}.eyebrow{letter-spacing:.2em;font-size:11px;font-weight:800;color:#b7e3fb}h1{font-size:clamp(37px,9vw,54px);letter-spacing:-.07em;margin:10px 0 6px}h2{font-size:33px;margin:8px 0}p{line-height:1.55;color:#d1e0eb}.subtitle{font-size:15px;margin:10px auto 20px}.tip{background:#ffffff10;border-radius:14px;padding:13px 15px;text-align:left;font-size:13px;line-height:1.55;color:#e3edf7;margin:20px 0}.tip b{color:white}
+button{appearance:none;border:0;color:#122035;background:linear-gradient(180deg,#ffde78,#ffae4c);font:800 17px system-ui;border-radius:15px;min-height:53px;padding:12px 25px;cursor:pointer;box-shadow:0 6px 0 #b66f30;width:100%}button:active{transform:translateY(3px);box-shadow:0 3px 0 #b66f30}.small{font-size:12px;color:#a9b8c8;margin-top:23px}
+#toast{position:absolute;top:18%;left:50%;transform:translateX(-50%);font-weight:900;font-size:18px;text-align:center;pointer-events:none;text-shadow:0 3px 6px #000;opacity:0;transition:opacity .2s;width:90%}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div id="app">
+<canvas id="game" aria-label="SiegeDolls game battlefield"></canvas>
+<div id="hud"><div class="stat">DEFENDERS<strong id="lives">❤ ❤ ❤</strong></div><div class="stat">CATS SAVED<strong id="kills">0 / 180</strong></div><div class="stat">TIME<strong id="clock">50</strong></div></div>
+<div id="toast"></div>
+<div id="menu" class="overlay"><div class="panel">
+<div class="logo">🐱⚔️</div><div class="eyebrow">RAGDOLLLABS PRESENTS</div><h1>SiegeDolls</h1>
+<p class="subtitle">One cannon. Thousands of tiny cats.<br>Defend the castle before time runs out.</p>
+<div class="tip"><b>HOW TO PLAY</b><br>Drag your finger or move your mouse sideways to aim. Your cannon fires automatically.<br><br><b>🟡 ×20 RISKY:</b> Lots of cats, exposed to red artillery.<br><b>🔵 ×5 SAFE:</b> Fewer cats, but they get shields.<br><br>Stop 180 invaders before 50 seconds elapse. Don't let three reach your cannon!</div>
+<button id="start">PLAY LEVEL 1</button><div class="small">No ads · No accounts · Just cats</div>
+</div></div>
+<div id="result" class="overlay" hidden><div class="panel"><div class="logo" id="result-icon">🏆</div><h2 id="result-title">Victory!</h2><p id="result-detail"></p><button id="again">PLAY AGAIN</button><div class="small">Level 1 · The Castle Approach</div></div></div>
+</div>
+<script>
+(() => {
+'use strict';
+const W=420,H=760,canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const rand=(a,b)=>a+Math.random()*(b-a);
+let state='menu',last=0,elapsed=0,fire=0,spawn=0,artillery=0,red=[],blue=[],shots=[],bolts=[],particles=[],kills=0,leaks=0,cannonX=210,shake=0,toastTime=0,winTarget=180;
+const gates=[{x1:39,x2:197,n:20,shield:0,color:'#ffc845'},{x1:223,x2:381,n:5,shield:3.4,color:'#58baff'}];
+const backdrop=()=>{
+ctx.fillStyle='#a1c5ac';ctx.fillRect(0,0,W,H);
+ctx.fillStyle='#537b62';ctx.fillRect(0,0,25,H);ctx.fillRect(W-25,0,25,H);
+ctx.fillStyle='#b8b7a7';ctx.fillRect(25,0,W-50,H);
+for(let y=0;y<H;y+=32){ctx.strokeStyle='#807e752a';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(25,y);ctx.lineTo(W-25,y);ctx.stroke();for(let x=25+(Math.floor(y/32)%2)*26;x<W-25;x+=52){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+32);ctx.stroke()}}
+for(let i=0;i<8;i++){let y=i*100;ctx.fillStyle='#718a72';ctx.fillRect(4,y,17,70);ctx.fillRect(W-21,y,17,70)}
+ctx.fillStyle='#596675';ctx.fillRect(25,315,12,240);ctx.fillRect(W-37,315,12,240);
+for(let y=315;y<555;y+=25){ctx.fillStyle='#81909a';ctx.fillRect(25,y,12,17);ctx.fillRect(W-37,y,12,17)}
+ctx.fillStyle='#758e70';ctx.fillRect(18,0,W-36,88);
+for(let i=0;i<70;i++){ctx.fillStyle=i%2?'#6e9e67':'#80aa74';ctx.beginPath();ctx.arc(randStable(i,1)*W,randStable(i,2)*95,randStable(i,3)*17+10,0,7);ctx.fill()}
+};
+function randStable(i,s){let t=Math.sin(i*127.1+s*311.7)*43758.5453;return t-Math.floor(t)}
+function rounded(x,y,w,h,r,fill){ctx.fillStyle=fill;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
+function cat(x,y,color,size=8,shield=false,phase=0){
+ctx.save();ctx.translate(x,y+Math.sin(elapsed*8+phase)*.8);
+if(shield){ctx.strokeStyle='#8fe5ffbb';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,0,size*1.6,0,7);ctx.stroke()}
+ctx.fillStyle='#26303a44';ctx.beginPath();ctx.ellipse(1,size*.8,size*.85,size*.32,0,0,7);ctx.fill();
+ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(-size*.75,-size*.35);ctx.lineTo(-size*.85,-size*1.07);ctx.lineTo(-size*.18,-size*.75);ctx.lineTo(size*.18,-size*.75);ctx.lineTo(size*.85,-size*1.07);ctx.lineTo(size*.75,-size*.35);ctx.arc(0,0,size*.78,-.5,Math.PI+.5);ctx.closePath();ctx.fill();
+ctx.beginPath();ctx.ellipse(0,size*.43,size*.72,size*.63,0,0,7);ctx.fill();
+ctx.fillStyle='#13253a';ctx.beginPath();ctx.arc(-size*.28,-size*.27,size*.09,0,7);ctx.arc(size*.28,-size*.27,size*.09,0,7);ctx.fill();ctx.restore();
+}
+function drawGate(g){
+ctx.save();ctx.shadowColor=g.color;ctx.shadowBlur=17;rounded(g.x1,478,g.x2-g.x1,34,6,g.color);ctx.restore();
+ctx.strokeStyle='#fff9';ctx.lineWidth=2;ctx.strokeRect(g.x1+2,480,g.x2-g.x1-4,30);
+ctx.font='900 25px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=5;ctx.strokeStyle='#253045';ctx.strokeText('×'+g.n,(g.x1+g.x2)/2,494);ctx.fillStyle='#fff';ctx.fillText('×'+g.n,(g.x1+g.x2)/2,494);
+ctx.font='800 12px system-ui';ctx.fillStyle=g.n===20?'#853916':'#d5f5ff';ctx.fillText(g.n===20?'EXPOSED':'SHIELDED',(g.x1+g.x2)/2,528);
+}
+function drawCannon(){
+ctx.save();ctx.translate(cannonX,694);
+ctx.fillStyle='#334a61';rounded(-19,4,38,22,5,'#354b66');rounded(-25,9,11,13,5,'#1e2d3a');rounded(14,9,11,13,5,'#1e2d3a');
+ctx.rotate(Math.sin(elapsed*4)*.015);rounded(-12,-26,24,43,9,'#a1b5c6');rounded(-9,-30,18,31,7,'#466785');rounded(-7,-33,14,8,4,'#162b3d');ctx.restore();
+cat(cannonX-27,717,'#75c6ff',9,false,1);cat(cannonX+28,717,'#75c6ff',9,false,2);
+}
+function reset(){
+elapsed=0;fire=0;spawn=0;artillery=0;red=[];blue=[];shots=[];bolts=[];particles=[];kills=0;leaks=0;cannonX=210;shake=0;toastTime=0;state='playing';
+$('menu').hidden=true;$('result').hidden=true;$('hud').style.display='flex';last=performance.now();requestAnimationFrame(loop);
+}
+function finish(won){
+state='end';$('hud').style.display='none';$('result').hidden=false;$('result-icon').textContent=won?'🏆':'😿';$('result-title').textContent=won?'Castle saved!':'The cats need you!';$('result-detail').textContent=won?('You stopped '+kills+' invaders with only a cannon and some very brave cats.'):('You stopped '+kills+' of '+winTarget+' invaders. Try shielding first, then exploit the ×20 gate.');}
+function puff(x,y,color,n=5){for(let i=0;i<n;i++)particles.push({x,y,vx:rand(-75,75),vy:rand(-65,40),life:rand(.15,.45),color})}
+function makeBlue(x,y,shield){if(blue.length>=300)return;blue.push({x:clamp(x,34,386),y,vx:rand(-9,9),speed:rand(43,58),shield,phase:rand(0,6),hp:shield?2:1})}
+function launch(){shots.push({x:cannonX,y:671,vy:-290});puff(cannonX,660,'#9fe7ff',3)}
+function spawnRed(){if(red.length>270)return;let x=rand(39,381);red.push({x,y:rand(82,112),speed:rand(22,32)+(elapsed>27?9:0),phase:rand(0,6),hp:1})}
+function update(dt){
+elapsed+=dt;fire-=dt;spawn-=dt;artillery-=dt;toastTime-=dt;shake=Math.max(0,shake-dt*18);
+if(fire<=0){launch();fire=.38}
+if(spawn<=0){for(let i=0;i<(elapsed>28?5:4);i++)spawnRed();spawn=.39}
+if(artillery<=0){bolts.push({x:rand(54,182),y:118,vy:300});artillery=1.55;if(elapsed>5){$('toast').textContent='⚠ RED ARTILLERY — LEFT LANE';toastTime=1.2}}
+for(let i=shots.length-1;i>=0;i--){let s=shots[i];s.y+=s.vy*dt;if(s.y<511){let gate=gates.find(g=>s.x>=g.x1&&s.x<=g.x2);if(gate){for(let k=0;k<gate.n;k++){let col=k%5,row=Math.floor(k/5);makeBlue(s.x+(col-2)*11+rand(-3,3),466-row*13+rand(-4,4),gate.shield)}puff(s.x,487,gate.color,9)}shots.splice(i,1)}}
+for(let i=bolts.length-1;i>=0;i--){let b=bolts[i];b.y+=b.vy*dt;if(b.y>640){bolts.splice(i,1);continue}for(let j=blue.length-1;j>=0;j--){let c=blue[j];if(Math.abs(c.x-b.x)<18&&Math.abs(c.y-b.y)<13){if(c.shield<=0){blue.splice(j,1);puff(c.x,c.y,'#7fcfff',2)}else c.shield=Math.max(0,c.shield-1);}}}
+for(let i=blue.length-1;i>=0;i--){let c=blue[i];c.shield=Math.max(0,c.shield-dt);c.y-=c.speed*dt;c.x=clamp(c.x+c.vx*dt,36,384);if(c.y<77)blue.splice(i,1)}
+for(let i=red.length-1;i>=0;i--){let e=red[i];e.y+=e.speed*dt;if(e.y>675){red.splice(i,1);leaks++;shake=7;puff(e.x,675,'#ef756c',8);if(leaks>=3){finish(false);return}}}
+const grid=new Map();for(let j=0;j<blue.length;j++){const c=blue[j],key=Math.floor(c.x/25)+','+Math.floor(c.y/25);if(!grid.has(key))grid.set(key,[]);grid.get(key).push(j)}
+const deadBlue=new Set(),deadRed=new Set();
+for(let i=0;i<red.length;i++){const e=red[i],gx=Math.floor(e.x/25),gy=Math.floor(e.y/25);let hit=-1;
+for(let dy=-1;dy<=1&&hit<0;dy++)for(let dx=-1;dx<=1&&hit<0;dx++){let list=grid.get((gx+dx)+','+(gy+dy));if(!list)continue;for(let j of list){if(deadBlue.has(j))continue;let c=blue[j];if(Math.abs(c.x-e.x)<12&&Math.abs(c.y-e.y)<12){hit=j;break}}}
+if(hit>=0){const c=blue[hit];deadRed.add(i);kills++;if(c.shield<=0)deadBlue.add(hit);else c.shield=Math.max(0,c.shield-.6);if(Math.random()<.28)puff(e.x,e.y,'#ff8b83',3)}
+}
+red=red.filter((_,i)=>!deadRed.has(i));blue=blue.filter((_,i)=>!deadBlue.has(i));
+for(let i=particles.length-1;i>=0;i--){let p=particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;if(p.life<=0)particles.splice(i,1)}
+$('kills').textContent=kills+' / '+winTarget;$('clock').textContent=Math.max(0,Math.ceil(50-elapsed));$('lives').textContent='❤ '.repeat(Math.max(0,3-leaks));
+$('toast').style.opacity=toastTime>0?'1':'0';
+if(elapsed>=50){finish(kills>=winTarget);return}
+}
+function draw(){
+ctx.clearRect(0,0,W,H);ctx.save();if(shake)ctx.translate(rand(-shake,shake),rand(-shake,shake));
+backdrop();
+rounded(39,449,158,23,7,'#3b566c');rounded(223,449,158,23,7,'#3b566c');
+ctx.fillStyle='#bd4440';ctx.fillRect(38,98,344,9);
+ctx.fillStyle='#e2d8c1';ctx.fillRect(23,744,374,16);
+for(const g of gates)drawGate(g);
+ctx.font='800 14px system-ui';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.shadowColor='#192437';ctx.shadowBlur=5;ctx.fillText('🐾  THE CASTLE APPROACH  🐾',210,132);ctx.shadowBlur=0;
+for(const s of shots){ctx.fillStyle='#7cf0ff';ctx.beginPath();ctx.arc(s.x,s.y,5,0,7);ctx.fill();ctx.fillStyle='#d5ffff';ctx.beginPath();ctx.arc(s.x,s.y,2,0,7);ctx.fill()}
+for(const c of blue)cat(c.x,c.y,'#3995f8',6.5,c.shield>0,c.phase);
+for(const e of red)cat(e.x,e.y,'#db5955',6.5,false,e.phase);
+for(const b of bolts){ctx.fillStyle='#ff5d43';ctx.shadowColor='#ff3c2c';ctx.shadowBlur=12;ctx.beginPath();ctx.arc(b.x,b.y,7,0,7);ctx.fill();ctx.shadowBlur=0}
+for(const p of particles){ctx.globalAlpha=clamp(p.life*3,0,1);ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,4,4)}ctx.globalAlpha=1;drawCannon();ctx.restore();
+}
+function loop(t){if(state!=='playing')return;const dt=Math.min((t-last)/1000,.045);last=t;update(dt);draw();if(state==='playing')requestAnimationFrame(loop)}
+function onMove(clientX){const rect=canvas.getBoundingClientRect();cannonX=clamp((clientX-rect.left)/rect.width*W,57,363)}
+canvas.addEventListener('pointerdown',e=>{if(state==='playing'){canvas.setPointerCapture(e.pointerId);onMove(e.clientX)}});
+canvas.addEventListener('pointermove',e=>{if(state==='playing'&&(e.pointerType==='mouse'||e.buttons||e.pressure>0))onMove(e.clientX)});
+document.addEventListener('keydown',e=>{if(state!=='playing')return;if(e.key==='ArrowLeft'||e.key==='a')cannonX=clamp(cannonX-24,57,363);if(e.key==='ArrowRight'||e.key==='d')cannonX=clamp(cannonX+24,57,363)});
+$('start').addEventListener('click',reset);$('again').addEventListener('click',reset);
+function resize(){const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.floor(W*dpr);canvas.height=Math.floor(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);draw()}
+window.addEventListener('resize',resize);resize();
+})();
+</script>
+</body>
+</html>
