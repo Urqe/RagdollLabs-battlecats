@@ -144,7 +144,7 @@ test("overlapping ×99 and ×999 handoffs stay bounded and reset when leaving a 
   }
   motion.reset();
   assert.equal(motion.tails.length, 0);
-  assert.equal(motion.contact.supportFront, null);
+  assert.equal(motion.contact.formation, null);
   assert.equal(motion.contact.blueArmy.population, null);
 });
 
@@ -201,3 +201,71 @@ for (const level of [LEVEL_ONE, LEVEL_TWO]) {
     assert.equal(motion.contact.foughtAt, -1);
   });
 }
+
+test("pressure packs a stalled formation after a wave and releases it into an advance", () => {
+  const motion = createMotion();
+  const state = createState(LEVEL_TWO);
+  Object.assign(state, { mode: "playing", front: 310, blueTotal: 1000, redTotal: 1800 });
+  step(motion, state, 0);
+  const tick = (i, velocity = 0) => {
+    state.t = i / 60;
+    state.front += velocity / 60;
+    motion.step(state.t, velocity, state.blueTotal, true, state.level, state);
+  };
+  for (let i = 1; i <= 60; i++) tick(i);
+  const holding = motion.contact.formation.compression;
+  motion.receive("arrival", 1, wave(999), state.front);
+  state.blueTotal += 999;
+  for (let i = 61; i <= 90; i++) tick(i);
+  const packed = motion.contact.formation.compression;
+  assert.ok(packed > holding + 0.25);
+  for (let i = 91; i <= 150; i++) tick(i, -24);
+  assert.ok(motion.contact.formation.compression < 0);
+  assert.equal(state.blueTotal, 1999);
+});
+
+test("artillery and casualties preserve continuous slot geometry and opposing sides", () => {
+  const motion = createMotion();
+  const state = createState(LEVEL_TWO);
+  const probe = renderProbe();
+  Object.assign(state, { mode: "playing", front: 250, blueTotal: 3100, redTotal: 9000 });
+  step(motion, state, 0);
+  let previous;
+  for (let i = 1; i <= 100; i++) {
+    state.t = i / 60;
+    const velocity = i < 45 ? 23 : -26;
+    state.front += velocity / 60;
+    if (i === 45) {
+      state.redTotal -= 3000;
+      state.blueTotal -= 450;
+      motion.receive("artilleryImpact", state.t, { at: state.t, x: 210, y: 235, loss: 3000 });
+      motion.receive("clash", state.t, 210, state.front, 35, 26);
+    }
+    motion.step(state.t, velocity, state.blueTotal, true, state.level, state);
+    const red = probe.red(state, motion);
+    const blue = probe.blue(state, motion);
+    assert.ok(red.every(({ y }) => y < state.front));
+    assert.ok(blue.every(({ y }) => y > state.front));
+    // The lowest-index blue sprites are painted last in stable slot order.
+    const frontRank = blue.slice(-5);
+    if (previous) frontRank.forEach(({ x, y }, slot) => {
+      assert.ok(Math.abs(x - previous[slot].x) < 3);
+      assert.ok(Math.abs(y - previous[slot].y) < 5.5);
+    });
+    previous = frontRank;
+  }
+  assert.equal(motion.impact.loss, 3000);
+  assert.equal(motion.contact.blueArmy.population, 2650);
+  state.mode = "victory";
+  state.redTotal = 0;
+  step(motion, state, state.t);
+  assert.equal(motion.contact.foughtAt, -Infinity);
+  motion.reset();
+  state.level = LEVEL_ONE;
+  state.mode = "playing";
+  state.front = 399;
+  step(motion, state, 0);
+  assert.deepEqual([...motion.contact.formation.anchors], [399, 399, 399]);
+  assert.equal(motion.contact.formation.compression, 0);
+  assert.equal(motion.impact.at, -Infinity);
+});

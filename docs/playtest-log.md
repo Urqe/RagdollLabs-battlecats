@@ -72,3 +72,9 @@ One entry and a short documentation edit are enough for most reviews.
 **Observations.** The old wave tail and new field rows drew independently. The old celebration moved the flag while the blue formation stayed on the frozen front. Bounded handoffs now connect representative sprites to local slots. The lead enters the cleared approach on the existing victory clock and the reserves follow. [Before and after gameplay](army-visual-scale.md#portrait-gameplay-evidence)
 
 **Player impressions.** No human feedback on the revised movement or physical-device timing was collected.
+
+## Milestone 12 · Formation dynamics
+
+The review starts from merged Milestone 11 at `685f84b`. The HUD-hidden Level 1 and Level 2 winning strategies exercise reinforcement growth, reversals, ×999 arrivals, artillery in Level 2 and the occupation surge. A labeled rendering fixture repeats the same hold, receipt, retreat and counterattack sequence on both builds so the movement can be compared without changes in player timing.
+
+The Level 1 and Level 2 simulation output files match Milestone 11 byte for byte at 30, 60 and 120 Hz. The added render checks exercise slot continuity through an artillery hit and a reversal, live-line bounds, pressure release, local openings, reset and wave ownership. The new motion field also matches exactly at common time samples for the same observed battle. [Model, reproduction and limits](army-visual-scale.md#milestone-12--formation-dynamics-and-battlefield-momentum)

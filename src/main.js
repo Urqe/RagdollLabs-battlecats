@@ -101,6 +101,7 @@ function start(level = playableLevel(progress.selected)) {
   const changed = state.level !== level;
   motion.reset();
   game.reset(level);
+  motion.step(0, 0, state.blueTotal, state.redEntryOpen, level, state);
   if (changed) renderer.resize();
   el("menu").hidden = true;
   el("levels").hidden = true;

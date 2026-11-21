@@ -1,6 +1,7 @@
 import { TAU, clamp } from "./config.js";
 import { laneHalfWidth, polygon } from "./terrain.js";
 import { waveProfile, waveRelease, waveY } from "./motion.js";
+import { breakthroughOffset, formationLag } from "./formation-dynamics.js";
 import { gapShift, gapStrength } from "./formation.js";
 import {
   mergeProgress, receivingY, smoothStep, victoryAdvance, victoryWaveVisibility,
@@ -52,6 +53,11 @@ const TILE_POSES = 3;
 const SPLIT_LIMIT = 12;
 const tileX = (i, pose) => (i % 3 - 1) * 7.2 + (i < 3 ? -0.9 : 0.9) + (pose - 1) * 0.44;
 const tileY = (i, pose) => (i < 3 ? -3.5 : 3.5) + ((i + pose) % 3 - 1) * 0.46;
+
+function boundCatY(y, line, red, margin = 1.9) {
+  return red ? clamp(y, 2, Math.max(2, line - margin))
+    : clamp(y, Math.min(711, line + margin), 711);
+}
 
 function reserveAtlas(ownerDocument) {
   const atlas = ownerDocument?.createElement("canvas");
@@ -146,10 +152,10 @@ export function createFigures(ctx, ownerDocument) {
   let receivingRear = 0;
   let receiverTime = -Infinity;
   let clock = 0;
-  function cat(x, y, tint, size, phase, flatten = 0) {
+  function cat(x, y, tint, size, phase, flatten = 0, stride = 1) {
     const detail = !flatten && size >= 4.25;
     const pose = detail ? Math.floor(clock * 13 + phase) & 3 : 4;
-    const bob = detail ? Math.sin(clock * 18 + phase * 1.6) * 0.58 : 0;
+    const bob = detail ? Math.sin(clock * 18 + phase * 1.6) * 0.58 * stride : 0;
     const span = size * 3.2;
     const height = span * (1 - flatten * 0.44);
     if (atlas) {
@@ -188,12 +194,13 @@ export function createFigures(ctx, ownerDocument) {
     );
   }
 
-  function drawReserve(state, start, end, living, extent, red, gap, strength, fallPose, lag) {
+  function drawReserve(state, start, end, living, extent, red, gap, strength, fallPose, formation, release) {
     if (!extent) return;
     const direction = red ? -1 : 1;
     const team = red ? 0 : 1;
     const span = red ? Math.abs(end - start) : Math.min(270, Math.abs(end - start));
     const pitch = span / RESERVE_ROWS;
+    const battleLine = state.front - (red ? 0 : advance(state, 0));
     const depth = red ? 2.15 : 1.26;
     const cycle = Math.floor(clock * 7);
     let split = 0;
@@ -202,8 +209,9 @@ export function createFigures(ctx, ownerDocument) {
     for (let row = 0; first < extent && row < RESERVE_ROWS; row++) {
       const fraction = (row + 0.5) / RESERVE_ROWS;
       const march = red ? 0 : advance(state, 0.57 + fraction * 0.43);
-      const y = clamp(start + direction * span * (1 - (1 - fraction) ** depth)
-        + lag * (0.68 + fraction * 0.32) - march, 3, 710);
+      const lag = formationLag(formation, state.front, 0.74 + fraction * 0.26) * release;
+      const distance = span * (1 - (1 - fraction) ** depth);
+      const y = clamp(start + direction * distance + lag - march, 3, 710);
       const half = laneHalfWidth(y) - 8;
       // A column belongs to this band for its entire lifetime. The lane
       // changes its spacing, never its index or the next band's occupancy.
@@ -216,7 +224,8 @@ export function createFigures(ctx, ownerDocument) {
         const x = 210 + side * step + (row % 2 - 0.5) * 3
           + spacingNoise[track] * 2.5;
         const stride = Math.sin(clock * 6 + row * 0.71 + col * 0.46);
-        const cy = y + direction * stride * Math.min(pitch * 0.23, 1.4);
+        const cy = boundCatY(y + direction * stride * Math.min(pitch * 0.23, 1.4),
+          battleLine, red, 2 + TILE_HEIGHT * size / 2);
         const group = Math.min(Math.ceil(extent - first), RESERVE_GROUP);
         const pose = (cycle + row + col) % TILE_POSES;
         const exposed = strength && split < SPLIT_LIMIT && first < living
@@ -232,7 +241,7 @@ export function createFigures(ctx, ownerDocument) {
         if (stamps && (allLiving || allFallen)) {
           const opacity = allFallen ? retirementOpacity(living, extent, first + group / 2, fallPose) : 1;
           if (allFallen) ctx.globalAlpha = opacity;
-          drawReserveTile(x, allFallen ? y + direction * fallPose * 4 : cy,
+          drawReserveTile(x, allFallen ? boundCatY(cy + direction * fallPose * 4, battleLine, red) : cy,
             group, team, allFallen ? 0 : pose, size, allFallen ? 0.06 + fallPose * 0.94 : 0);
           if (allFallen) ctx.globalAlpha = 1;
           continue;
@@ -243,8 +252,9 @@ export function createFigures(ctx, ownerDocument) {
           const fallen = coverage === 0;
           const still = fallen ? 0 : pose;
           const px = x + tileX(i, still) * size;
-          const py = (fallen ? y + direction * fallPose * 3 : cy) + tileY(i, still) * size;
-          const shifted = py + gapShift(px, py, gap, fallen ? 0 : strength, track + i);
+          const py = cy + (fallen ? direction * fallPose * 3 : 0) + tileY(i, still) * size;
+          const shifted = boundCatY(py + gapShift(px, py, gap, fallen ? 0 : strength, track + i),
+            battleLine, red);
           const alpha = fallen ? retirementOpacity(living, extent, slot, fallPose) : coverage;
           const tint = red ? (fallen ? DARK_RED : RED) : (fallen ? DARK_BLUE : BLUE);
           const remaining = !red && coverage && reserveJoins[slot]
@@ -270,7 +280,7 @@ export function createFigures(ctx, ownerDocument) {
         + spacingNoise[i + 455] * 7;
       const alpha = clamp(Math.min(y + 6, length - y) / 8, 0, 1);
       ctx.globalAlpha = alpha;
-      cat(x, y + gapShift(x, y, gap, strength, i), DARK_RED, 3.6, i);
+      cat(x, boundCatY(y + gapShift(x, y, gap, strength, i), tip + 6, true), DARK_RED, 3.6, i);
     }
     if (count) ctx.globalAlpha = 1;
   }
@@ -294,9 +304,12 @@ export function createFigures(ctx, ownerDocument) {
     const reach = Math.abs(end - tip);
     const pressure = red ? contact.pressure : -contact.pressure;
     const balance = encounterBalance(total, opposing);
+    const formation = contact.formation;
+    const release = 1 - smoothStep(state.victoryElapsed / 0.58);
+    const packed = (formation?.compression ?? 0) * release;
     const step = Math.min(
       (reach * 0.59) / Math.max(1, rows),
-      8.6 - Math.max(0, -pressure) * 1.5 - contact.hold * 0.55 - compression * 0.95,
+      8.9 - packed * (red ? 0.65 : 2.15) - compression * 0.76,
     );
     const gapAmount = red ? gapStrength(clock - gap?.at) : 0;
     const sinceCutoff = clock - (contact.cutoffAt ?? clock);
@@ -306,15 +319,16 @@ export function createFigures(ctx, ownerDocument) {
     const rear = tip + side * Math.min(
       reach * 0.68, rows * step + 8,
     );
-    const lag = (contact.supportFront ?? front) - front;
     if (!red) {
+      const receiverLag = formationLag(formation, front, reserve > 0 ? 0.79 : Math.min(0.74, rows / 22))
+        * (reserve > 0 ? 1 : 0.72) * release;
       const rearSpread = Math.min(63, reserve * 0.29);
       const target = (reserve > 0 ? rear + rearSpread : tip + rows * step)
-        + lag * 0.7 - advance(state, 0.63);
+        + receiverLag - advance(state, 0.63);
       updateReceiver(target, state);
     }
     drawReserve(state, rear, end, reserve - entry, reserveExtent - entry,
-      red, gap, gapAmount, fallPose, lag);
+      red, gap, gapAmount, fallPose, formation, release);
     if (entry) drawEntry(entry, tip, contact.cutoffAt, gap, gapAmount);
 
     const engaged = total > 0 && opposing > 0 && state.mode === "playing";
@@ -322,37 +336,46 @@ export function createFigures(ctx, ownerDocument) {
     const flush = Math.max(0, 1 - (clock - contact.surgeAt) / 0.68);
     const stress = red ? contact.red : contact.blue;
     const leadingY = front - (red ? 0 : advance(state, 0));
+    const drive = formation?.drive ?? 0;
+    const gait = state.victoryElapsed ? 1.4
+      : engaged ? 0.48 + Math.abs(drive) * 0.82 : 0.82;
     let opacity = 1;
+    let lastRow = -1;
+    let baseline, lane, spacing, anchor, stagger;
     for (let i = Math.ceil(fieldExtent) - 1; i >= 0; i--) {
       const coverage = slotCoverage(field, i);
       const fallen = coverage === 0;
       const row = fieldRow(i);
       const rank = fieldColumn(i);
-      const depth = Math.min(1, row / Math.max(6, rows));
-      const travel = red ? 0 : advance(state, depth * 0.52);
-      const baseline = tip + side * row * step + lag * depth * 0.64 - travel;
-      const lane = laneHalfWidth(baseline) - 6;
-      const spacing = Math.min(12.5, lane / Math.max(2, Math.min(7, 2 + row)));
-      const anchor = red ? 0
-        : (contact.blueAnchor - 210) * clamp((baseline - 275) / 320, 0, 0.32);
-      const stagger = row ? (row % 2 - 0.5) * Math.min(3, spacing * 0.4) : 0;
+      if (row !== lastRow) {
+        const depth = Math.min(1, row / Math.max(6, rows));
+        const travel = red ? 0 : advance(state, depth * 0.52);
+        const lag = formationLag(formation, front, Math.min(0.74, row / 22)) * 0.72 * release;
+        baseline = tip + side * row * step + lag - travel;
+        lane = laneHalfWidth(baseline) - 6;
+        spacing = Math.min(12.5, lane / Math.max(2, Math.min(7, 2 + row)));
+        anchor = red ? 0 : (contact.blueAnchor - 210) * clamp((baseline - 275) / 320, 0, 0.32);
+        stagger = row ? (row % 2 - 0.5) * Math.min(3, spacing * 0.4) : 0;
+        lastRow = row;
+      }
       const offset = rank * spacing + anchor + stagger +
         (row ? spacingNoise[i + 19] * Math.min(3.8, spacing * 0.44) : 0);
       const x = 210 + clamp(offset, -lane, lane);
       const local = 1 - clamp(Math.abs(x - contact.clashX) / 40, 0, 1);
       const bump = engaged && !fallen
         ? encounterOffset(clock, i, row, red, balance, pressure,
-          local * shock * stress * 3.5 - flush * pressure * 2 + recoil * 6)
+          local * shock * stress * 2.7 - flush * pressure * 1.3 + recoil * 5) * 0.72
         : 0;
       const marching = !red && state.mode === "victory";
       const cadence = (row || marching) && !fallen
         ? Math.sin(clock * (marching ? 17 : 11) + rank * 0.6 - row * 0.59)
-          * Math.min(marching ? 1.7 : 1.1, step * 0.24) : 0;
-      const y = baseline - side * bump + cadence + spacingNoise[i] * Math.min(1.5, step * 0.24);
+          * Math.min(marching ? 1.7 : gait, step * 0.24) : 0;
+      const opening = engaged && !fallen
+        ? breakthroughOffset(clock, x, row, formation?.opening ?? 0, red) : 0;
+      const y = baseline + opening - side * bump + cadence + spacingNoise[i] * Math.min(1.2, step * 0.2);
       const displaced = fallen ? y + side * fallPose * (3 + recoil * 7)
         : y + gapShift(x, y, gap, gapAmount, i);
-      const within = red ? clamp(displaced, 2, front - 1.9)
-        : clamp(displaced, leadingY + 1.9, 711);
+      const within = boundCatY(displaced, leadingY, red);
       const size = clamp(4.35 + within * 0.0027, 4.35, 6.12);
       let alpha = fallen ? retirementOpacity(field, fieldExtent, i, fallPose) : coverage;
       if (!red && coverage && fieldJoins[i]) {
@@ -362,7 +385,7 @@ export function createFigures(ctx, ownerDocument) {
       if (alpha > 0) {
         if (alpha !== opacity) ctx.globalAlpha = opacity = alpha;
         cat(x, within, (red ? RED : BLUE) + Number(fallen || i % 5 === 4),
-          size, i * 0.71, fallen ? 0.06 + fallPose * 0.94 : 0);
+          size, i * 0.71, fallen ? 0.06 + fallPose * 0.94 : 0, gait);
       }
     }
     if (opacity !== 1) ctx.globalAlpha = 1;
@@ -400,7 +423,8 @@ export function createFigures(ctx, ownerDocument) {
     const rank = Math.floor(i / profile.cols);
     const stride = Math.sin(run * 13 + i * 1.7);
     const front = state.front - advance(state, 0);
-    const y = receivingY(rawY, receivingRear, front, entryY) + (sway * 3 + stride * 1.4) * spread;
+    const y = boundCatY(receivingY(rawY, receivingRear, front, entryY)
+      + (sway * 3 + stride * 1.4) * spread, front, false);
     const route = clamp((y - 242) / 270, 0, 1);
     const offset = (q.slot || 0) * profile.laneOffset;
     const col = i % profile.cols;
