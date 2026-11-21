@@ -39,6 +39,18 @@ The recurring core can be humble kitten conscripts; selected battles may instead
 
 Do not distribute new army archetypes evenly across Levels 1–10. Introduce them selectively after reviewing the level's setting, player experience, rendering cost, and whether they make the battle more satisfying. Reuse existing army visuals between special encounters so the exceptions feel special. Preserve the decision of when to reinforce versus when to invest in unlocking another option. If a visual change needs strength tuning, keep the rationale and count-versus-effectiveness distinction legible to the player and regression-test the same strategic outcomes.
 
+## Decisive-moment banners and battlefield humor (provisional)
+
+Use occasional short, tongue-in-cheek banners to celebrate a **genuinely decisive turn** in a battle, particularly when a hard-earned final unlock, elite reinforcement, or counterattack makes victory feel within reach. Examples of candidate lines include **“THE PURRUSSIAN GUARD HAS ARRIVED”**, **“HOLD THE PURRIMETER”**, and setting-specific variants. Choose wording that fits that level's battlefield and troops; do not reuse the same gag in every level. These are examples, not required phrases or fixed level assignments.
+
+- **Earn the cue.** An unlock alone is not proof that victory is assured. Trigger a decisive-moment announcement only from grounded game state (for example, sustained blue superiority, enemy supply cut off, and a substantial enemy collapse), with hysteresis or a one-time guard against oscillation. Alternatively use a clearly labeled *reinforcement-arrival* announcement for a dramatic unlock without implying the battle is won.
+- **Keep it rare.** Prefer one memorable mid-to-late battle announcement in a suitable level over a stream of popups. Some levels should have none; reserve distinctive lines for special formations or climactic moments.
+- **Don't interrupt controls.** A short banner and optional sound accent must not freeze combat, obscure the frontline, gate targets, or catapult, or delay the outcome. It should be readable on a portrait phone and respect muted sound settings.
+- **Show the cause first.** Pair a banner with a visible arrival, cannon transformation, surge, or enemy collapse; text should amplify a strong visual event rather than stand in for one.
+- **Preserve the distinction.** A dramatic *“the tide has turned”* banner is not the victory screen. Only the existing authoritative win condition declares victory.
+
+A candidate future special encounter could unlock a **Royal Armory** after costly barricade work: subsequent cannon volleys through existing multipliers deploy visually distinct elite cats rather than ordinary militia. Keep the same one-finger input, gate counts, and aggregate combat engine; if elite effectiveness changes, model and explain it clearly, preserve remaining militia as militia, and balance unlock timing against the risk of neglecting defense. This is a **future design possibility**, not a commitment to add it to every level or to implement it during the current Level 2 polish milestone.
+
 ## Milestone sequence
 
 1. **Milestone 6 · Roadmap and architecture.** Establish this plan, level briefs, and a lightweight review process.
