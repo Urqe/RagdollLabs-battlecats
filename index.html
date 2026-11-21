@@ -17,7 +17,7 @@ button{cursor:pointer;width:100%;min-height:54px;border:0;border-radius:15px;bac
 [hidden]{display:none!important}
 </style></head><body><div id="app">
 <canvas id="game" aria-label="SiegeDolls battlefield"></canvas>
-<div id="hud"><div class="stat">BLUE CATS<b id="blueCount">0</b></div><div class="stat">ENEMY HORDE<b id="redCount">0</b></div><div class="stat">NEXT GATE<b id="gateProgress">×99: 0%</b></div></div>
+<div id="hud"><div class="stat">BLUE CATS<b id="blueCount">0</b></div><div class="stat">ENEMY HORDE<b id="redCount">0</b></div><div class="stat">×99 BARRIER<b id="gate99">0%</b></div><div class="stat">×999 BARRIER<b id="gate999">0%</b></div></div>
 <div id="banner" aria-live="polite"></div>
 <div id="menu" class="overlay"><div class="panel">
 <div class="logo">🐱⚔️</div><div class="brand">RAGDOLLLABS PRESENTS</div><h1>SiegeDolls</h1>
@@ -31,14 +31,15 @@ button{cursor:pointer;width:100%;min-height:54px;border:0;border-radius:15px;bac
 (()=>{
 'use strict';
 const W=420,H=760,TAU=Math.PI*2,canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),el=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-let mode='menu',last=0,t=0,gunX=210,dragId=null,dragStart=0,gunStart=0,nextShot=0,front=283,redTotal=22000,blueTotal=0,work=[0,0],flash=0,shots=[],squads=[],burst=[],finalActivated=false,bannerUntil=0;
+let mode='menu',last=0,t=0,gunX=210,dragId=null,dragStart=0,gunStart=0,nextShot=0,front=283,redTotal=22000,blueTotal=0,work=[0,0],flash=0,shots=[],squads=[],burst=[],finalActivated=false,bannerUntil=0,barricadeFlashes=[0,0];
 const gates=[
  {x:210,width:98,y:555,mult:20,name:'×20',color:'#399be9',open:true},
  {x:90,width:96,y:555,mult:99,name:'×99',color:'#ffb740',open:false},
  {x:329,width:106,y:555,mult:999,name:'×999',color:'#ffd561',open:false}
 ];
 // Each shot against a locked gate chips the barricade. No passive unlocking.
-const workNeeded=[95,210];
+const workNeeded=[54,126];
+const BARRICADE_HIT_Y=545,GATE_HIT_Y=565;
 const SHOT_INTERVAL=.28,BLUE_SPEED=104;
 const rand=(a,b)=>a+Math.random()*(b-a);
 function notify(s,seconds=2){bannerUntil=t+seconds;el('banner').textContent=s;el('banner').style.opacity=1}
@@ -126,6 +127,7 @@ function drawBarricade(g,i){
  ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#273440';ctx.font='900 15px system-ui';
  ctx.strokeText(Math.round(progress*100)+'%',g.x,y-9);ctx.fillStyle='#fff';ctx.fillText(Math.round(progress*100)+'%',g.x,y-9);
  ctx.font='bold 10px system-ui';ctx.fillStyle='#fff3cf';ctx.fillText('SHOOT TO BREAK',g.x,y+52);
+ if(barricadeFlashes[i]>0){ctx.fillStyle='rgba(255,233,134,'+Math.min(.68,barricadeFlashes[i]*2)+')';ctx.fillRect(xx,y,g.width,30)}
 }
 function drawGate(g,i){
  const x=g.x-g.width/2,y=g.y;
@@ -176,29 +178,35 @@ function end(won){
 }
 function reset(){
  mode='playing';t=0;gunX=210;dragId=null;nextShot=.1;front=283;redTotal=22000;blueTotal=0;work=[0,0];flash=0;shots=[];squads=[];burst=[];finalActivated=false;bannerUntil=0;
- gates[1].open=false;gates[2].open=false;
+ gates[1].open=false;gates[2].open=false;barricadeFlashes=[0,0];
+ el('gate99').textContent='0%';el('gate999').textContent='0%';
  el('menu').hidden=true;el('result').hidden=true;el('hud').style.display='flex';
  notify('HOLD THE CHOKEPOINT!',2.2);last=performance.now();requestAnimationFrame(loop);
 }
 function update(dt){
  t+=dt;nextShot-=dt;flash=Math.max(0,flash-dt*4);
  if(nextShot<=0){fire();nextShot+=SHOT_INTERVAL}
+ for(let i=0;i<2;i++)barricadeFlashes[i]=Math.max(0,barricadeFlashes[i]-dt);
  for(let j=shots.length-1;j>=0;j--){
-  const s=shots[j];s.y-=315*dt;
-  if(s.y>570)continue;
+  const shot=shots[j],previousY=shot.y;
+  shot.y-=315*dt;
+  const gateIndex=gates.findIndex(g=>Math.abs(shot.x-g.x)<=g.width/2);
+  if(gateIndex<0){if(shot.y<510)shots.splice(j,1);continue}
+  const gate=gates[gateIndex];
+  // Only a cannon projectile crossing a visible barrier damages it.
+  // Neither allied soldiers nor a timer can alter barricade integrity.
+  const hitY=gate.open?GATE_HIT_Y:BARRICADE_HIT_Y;
+  if(!(previousY>=hitY&&shot.y<hitY))continue;
   shots.splice(j,1);
-  const gIndex=gates.findIndex(g=>Math.abs(s.x-g.x)<=g.width/2);
-  if(gIndex<0)continue;
-  const g=gates[gIndex];
-  if(g.open){spawnSquad(g,s.x);continue}
-  // Only direct hits by the player's cannon break barricades.
-  const i=gIndex-1;
-  work[i]+=1;
-  sprinkle(s.x,542,'#d9a46b',5);
-  if(work[i]>=workNeeded[i]){
-   work[i]=workNeeded[i];g.open=true;
-   notify(g.mult===99?'×99 OPEN! FIRE LEFT!':'×999 OPEN! FIRE RIGHT!',3.5);
-   sprinkle(g.x,g.y,'#ffd276',38);
+  if(gate.open){spawnSquad(gate,shot.x);continue}
+  const barrierIndex=gateIndex-1;
+  if(barrierIndex<0)continue;
+  work[barrierIndex]=Math.min(workNeeded[barrierIndex],work[barrierIndex]+1);
+  barricadeFlashes[barrierIndex]=.25;
+  sprinkle(shot.x,BARRICADE_HIT_Y,'#e9b779',6);
+  if(work[barrierIndex]===workNeeded[barrierIndex]){
+   gate.open=true;notify(gate.mult===99?'×99 OPEN — AIM LEFT!':'×999 OPEN — AIM RIGHT!',3);
+   sprinkle(gate.x,gate.y,'#ffd276',38);
   }
  }
  // Each cat army physically travels across the battlefield. Deliver troops only
@@ -230,8 +238,8 @@ function update(dt){
  const marching=squads.reduce((n,q)=>n+q.count,0);
  el('blueCount').textContent=Math.floor(blueTotal+marching).toLocaleString('en-US');
  el('redCount').textContent=Math.ceil(redTotal).toLocaleString('en-US');
- const next=gates.findIndex((g,i)=>i>0&&!g.open);
- el('gateProgress').textContent=next<0?(finalActivated?'PUSH BACK!':'USE ×999!'):gates[next].name+': '+Math.floor(work[next-1]/workNeeded[next-1]*100)+'%';
+ el('gate99').textContent=gates[1].open?'OPEN':Math.floor(work[0]/workNeeded[0]*100)+'%';
+ el('gate999').textContent=gates[2].open?'OPEN':Math.floor(work[1]/workNeeded[1]*100)+'%';
 }
 function loop(now){if(mode!=='playing')return;let dt=Math.min((now-last)/1000,.045);last=now;update(dt);draw();if(mode==='playing')requestAnimationFrame(loop)}
 // Touch: anchor at initial press, move continuously *relative* to drag distance.
