@@ -61,8 +61,12 @@ npm run test:all
 - `src/terrain.js` / `src/figures.js`: cached terrain, cat sprites, and representative formations.
 - `src/motion.js` / `src/sound.js`: presentation timing, battle cues, and optional Web Audio effects.
 
-For AI-assisted changes, keep simulation code independent of DOM and animation timing. Add a regression test for gameplay changes, run `npm run test:all`, and review mobile behavior. Preserve the single level, three-cat automatic volleys, manually destroyed barricades, and travel time before combat. No runtime libraries, backend, monetization, or additional levels are needed.
+For AI-assisted changes, keep simulation code independent of DOM and animation timing. Add a regression test for gameplay changes, run `npm run test:all`, and review mobile behavior. Preserve Level 1 as the regression baseline, including automatic three-cat volleys, manually destroyed barricades, and travel time before combat. Keep runtime dependencies lightweight.
 
 ## Level 1 balance validation
 
 See the [combat model, tested outcomes, and gameplay recordings](docs/level-1-balance.md). Run `npm run simulate` to reproduce the results at 30, 60, and 120 Hz. Chromium uses native touch drags in the playthrough tests. The browser diagnostics read a detached snapshot from `src/main.js`. CI retains the evidence in the `playwright-results` artifact.
+
+## Roadmap and level design
+
+Start with the [living roadmap and Level 1–10 specifications](docs/roadmap.md). See [level architecture](docs/level-architecture.md) for the incremental migration and the [playtest log](docs/playtest-log.md) for recording evidence and revising the plan.
