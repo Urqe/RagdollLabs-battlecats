@@ -7,14 +7,17 @@ export function createGame({
   notify = () => {},
   onEnd = () => {},
   random = Math.random,
+  onEffect = null,
 } = {}) {
   const state = createState();
   const rand = (a, b) => a + random() * (b - a);
   function end(won) {
     state.mode = won ? "victory" : "end";
-    if (!won) onEnd(false);
+    if (won) onEffect?.("victory", state.t);
+    else onEnd(false);
   }
   function sprinkle(x, y, color, n) {
+    n = Math.min(n, 180 - state.burst.length);
     for (let k = 0; k < n; k++)
       state.burst.push({
         x,
@@ -27,6 +30,10 @@ export function createGame({
   }
 
   const { spawnSquad } = createMultipliers(state, sprinkle, random);
+  function multiply(gate, x, y, slot) {
+    spawnSquad(gate, x, y, slot);
+    onEffect?.("multiply", state.t, gate.mult);
+  }
   function reset() {
     resetState(state);
     notify("HOLD THE CHOKEPOINT!", 2.2);
@@ -49,12 +56,13 @@ export function createGame({
     state.recoil = Math.max(0, state.recoil - dt * 6);
     if (state.nextShot <= 0) {
       fire(state, sprinkle);
+      onEffect?.("fire", state.t);
       state.nextShot += SHOT_INTERVAL;
     }
     for (let i = 0; i < 2; i++)
       state.barricadeFlashes[i] = Math.max(0, state.barricadeFlashes[i] - dt);
-    updateProjectiles(state, dt, spawnSquad, sprinkle, notify);
-    updateArmy(state, dt, sprinkle, end, notify);
+    updateProjectiles(state, dt, multiply, sprinkle, notify, onEffect);
+    updateArmy(state, dt, sprinkle, end, notify, onEffect);
     for (let j = state.burst.length - 1; j >= 0; j--) {
       const b = state.burst[j];
       b.x += b.dx * dt;

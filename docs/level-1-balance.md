@@ -26,14 +26,29 @@ Run `npm run simulate` to reproduce [all 30, 60, and 120 Hz results](evidence/st
 
 At 60 Hz, ×20 drives the line back by more than 70 pixels from its starting position before stalling and retreating. Sustained ×99 fire pushes the line back to about y=105 before the growing horde reverses it. The two balanced schedules get their first ×999 troops to the front at 57.33 and 55.65 seconds. They secure the supply entrance at 93.82 and 96.53 seconds, respectively, then finish the remaining horde. All tested policies produce the same wins and losses as Milestone 3. The two wins finish earlier because combat ends on elimination. Both tolerate the tested ±20-pixel aiming errors and small delays. The exact aim schedules are in [`tests/helpers/strategies.js`](../tests/helpers/strategies.js).
 
-## Battlefield rendering
+## Combat animation and sound
 
-- The wide limestone yard holds the red reserve. Its population grows with the logical red count and thins as red cats die. A narrower band of moving cats connects that reserve to the front. The red entry files represent recruits already counted in the simulation, and their visibility follows the current recruitment rate.
-- Projectile drawings carry through the gate crossing. Each shot's expanding formation begins at its actual collision position and settles onto its logical marching path. Displayed wave sizes differ by multiplier while the simulation uses exact troop counts. The pillars, gate plates, barricade damage, debris and fire recoil follow the same gate and shot state.
-- At contact, animated front ranks overlap, recoil in response to losses, and thin as both sides take casualties. During the victory animation, the blue ranks surge into the cleared yard while the gameplay clock, frontline, and troop counts stay fixed.
-- The renderer caches terrain at the canvas resolution and keeps four stride poses plus one distant pose per cat tint in a single atlas. Near cats get paws, faces, and faster stride detail. Distant sprites use simplified shapes. Representative counts bound the busiest frames to roughly 2,800 soldier sprite draws, including marching waves. The renderer caps canvas pixel density at 2.
+- Each projectile retains its original crossing position. ×20 releases its representative cats within 0.054 seconds. ×99 fans through three ranks over 0.254 seconds. ×999 releases six ranks over 0.782 seconds, overlapping subsequent volleys. The representative formations keep marching and merge at the contact line. A short-lived visual copy can finish the release after the logical formation arrives.
+- The front ranks compress, lunge, and recoil in response to actual frontline velocity and casualty pulses. New blue ranks build from the arriving lane. A sustained direction change drives the reversal cue. A few time-limited falling cat sprites and brief flashes mark real casualty batches.
+- The yard uses a stable pattern of occupied slots. As the red reserve falls, survivors keep their positions relative to their ranks and gaps grow between groups. Cutoff ends the red entry file movement. The final remnant remains visible while any red cats are alive. Blue advances into the yard and the existing 1.5-second victory sequence begins on the last casualty.
+- A single atlas holds four stride poses and one distant pose per tint. Each projectile contributes at most 24 marching sprites, and each field has a representative count cap. Only twelve recently joined waves can continue drawing their trailing ranks, and at most twelve falling sprites are alive. Terrain is cached, canvas pixel density is capped at 2, and the transient burst list is capped at 180. The model still uses exact troop counts and the existing reinforcement timing.
+- The menu and result screen share a sound toggle. Fresh visits default to muted. The saved preference is applied after a user gesture, and a blocked audio context can retry on a later gesture. Web Audio synthesizes short cannon, gate, wood, contact, reversal and victory effects. Per-cue cooldowns limit repeated sounds. Five ordinary voices can overlap, with room for the three-note victory cue.
 
-## Browser evidence
+## Recorded motion
+
+The muted Chromium recordings use a 390 × 844 viewport, native touch input, and the normal animation loop. The HUD and banner are hidden for visual review.
+
+| Clip | What to watch |
+| --- | --- |
+| [A · Gate multiplication](evidence/motion/a-gate-multiplication.mp4) | ×20 first, then ×99 and ×999. Watch the cats cross the gate, fan out, and start marching. |
+| [B · Frontline reversal](evidence/motion/b-frontline-reversal.mp4) | The line retreats while the left barricade takes damage. When the ×99 wave arrives, blue fills the front and drives red back. |
+| [C · Final counterattack](evidence/motion/c-final-counterattack.mp4) | The right gate floods the lower approach. The middle advance runs at 2.2× playback speed, then the last casualties and celebration play in real time. The clip holds the browser’s final result frame briefly. |
+
+To reproduce the clips, install the development dependencies, Chromium through Playwright, and FFmpeg with H.264 support. Run `npm run dev` in one terminal and `node scripts/capture-motion.js` in another. The recorder writes the unedited WebM, the three MP4 cuts, and the timing marks to `test-results/motion/` by default.
+
+The clips were reviewed as ordered frames from the encoded videos, including short intervals around the gate releases and last casualties. The first review showed blue filling the whole line too abruptly after the first ×999 arrival. The final capture uses a visual ramp that expands from the arriving lane. Browser testing covers Chromium and mobile-emulated WebKit. Physical iPhone frame rate, battery use, and sound mix remain unmeasured.
+
+## Milestone 4 stills
 
 | Phase | Playwright capture |
 | --- | --- |

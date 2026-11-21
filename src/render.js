@@ -9,7 +9,8 @@ import {
 } from "./config.js";
 import { barrierStatus } from "./barricades.js";
 import { createFigures } from "./figures.js";
-import { drawTerrain, polygon } from "./terrain.js";
+import { drawTerrain, laneHalfWidth, polygon } from "./terrain.js";
+import { createMotion, waveProfile } from "./motion.js";
 
 const palettes = [
   { light: "#b5f1ff", face: "#2279b2", dark: "#194560", glow: "#64d8ff" },
@@ -17,7 +18,7 @@ const palettes = [
   { light: "#fff4b4", face: "#96661f", dark: "#634c53", glow: "#ffdf6c" },
 ];
 
-export function createRenderer(state, canvas) {
+export function createRenderer(state, canvas, motion = createMotion()) {
   const ctx = canvas.getContext("2d");
   const terrain = canvas.ownerDocument?.createElement("canvas");
   if (terrain) terrain.width = 0;
@@ -72,18 +73,23 @@ export function createRenderer(state, canvas) {
     const pulse = pulses[index];
     if (!gate.open || pulse === 0) return;
     ctx.save();
+    const y = GATE_HIT_Y - 15;
     ctx.strokeStyle = palettes[index].glow;
-    ctx.globalAlpha = pulse * 0.68;
-    ctx.lineWidth = index === 2 ? 3.5 : 2;
-    const radius = (index === 2 ? 57 : 33) * (1 - pulse) + 10;
-    ctx.beginPath();
-    ctx.ellipse(x, GATE_HIT_Y - 14, radius, radius * 0.4, 0, 0, TAU);
-    ctx.stroke();
-    if (index === 2) {
-      ctx.globalAlpha = pulse * 0.34;
+    const rings = index === 0 ? 1 : index === 1 ? 2 : 3;
+    for (let i = 0; i < rings; i++) {
+      const age = clamp(1 - pulse - i * 0.17, 0, 1);
+      const radius = 7 + age * (index === 2 ? 60 : index === 1 ? 46 : 20);
+      ctx.globalAlpha =
+        ((1 - age) * (index === 0 ? 0.42 : 0.57)) / (1 + i * 0.4);
+      ctx.lineWidth = index === 2 ? 2.7 : 1.6;
       ctx.beginPath();
-      ctx.ellipse(x, GATE_HIT_Y - 25, radius * 0.78, radius * 0.29, 0, 0, TAU);
+      ctx.ellipse(x, y - i * 12, radius, radius * 0.34, 0, 0, TAU);
       ctx.stroke();
+    }
+    if (index === 2) {
+      ctx.fillStyle = "#ffe6a8";
+      ctx.globalAlpha = pulse * 0.11;
+      ctx.fillRect(left + 11, y - 10, width - 19, 23);
     }
     ctx.restore();
   }
@@ -350,6 +356,44 @@ export function createRenderer(state, canvas) {
     ctx.restore();
   }
 
+  function contactEffects() {
+    const contact = motion.contact;
+    const strike = state.t - contact.foughtAt;
+    const isContact = contact.foughtAt >= 0 && strike < 0.13;
+    if (isContact) {
+      ctx.save();
+      ctx.globalAlpha =
+        (1 - strike / 0.13) * (contact.blue + contact.red) * 0.4;
+      ctx.fillStyle = "#ffebc5";
+      const half = laneHalfWidth(state.front) * 0.65;
+      const x = 210 + Math.sin(contact.foughtAt * 13) * half;
+      for (let i = -1; i <= 1; i++) {
+        const spread = i * (5 + strike * 45);
+        ctx.fillRect(x + spread, state.front - i * 4 - strike * 22, 2.4, 3.6);
+      }
+      ctx.restore();
+    }
+
+    const joined = Math.max(motion.arrivals[1], motion.arrivals[2]);
+    const age = state.t - joined;
+    if (!state.redTotal || age > 0.3) return;
+    ctx.save();
+    ctx.globalAlpha = (1 - age / 0.3) * 0.42;
+    ctx.strokeStyle = "#b7e8ff";
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    const half = laneHalfWidth(state.front) * (0.32 + age * 1.1);
+    ctx.moveTo(210 - half, state.front + 12 + age * 23);
+    ctx.quadraticCurveTo(
+      210,
+      state.front + 3 + age * 23,
+      210 + half,
+      state.front + 12 + age * 23,
+    );
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function draw() {
     ctx.clearRect(0, 0, W, H);
     if (terrain?.width) ctx.drawImage(terrain, 0, 0, W, H);
@@ -357,21 +401,23 @@ export function createRenderer(state, canvas) {
     const celebration = state.victoryElapsed / LEVEL.victoryDuration;
     const surge = 1 - (1 - celebration) ** 2;
     figures.setClock(state.t + state.victoryElapsed);
-    pulses.fill(0);
-    if (!celebration) {
-      for (const q of state.squads) {
-        const index = q.mult === 20 ? 0 : q.mult === 99 ? 1 : 2;
-        pulses[index] = Math.max(pulses[index], 1 - (q.marchTime || 0) * 3.4);
-      }
+    for (let i = 0; i < 3; i++) {
+      const duration = waveProfile(state.gates[i].mult).flare;
+      pulses[i] =
+        state.mode === "playing"
+          ? clamp(1 - (state.t - motion.pulses[i]) / duration, 0, 1)
+          : 0;
+      gateGround(state.gates[i], i);
     }
-    for (let i = 0; i < 3; i++) gateGround(state.gates[i], i);
-    figures.redArmy(state, false);
-    figures.blueArmy(state, false, surge);
+    figures.redArmy(state, false, motion.contact);
+    figures.blueArmy(state, false, surge, motion.contact, motion.tails);
     for (let i = 0; i < 3; i++) drawGate(state.gates[i], i);
-    figures.redArmy(state, true);
-    figures.blueArmy(state, true, surge);
+    figures.redArmy(state, true, motion.contact);
+    figures.blueArmy(state, true, surge, motion.contact, motion.tails);
     supplyFlags();
-    if (!celebration) {
+    if (state.mode === "playing" || (state.mode === "end" && !celebration)) {
+      contactEffects();
+      figures.fallen(motion.falls);
       for (let i = 1; i < 3; i++) brokenWood(state.gates[i], i);
       for (const shot of state.shots) figures.projectile(shot);
       for (const b of state.burst) {

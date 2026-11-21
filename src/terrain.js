@@ -1,4 +1,4 @@
-import { H, LEVEL, TAU, W, clamp } from "./config.js";
+import { H, LEVEL, TAU, W } from "./config.js";
 
 const walls = [
   [17, 0],
@@ -191,8 +191,4 @@ export function drawTerrain(ctx) {
     ctx.fillStyle = "#5a6260";
     ctx.fillRect(x, 720, 22, 11);
   }
-}
-
-export function yardSpacing(front) {
-  return clamp(front - 7, 5, 191);
 }

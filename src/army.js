@@ -1,6 +1,13 @@
 import { BLUE_SPEED, LEVEL, clamp } from "./config.js";
 
-export function updateArmy(state, dt, sprinkle, end, notify = () => {}) {
+export function updateArmy(
+  state,
+  dt,
+  sprinkle,
+  end,
+  notify = () => {},
+  onEffect = null,
+) {
   for (let j = state.squads.length - 1; j >= 0; j--) {
     const q = state.squads[j];
     q.y -= BLUE_SPEED * dt;
@@ -11,6 +18,7 @@ export function updateArmy(state, dt, sprinkle, end, notify = () => {}) {
     ) {
       state.blueTotal += q.count;
       state.squads.splice(j, 1);
+      onEffect?.("arrival", state.t, q, state.front);
       sprinkle(
         q.x + (210 - q.x) * 0.8,
         state.front + LEVEL.arrivalOffset,
@@ -73,6 +81,16 @@ export function updateArmy(state, dt, sprinkle, end, notify = () => {}) {
     const x = 210 + Math.sin(state.t * 13) * half * 0.7;
     impact(sprinkle, state.redRecentLoss, x, state.front - 4, "#df544b");
     impact(sprinkle, state.blueRecentLoss, 420 - x, state.front + 8, "#65baff");
+    if (state.redRecentLoss > 0 || state.blueRecentLoss > 0) {
+      onEffect?.(
+        "clash",
+        state.t,
+        x,
+        state.front,
+        state.redRecentLoss,
+        state.blueRecentLoss,
+      );
+    }
     state.redRecentLoss = 0;
     state.blueRecentLoss = 0;
     state.nextCombatEffect += LEVEL.combatEffectInterval;
@@ -95,6 +113,6 @@ export function updateArmy(state, dt, sprinkle, end, notify = () => {}) {
 
 function impact(sprinkle, loss, x, y, color) {
   if (loss > 0) {
-    sprinkle(x, y, color, Math.min(9, Math.ceil(Math.sqrt(loss) / 2)));
+    sprinkle(x, y, color, Math.min(4, Math.ceil(Math.sqrt(loss) / 3)));
   }
 }
