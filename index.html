@@ -41,7 +41,7 @@ const gates=[
 const workNeeded=[95,210];
 const SHOT_INTERVAL=.28,BLUE_SPEED=104;
 const rand=(a,b)=>a+Math.random()*(b-a);
-function notify(s,seconds=2){shown=s;bannerUntil=t+seconds;el('banner').textContent=s;el('banner').style.opacity=1}
+function notify(s,seconds=2){bannerUntil=t+seconds;el('banner').textContent=s;el('banner').style.opacity=1}
 function mapY(y){return y} // battlefield projection is applied in path geometry and perspective scaling
 function landscape(){
  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#a8b9ab');g.addColorStop(1,'#c8c7bd');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
@@ -175,7 +175,7 @@ function end(won){
  el('resultText').textContent=won?'Your cat army overwhelmed the invaders and cleared the battlefield. The Last Stand is won!':'The enemy reached your castle before you could turn the tide. Keep the ×20 gate firing, and switch to unlocked multipliers!';
 }
 function reset(){
- mode='playing';t=0;gunX=210;dragId=null;nextShot=.1;front=283;redTotal=22000;blueTotal=0;work=[0,0];flash=0;shots=[];squads=[];burst=[];finalActivated=false;bannerUntil=0;shown='';
+ mode='playing';t=0;gunX=210;dragId=null;nextShot=.1;front=283;redTotal=22000;blueTotal=0;work=[0,0];flash=0;shots=[];squads=[];burst=[];finalActivated=false;bannerUntil=0;
  gates[1].open=false;gates[2].open=false;
  el('menu').hidden=true;el('result').hidden=true;el('hud').style.display='flex';
  notify('HOLD THE CHOKEPOINT!',2.2);last=performance.now();requestAnimationFrame(loop);
