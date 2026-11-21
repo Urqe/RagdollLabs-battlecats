@@ -1,18 +1,21 @@
 import { createState, resetState } from "./state.js";
-import { LEVEL, SHOT_INTERVAL } from "./config.js";
+import { updateArtillery } from "./artillery.js";
+import { LEVEL_ONE } from "./levels.js";
 import { createMultipliers } from "./multipliers.js";
 import { fire, updateProjectiles } from "./projectiles.js";
 import { updateArmy } from "./army.js";
 export function createGame({
+  level = LEVEL_ONE,
   notify = () => {},
   onEnd = () => {},
   random = Math.random,
   onEffect = null,
 } = {}) {
-  const state = createState();
+  const state = createState(level);
   const rand = (a, b) => a + random() * (b - a);
   function end(won) {
     state.mode = won ? "victory" : "end";
+    if (state.support) state.support.shot = null;
     if (won) onEffect?.("victory", state.t);
     else onEnd(false);
   }
@@ -34,17 +37,17 @@ export function createGame({
     spawnSquad(gate, x, y, slot);
     onEffect?.("multiply", state.t, gate.mult);
   }
-  function reset() {
-    resetState(state);
-    notify("HOLD THE CHOKEPOINT!", 2.2);
+  function reset(nextLevel = state.level, mode = "playing") {
+    resetState(state, nextLevel, mode);
+    if (mode === "playing") notify("HOLD THE CHOKEPOINT!", 2.2);
   }
   function update(dt) {
     if (state.mode === "victory") {
       state.victoryElapsed = Math.min(
-        LEVEL.victoryDuration,
+        state.level.combat.victoryDuration,
         state.victoryElapsed + dt,
       );
-      if (state.victoryElapsed === LEVEL.victoryDuration) {
+      if (state.victoryElapsed === state.level.combat.victoryDuration) {
         state.mode = "end";
         onEnd(true);
       }
@@ -57,11 +60,12 @@ export function createGame({
     if (state.nextShot <= 0) {
       fire(state, sprinkle);
       onEffect?.("fire", state.t);
-      state.nextShot += SHOT_INTERVAL;
+      state.nextShot += state.level.battlefield.shotInterval;
     }
-    for (let i = 0; i < 2; i++)
+    for (let i = 0; i < state.barricadeFlashes.length; i++)
       state.barricadeFlashes[i] = Math.max(0, state.barricadeFlashes[i] - dt);
     updateProjectiles(state, dt, multiply, sprinkle, notify, onEffect);
+    updateArtillery(state, onEffect);
     updateArmy(state, dt, sprinkle, end, notify, onEffect);
     for (let j = state.burst.length - 1; j >= 0; j--) {
       const b = state.burst[j];

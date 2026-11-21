@@ -1,8 +1,12 @@
-import { W, clamp } from "./config.js";
+import { clamp } from "./config.js";
 export function bindControls(state, canvas, document) {
+  function aim(x) {
+    const { minX, maxX } = state.level.battlefield;
+    state.gunX = clamp(x, minX, maxX);
+  }
   function moveMouse(x) {
     const r = canvas.getBoundingClientRect();
-    state.gunX = clamp(((x - r.left) / r.width) * W, 45, 375);
+    aim(((x - r.left) / r.width) * state.level.battlefield.width);
   }
   canvas.addEventListener("pointerdown", (e) => {
     if (
@@ -24,10 +28,10 @@ export function bindControls(state, canvas, document) {
     }
     if (e.pointerId === state.dragId) {
       const r = canvas.getBoundingClientRect();
-      state.gunX = clamp(
-        state.gunStart + ((e.clientX - state.dragStart) / r.width) * W,
-        45,
-        375,
+      aim(
+        state.gunStart +
+          ((e.clientX - state.dragStart) / r.width) *
+            state.level.battlefield.width,
       );
     }
   });
@@ -39,9 +43,7 @@ export function bindControls(state, canvas, document) {
   canvas.addEventListener("lostpointercapture", release);
   document.addEventListener("keydown", (e) => {
     if (state.mode !== "playing") return;
-    if (["ArrowLeft", "a", "A"].includes(e.key))
-      state.gunX = clamp(state.gunX - 23, 45, 375);
-    if (["ArrowRight", "d", "D"].includes(e.key))
-      state.gunX = clamp(state.gunX + 23, 45, 375);
+    if (["ArrowLeft", "a", "A"].includes(e.key)) aim(state.gunX - 23);
+    if (["ArrowRight", "d", "D"].includes(e.key)) aim(state.gunX + 23);
   });
 }

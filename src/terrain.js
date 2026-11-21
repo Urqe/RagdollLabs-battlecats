@@ -96,7 +96,7 @@ function wall(ctx, x1, y1, x2, y2) {
   }
 }
 
-export function drawTerrain(ctx) {
+export function drawTerrain(ctx, cutoff = LEVEL.reinforcementCutoff) {
   const grass = ctx.createLinearGradient(0, 0, W, H);
   grass.addColorStop(0, "#5f7351");
   grass.addColorStop(0.55, "#405948");
@@ -139,7 +139,7 @@ export function drawTerrain(ctx) {
   ctx.restore();
 
   // The paving across the mustering ground marks the supply entrance.
-  const y = LEVEL.reinforcementCutoff;
+  const y = cutoff;
   ctx.fillStyle = "#726c5c3d";
   ctx.fillRect(26, y - 4, W - 52, 9);
   ctx.fillStyle = "#e2d5aa6d";

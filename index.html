@@ -14,11 +14,18 @@
   <body>
     <div id="app">
       <canvas id="game" aria-label="SiegeDolls battlefield"></canvas>
+      <nav id="battleNav" aria-label="Battle navigation" hidden>
+        <button id="battleLevels" class="secondary" type="button">
+          Levels
+        </button>
+      </nav>
       <div id="hud">
         <div class="stat">BLUE CATS<b id="blueCount">0</b></div>
         <div class="stat">ENEMY HORDE<b id="redCount">0</b></div>
-        <div class="stat">×99 BARRIER<b id="gate99">0%</b></div>
-        <div class="stat">×999 BARRIER<b id="gate999">0%</b></div>
+        <div id="barrierHud" class="barrier-hud">
+          <div class="stat">×99 BARRIER<b id="gate99">0%</b></div>
+          <div class="stat">×999 BARRIER<b id="gate999">0%</b></div>
+        </div>
       </div>
       <div id="banner" aria-live="polite"></div>
       <div id="menu" class="overlay">
@@ -27,8 +34,9 @@
           <div class="brand">RAGDOLLLABS PRESENTS</div>
           <h1>SiegeDolls</h1>
           <p>
-            Level 1 · The Last Stand<br />Fire three tiny cats at a time.
-            Multiply your army or break barricades to open stronger gates.
+            <span id="menuLevel">Level 1 · The Last Stand</span><br />Fire three
+            tiny cats at a time. Multiply your army or break barricades to open
+            stronger gates.
           </p>
           <div class="tip">
             <strong>ONE-FINGER CONTROLS</strong><br />Slide left or right to
@@ -39,10 +47,16 @@
               >YOU must break the barricades:</strong
             >
             aim at the locked ×99 or ×999 gate to damage its wooden barrier.
+            <span id="artilleryTip" hidden
+              >Break the Purrapult barricade to add automatic yarn artillery.<br
+            /></span>
             Those shots produce no soldiers. Time the trade-off: defend through
             an open gate or spend precious shots opening the next one.
           </div>
           <button id="play">DEFEND THE CASTLE</button>
+          <button id="chooseLevel" class="secondary menu-action" type="button">
+            Choose level
+          </button>
           <button
             class="sound-toggle"
             type="button"
@@ -54,12 +68,24 @@
           <div class="fine">No ads · No energy system · Just cats</div>
         </div>
       </div>
+      <div id="levels" class="overlay" hidden>
+        <section class="panel level-panel" aria-labelledby="levelsTitle">
+          <h2 id="levelsTitle">Choose a level</h2>
+          <div id="levelGrid" class="level-grid"></div>
+          <button id="levelsBack" class="secondary menu-action" type="button">
+            Main menu
+          </button>
+        </section>
+      </div>
       <div id="result" class="overlay" hidden>
         <div class="panel">
           <div class="logo" id="resultEmoji">🏆</div>
           <h2 id="resultTitle">Victory!</h2>
           <p id="resultText"></p>
           <button id="replay">TRY AGAIN</button>
+          <button id="resultLevels" class="secondary menu-action" type="button">
+            Choose level
+          </button>
           <button
             class="sound-toggle"
             type="button"
@@ -68,7 +94,7 @@
           >
             Sound off
           </button>
-          <div class="fine">SiegeDolls · Level 1</div>
+          <div id="resultLevel" class="fine">SiegeDolls · Level 1</div>
         </div>
       </div>
     </div>

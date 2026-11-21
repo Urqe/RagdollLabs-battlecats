@@ -37,6 +37,17 @@ const cues = {
       [0.075, 393, 524, 0.24, 0.08, "sine"],
     ],
   },
+  artilleryLaunch: {
+    cooldown: 0.55,
+    notes: [[0, 150, 360, 0.16, 0.13, "triangle"]],
+  },
+  artilleryImpact: {
+    cooldown: 0.55,
+    notes: [
+      [0, 172, 62, 0.23, 0.17, "triangle"],
+      [0.03, 245, 130, 0.13, 0.08, "sine"],
+    ],
+  },
   victory: {
     cooldown: 1.1,
     notes: [

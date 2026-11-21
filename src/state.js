@@ -1,53 +1,39 @@
-import { LEVEL } from "./config.js";
-export function createState() {
+import { LEVEL_ONE } from "./levels.js";
+export function createState(level = LEVEL_ONE) {
+  const { battlefield, combat } = level;
   const mode = "menu",
     t = 0,
-    gunX = 210,
+    gunX = battlefield.startX,
     dragId = null,
     dragStart = 0,
     gunStart = 0,
     nextShot = 0,
-    front = LEVEL.initialFront,
-    redTotal = LEVEL.initialRed,
+    front = combat.initialFront,
+    redTotal = combat.initialRed,
     blueTotal = 0,
-    work = [0, 0],
+    work = level.barricades.map(() => 0),
     recoil = 0,
     shots = [],
     squads = [],
     burst = [],
     finalActivated = false,
     bannerUntil = 0,
-    barricadeFlashes = [0, 0];
-  const gates = [
-    {
-      x: 210,
-      width: 98,
-      y: 555,
-      mult: 20,
-      name: "×20",
-      color: "#399be9",
-      open: true,
-    },
-    {
-      x: 90,
-      width: 96,
-      y: 555,
-      mult: 99,
-      name: "×99",
-      color: "#ffb740",
-      open: false,
-    },
-    {
-      x: 329,
-      width: 106,
-      y: 555,
-      mult: 999,
-      name: "×999",
-      color: "#ffd561",
-      open: false,
-    },
-  ];
+    barricadeFlashes = level.barricades.map(() => 0);
+  const gates = level.gates.map((gate) => ({ ...gate }));
   return {
+    level,
+    support: level.support
+      ? {
+          open: false,
+          readyAt: null,
+          shot: null,
+          impact: null,
+          unlockedAt: null,
+          shotsFired: 0,
+          impacts: 0,
+          damage: 0,
+        }
+      : null,
     mode,
     t,
     gunX,
@@ -63,7 +49,7 @@ export function createState() {
     victoryElapsed: 0,
     redRecentLoss: 0,
     blueRecentLoss: 0,
-    nextCombatEffect: LEVEL.combatEffectInterval,
+    nextCombatEffect: combat.combatEffectInterval,
     work,
     recoil,
     shots,
@@ -75,6 +61,6 @@ export function createState() {
     gates,
   };
 }
-export function resetState(state) {
-  Object.assign(state, createState(), { mode: "playing", nextShot: 0.1 });
+export function resetState(state, level = state.level, mode = "playing") {
+  Object.assign(state, createState(level), { mode, nextShot: 0.1 });
 }

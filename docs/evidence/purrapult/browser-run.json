@@ -1,0 +1,105 @@
+{
+  "browserName": "chromium",
+  "evidence": [
+    {
+      "event": "unlocked",
+      "time": 11.83800000000001,
+      "front": 309.814165226164,
+      "red": 6156.722916674059,
+      "support": {
+        "open": true,
+        "readyAt": 15.074000000000009,
+        "shot": null,
+        "impact": null,
+        "unlockedAt": 11.77400000000001,
+        "shotsFired": 0,
+        "impacts": 0,
+        "damage": 0
+      }
+    },
+    {
+      "event": "flight",
+      "time": 15.518000000000013,
+      "front": 310.1360923379021,
+      "red": 8495.243180669813,
+      "support": {
+        "open": true,
+        "readyAt": 15.074000000000009,
+        "shot": {
+          "x": 210,
+          "y": 276.7718394206071,
+          "launchedAt": 15.086000000000013,
+          "impactAt": 16.026000000000014
+        },
+        "impact": null,
+        "unlockedAt": 11.77400000000001,
+        "shotsFired": 1,
+        "impacts": 0,
+        "damage": 0
+      }
+    },
+    {
+      "event": "impact",
+      "time": 16.157999999999998,
+      "front": 314.43103850672503,
+      "red": 6842.905513858687,
+      "support": {
+        "open": true,
+        "readyAt": 19.326000000000015,
+        "shot": null,
+        "impact": {
+          "x": 210,
+          "y": 276.7718394206071,
+          "at": 16.030000000000012,
+          "loss": 2121.369673884762
+        },
+        "unlockedAt": 11.77400000000001,
+        "shotsFired": 1,
+        "impacts": 1,
+        "damage": 2121.369673884762
+      }
+    },
+    {
+      "event": "counterattack",
+      "time": 80.47800000000024,
+      "front": 283.893738538296,
+      "red": 23189.889042738232,
+      "support": {
+        "open": true,
+        "readyAt": 83.10199999999969,
+        "shot": null,
+        "impact": {
+          "x": 210,
+          "y": 273.587976740439,
+          "at": 79.80600000000001,
+          "loss": 2850
+        },
+        "unlockedAt": 11.77400000000001,
+        "shotsFired": 16,
+        "impacts": 16,
+        "damage": 44347.82150177783
+      }
+    },
+    {
+      "event": "victory",
+      "time": 94.07800000000478,
+      "front": 99.37328631437113,
+      "red": 0,
+      "support": {
+        "open": true,
+        "readyAt": 95.82200000000394,
+        "shot": null,
+        "impact": {
+          "x": 210,
+          "y": 101.74688022009434,
+          "at": 92.52600000000426,
+          "loss": 1020.7182468381468
+        },
+        "unlockedAt": 11.77400000000001,
+        "shotsFired": 19,
+        "impacts": 19,
+        "damage": 50766.43755716364
+      }
+    }
+  ]
+}

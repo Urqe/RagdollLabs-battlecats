@@ -1,4 +1,4 @@
-import { LEVEL, TAU, clamp } from "./config.js";
+import { TAU, clamp } from "./config.js";
 import { laneHalfWidth, polygon } from "./terrain.js";
 import { waveProfile, waveRelease, waveY } from "./motion.js";
 
@@ -246,16 +246,16 @@ export function createFigures(ctx, ownerDocument) {
     return (seam + advance) * (1 - row * 0.3);
   }
 
-  function blueWave(q, age, front, nearGates, triumph) {
+  function blueWave(q, age, state, nearGates, triumph) {
     const profile = waveProfile(q.mult);
-    const entryY = q.entryY ?? LEVEL.spawnY;
-    const contactY = Math.min(front + 13, entryY - 27);
+    const entryY = q.entryY ?? state.level.combat.spawnY;
+    const contactY = Math.min(state.front + 13, entryY - 27);
     const limit = Math.min(profile.count, q.count);
     let alpha = 1;
     for (let i = 0; i < limit; i++) {
       const run = age - waveRelease(profile, i);
       if (run < 0) break;
-      const marchY = waveY(entryY, run);
+      const marchY = waveY(entryY, run, state.level);
       if (marchY <= contactY - 15) continue;
       const push = clamp(run / profile.spread, 0, 1);
       const spread = push * (2 - push);
@@ -291,10 +291,9 @@ export function createFigures(ctx, ownerDocument) {
 
   function blueArmy(state, nearGates, triumph, contact, tails) {
     for (const q of state.squads)
-      blueWave(q, q.marchTime || 0, state.front, nearGates, triumph);
+      blueWave(q, q.marchTime || 0, state, nearGates, triumph);
     if (!triumph) {
-      for (const q of tails)
-        blueWave(q, state.t - q.born, state.front, nearGates, 0);
+      for (const q of tails) blueWave(q, state.t - q.born, state, nearGates, 0);
     }
 
     const displayed = contact.blueStrength ?? state.blueTotal;
@@ -357,6 +356,12 @@ export function createFigures(ctx, ownerDocument) {
     redArmy,
     blueArmy,
     fallen,
+    crew(x, y, pose) {
+      cat(x, y, BLUE, 6, pose);
+    },
+    scattered(x, y, pose) {
+      cat(x, y, RED, 4, pose);
+    },
     projectile(shot) {
       cat(shot.x, shot.y, PROJECTILE, 6.0, shot.x * 0.75);
     },
