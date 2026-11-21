@@ -1,10 +1,15 @@
 import { createState, resetState } from "./state.js";
-import { rand, SHOT_INTERVAL } from "./config.js";
+import { SHOT_INTERVAL } from "./config.js";
 import { createMultipliers } from "./multipliers.js";
 import { fire, updateProjectiles } from "./projectiles.js";
 import { updateArmy } from "./army.js";
-export function createGame({ notify = () => {}, onEnd = () => {} } = {}) {
+export function createGame({
+  notify = () => {},
+  onEnd = () => {},
+  random = Math.random,
+} = {}) {
   const state = createState();
+  const rand = (a, b) => a + random() * (b - a);
   function end(won) {
     state.mode = "end";
     onEnd(won);
@@ -21,7 +26,7 @@ export function createGame({ notify = () => {}, onEnd = () => {} } = {}) {
       });
   }
 
-  const { spawnSquad } = createMultipliers(state, sprinkle, notify);
+  const { spawnSquad } = createMultipliers(state, sprinkle, notify, random);
   function reset() {
     resetState(state);
     notify("HOLD THE CHOKEPOINT!", 2.2);
@@ -38,7 +43,7 @@ export function createGame({ notify = () => {}, onEnd = () => {} } = {}) {
     for (let i = 0; i < 2; i++)
       state.barricadeFlashes[i] = Math.max(0, state.barricadeFlashes[i] - dt);
     updateProjectiles(state, dt, spawnSquad, sprinkle, notify);
-    updateArmy(state, dt, sprinkle, end);
+    updateArmy(state, dt, sprinkle, end, notify);
     for (let j = state.burst.length - 1; j >= 0; j--) {
       const b = state.burst[j];
       b.x += b.dx * dt;

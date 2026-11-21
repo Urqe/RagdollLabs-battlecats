@@ -1,7 +1,7 @@
 import { createGame } from "./game.js";
 import { createRenderer } from "./render.js";
 import { bindControls } from "./controls.js";
-import { workNeeded } from "./config.js";
+import { barrierStatus } from "./barricades.js";
 const el = (id) => document.getElementById(id),
   canvas = el("game");
 const game = createGame({ notify, onEnd: end }),
@@ -46,12 +46,8 @@ function updateHud() {
   el("redCount").textContent = Math.ceil(state.redTotal).toLocaleString(
     "en-US",
   );
-  el("gate99").textContent = state.gates[1].open
-    ? "OPEN"
-    : Math.floor((state.work[0] / workNeeded[0]) * 100) + "%";
-  el("gate999").textContent = state.gates[2].open
-    ? "OPEN"
-    : Math.floor((state.work[1] / workNeeded[1]) * 100) + "%";
+  el("gate99").textContent = barrierStatus(state, 0).label;
+  el("gate999").textContent = barrierStatus(state, 1).label;
 }
 function loop(now) {
   frame = null;
@@ -68,3 +64,9 @@ el("play").addEventListener("click", reset);
 el("replay").addEventListener("click", reset);
 addEventListener("resize", renderer.resize);
 renderer.resize();
+
+// Read-only inspection for debugging and browser regression tests; no test-only
+// controls or state setters are installed in the running game.
+export function getSnapshot() {
+  return structuredClone(state);
+}

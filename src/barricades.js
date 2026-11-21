@@ -18,3 +18,16 @@ export function hitBarricade(state, gateIndex, shot, sprinkle, notify) {
     sprinkle(gate.x, gate.y, "#ffd276", 38);
   }
 }
+
+// One representation for HUD counters, visible wood damage and diagnostics.
+export function barrierStatus(state, index) {
+  const progress = Math.min(1, state.work[index] / workNeeded[index]);
+  return {
+    progress,
+    remaining: workNeeded[index] - state.work[index],
+    open: state.gates[index + 1].open,
+    label: state.gates[index + 1].open
+      ? "OPEN"
+      : Math.floor(progress * 100) + "%",
+  };
+}
