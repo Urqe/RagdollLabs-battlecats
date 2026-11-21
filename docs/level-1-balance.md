@@ -28,6 +28,8 @@ At 60 Hz, ×20 drives the line back by more than 70 pixels from its starting pos
 
 ## Combat animation and sound
 
+The notes below describe the original motion captures. The current shared model renders small counts literally and uses cached groups in larger reserves. [Current scaling and recordings](army-visual-scale.md)
+
 - Each projectile retains its original crossing position. ×20 releases its representative cats within 0.054 seconds. ×99 fans through three ranks over 0.254 seconds. ×999 releases six ranks over 0.782 seconds, overlapping subsequent volleys. The representative formations keep marching and merge at the contact line. A short-lived visual copy can finish the release after the logical formation arrives.
 - The front ranks compress, lunge, and recoil in response to actual frontline velocity and casualty pulses. New blue ranks build from the arriving lane. A sustained direction change drives the reversal cue. A few time-limited falling cat sprites and brief flashes mark real casualty batches.
 - The yard uses a stable pattern of occupied slots. As the red reserve falls, survivors keep their positions relative to their ranks and gaps grow between groups. Cutoff ends the red entry file movement. The final remnant remains visible while any red cats are alive. Blue advances into the yard and the existing 1.5-second victory sequence begins on the last casualty.

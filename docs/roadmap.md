@@ -56,7 +56,8 @@ A candidate future special encounter could unlock a **Royal Armory** after costl
 1. **Milestone 6 · Roadmap and architecture.** Establish this plan, level briefs, and a lightweight review process.
 2. **Milestone 7 · Level foundation and Level 2.** Shared level definitions, free level selection, and The Purrapult are playable. The original Level 1 simulation remains the regression baseline. [Architecture](level-architecture.md) · [Level 2 evidence](purrapult-balance.md)
 3. **Milestone 8 · Battlefield impact and visual polish.** Faster Purrapult support and visible formation disruption join shared contact and reinforcement polish. Both levels retain their strategy outcomes. Check readability and enjoyment in a human session before choosing the next level. [Balance and motion evidence](purrapult-balance.md)
-4. **Milestone 9 · Level 3 candidate.** Prototype ranged support if testing identifies a distinct tactical role for it. Use Level 2 lessons to define scope.
+4. **Milestone 9 · Army scale and combat fidelity.** Literal small encounters, shared reserve scaling and population-driven formation reactions are part of the level foundation. [Army scale and combat evidence](army-visual-scale.md)
+5. **Future candidate · Level 3.** Prototype ranged support if testing identifies a distinct tactical role for it. Use Level 2 lessons to define scope.
 
 Treat Levels 4–10 as candidates while the support mechanics and their mobile cost are being validated. Prioritize readable choices and short feedback cycles before lane routing, mixed unit populations, or combined encounters.
 

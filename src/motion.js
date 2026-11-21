@@ -1,6 +1,7 @@
 import { clamp } from "./config.js";
 import { LEVEL_ONE } from "./levels.js";
 import { impactShape } from "./formation.js";
+import { LITERAL_ARMY } from "./army-visual.js";
 
 const profiles = {
   20: {
@@ -70,10 +71,13 @@ export function createMotion(onReversal = () => {}) {
   let directionTime = 0;
   const contact = {};
   const impact = {};
+  let lastRed = null;
+  let lastBlue = null;
 
   function reset() {
     clock = direction = nextDirection = directionTime = 0;
     tails.length = falls.length = 0;
+    lastRed = lastBlue = null;
     Object.assign(impact, {
       x: 0,
       y: 0,
@@ -98,6 +102,7 @@ export function createMotion(onReversal = () => {}) {
       blueStrength: null,
       blueAnchor: 210,
       cutoffAt: null,
+      entryRate: 0,
     });
   }
 
@@ -107,17 +112,28 @@ export function createMotion(onReversal = () => {}) {
     blueStrength = 0,
     redEntryOpen = true,
     level = LEVEL_ONE,
+    battle = null,
   ) {
     const dt = Math.max(0, time - clock);
     clock = time;
     const visible = contact.blueStrength ?? 0;
-    contact.blueStrength = Math.min(
-      blueStrength,
-      visible + (blueStrength - visible) * (1 - Math.exp(-dt / 0.46)),
-    );
+    contact.blueStrength = blueStrength <= LITERAL_ARMY
+      ? blueStrength
+      : Math.min(blueStrength, visible + (blueStrength - visible) * (1 - Math.exp(-dt / 0.46)));
     contact.blueAnchor +=
       (210 - contact.blueAnchor) * (1 - Math.exp(-dt / 0.57));
     if (!redEntryOpen) contact.cutoffAt ??= time;
+    else if (battle) contact.entryRate = battle.redEntryRate;
+    if (battle) {
+      const red = Math.ceil(battle.redTotal);
+      const blue = Math.ceil(blueStrength);
+      if (lastRed > red && lastRed <= LITERAL_ARMY && impact.at !== time)
+        addFall(210, battle.front, true, time);
+      if (lastBlue > blue && lastBlue <= LITERAL_ARMY)
+        addFall(210, battle.front, false, time);
+      lastRed = red;
+      lastBlue = blue;
+    }
     const normalized =
       velocity /
       (velocity > 0 ? level.combat.redAdvance : level.combat.blueAdvance);
@@ -146,8 +162,7 @@ export function createMotion(onReversal = () => {}) {
     while (falls.length && falls[0].at + FALL_LIFE <= clock) falls.shift();
   }
 
-  function addFall(x, front, loss, red, time) {
-    if (loss < 7) return;
+  function addFall(x, front, red, time) {
     if (falls.length === MAX_FALLS) falls.shift();
     falls.push({ x, y: front + (red ? -7 : 9), red, at: time });
   }
@@ -169,8 +184,8 @@ export function createMotion(onReversal = () => {}) {
       contact.blue = Math.min(1, blueLoss / 26);
       contact.foughtAt = time;
       contact.clashX = value;
-      addFall(value, front, redLoss, true, time);
-      addFall(420 - value, front, blueLoss, false, time);
+      if (redLoss >= 7) addFall(value, front, true, time);
+      if (blueLoss >= 7) addFall(420 - value, front, false, time);
     }
   }
 

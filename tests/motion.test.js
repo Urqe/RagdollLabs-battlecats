@@ -9,7 +9,8 @@ import {
   waveRelease,
   waveY,
 } from "../src/motion.js";
-import { createFigures, redFormationSize } from "../src/figures.js";
+import { createFigures } from "../src/figures.js";
+import { armyScale, FIELD_LIMIT, RESERVE_LIMIT } from "../src/army-visual.js";
 import { updateArtillery } from "../src/artillery.js";
 import { LEVEL_ONE, LEVEL_TWO } from "../src/levels.js";
 import { AIRBORNE_LIMIT, IMPACT_LIFE, gapShift, gapStrength } from "../src/formation.js";
@@ -122,6 +123,10 @@ test("blue ranks ease outward from a new arrival lane at every tested frame rate
 });
 
 test("the red population scales down to the last visible remnant", () => {
+  const redFormationSize = (population) => {
+    const { field, reserve } = armyScale(population);
+    return field + reserve;
+  };
   assert.equal(redFormationSize(0), 0);
   assert.equal(redFormationSize(1), 1);
   const remaining = [1, 500, 2000, 7000, 16000, 65000].map(redFormationSize);
@@ -129,7 +134,7 @@ test("the red population scales down to the last visible remnant", () => {
     remaining,
     [...new Set(remaining)].sort((a, b) => a - b),
   );
-  assert.ok(redFormationSize(1_000_000) <= 1230);
+  assert.ok(redFormationSize(1_000_000) <= FIELD_LIMIT + RESERVE_LIMIT);
 });
 
 test("only resolved losses launch bounded casualties at the simulation's impact point", () => {
@@ -198,15 +203,15 @@ test("surviving red ranks open and refill a local pocket at each refresh rate", 
     { createElement: () => ({ getContext: () => atlasContext }) },
   );
   plot.setClock(0.2);
-  plot.redArmy(state, false, motion.contact, impact);
+  plot.redArmy(state, motion.contact, impact);
   const displaced = positions.splice(0);
-  plot.redArmy(state, false, motion.contact);
+  plot.redArmy(state, motion.contact);
   const inside = ([x, y]) => Math.abs(x - impact.x) < 14 && Math.abs(y - impact.y) < 11;
   assert.equal(displaced.length, positions.length);
   assert.ok(positions.some(inside));
   assert.ok(displaced.filter(inside).length < positions.filter(inside).length);
   state.redTotal = 1500;
   positions.length = 0;
-  plot.redArmy(state, false, motion.contact, impact);
+  plot.redArmy(state, motion.contact, impact);
   assert.ok(positions.length < displaced.length);
 });
