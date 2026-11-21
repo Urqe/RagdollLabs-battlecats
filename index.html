@@ -1,153 +1,208 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#101b2b"><meta name="description" content="SiegeDolls — an arcade game about tiny cat armies and impossible odds.">
-<title>SiegeDolls · RagDollLabs</title>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827"><title>SiegeDolls · RagDollLabs</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101b2b;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none}
-#app{position:relative;width:100%;height:100%;overflow:hidden;display:grid;place-items:center;background:radial-gradient(ellipse at center,#253f55,#101b2b 75%)}
-canvas{display:block;height:100%;max-width:100%;aspect-ratio:420/760;touch-action:none;box-shadow:0 0 70px #0007}
-#hud{position:absolute;top:max(12px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:min(100%,calc(100dvh * 420 / 760));display:none;align-items:center;justify-content:space-between;gap:8px;padding:0 18px;pointer-events:none;text-shadow:0 2px 4px #000}
-.stat{background:#13213bce;border:1px solid #ffffff38;border-radius:12px;padding:7px 11px;font-size:12px}.stat strong{display:block;font-size:20px;line-height:1.2}
-.overlay{position:absolute;inset:0;display:grid;place-items:center;background:#0c1424ac;padding:24px;backdrop-filter:blur(5px)}
-.panel{width:min(390px,100%);max-height:95%;overflow-y:auto;text-align:center;border:1px solid #ffffff36;border-radius:26px;padding:30px 24px;background:linear-gradient(160deg,#263f5bfa,#111c30fa);box-shadow:0 20px 80px #0009}
-.logo{font-size:66px;line-height:1}.eyebrow{letter-spacing:.2em;font-size:11px;font-weight:800;color:#b7e3fb}h1{font-size:clamp(37px,9vw,54px);letter-spacing:-.07em;margin:10px 0 6px}h2{font-size:33px;margin:8px 0}p{line-height:1.55;color:#d1e0eb}.subtitle{font-size:15px;margin:10px auto 20px}.tip{background:#ffffff10;border-radius:14px;padding:13px 15px;text-align:left;font-size:13px;line-height:1.55;color:#e3edf7;margin:20px 0}.tip b{color:white}
-button{appearance:none;border:0;color:#122035;background:linear-gradient(180deg,#ffde78,#ffae4c);font:800 17px system-ui;border-radius:15px;min-height:53px;padding:12px 25px;cursor:pointer;box-shadow:0 6px 0 #b66f30;width:100%}button:active{transform:translateY(3px);box-shadow:0 3px 0 #b66f30}.small{font-size:12px;color:#a9b8c8;margin-top:23px}
-#toast{position:absolute;top:18%;left:50%;transform:translateX(-50%);font-weight:900;font-size:18px;text-align:center;pointer-events:none;text-shadow:0 3px 6px #000;opacity:0;transition:opacity .2s;width:90%}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111827;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fff;touch-action:none}
+#app{height:100dvh;width:100vw;display:flex;justify-content:center;align-items:center;position:relative;background:radial-gradient(#32485c,#0c1625 70%);overflow:hidden}
+#game{display:block;width:min(100vw,55.263dvh);height:auto;aspect-ratio:420/760;max-height:100dvh;touch-action:none;box-shadow:0 0 70px #000a}
+#hud{position:absolute;top:max(env(safe-area-inset-top),10px);left:50%;transform:translateX(-50%);width:min(100vw,55.263dvh);padding:0 9px;display:none;justify-content:space-between;gap:5px;pointer-events:none}
+.stat{font-size:10px;font-weight:800;text-align:center;background:#16263dcc;border:1px solid #ffffff65;border-radius:10px;padding:7px 5px;min-width:78px;white-space:nowrap;text-shadow:0 1px 3px #000}.stat b{display:block;font-size:16px;color:#fff}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;padding:20px;background:#0a1425bb;backdrop-filter:blur(5px)}
+.panel{width:min(400px,100%);padding:26px 23px;border:1px solid #ffffff35;border-radius:26px;background:linear-gradient(145deg,#284566,#121e31);box-shadow:0 20px 70px #000a;text-align:center;max-height:95dvh;overflow-y:auto}
+.logo{font-size:57px}.brand{font-size:11px;letter-spacing:.23em;color:#b9daf4;font-weight:900}h1{font-size:clamp(34px,8vw,51px);margin:7px 0 4px;letter-spacing:-.06em}h2{font-size:31px;margin:8px 0}
+p{color:#d4e1ee;line-height:1.5}.tip{text-align:left;background:#ffffff10;border-radius:14px;padding:14px;font-size:13px;line-height:1.5;margin:18px 0}.tip strong{color:#ffdb85}
+button{cursor:pointer;width:100%;min-height:54px;border:0;border-radius:15px;background:linear-gradient(#ffe28c,#ffad4b);box-shadow:0 5px 0 #9b5b20;color:#182536;font-size:17px;font-weight:900}button:active{transform:translateY(3px);box-shadow:0 2px 0 #9b5b20}.fine{color:#b5c4d3;font-size:11px;margin-top:18px}
+#banner{position:absolute;top:17%;left:50%;transform:translateX(-50%);font-size:16px;font-weight:900;text-align:center;text-shadow:0 2px 5px #000;pointer-events:none;opacity:0;transition:opacity .2s;width:95%}
 [hidden]{display:none!important}
-</style>
-</head>
-<body>
-<div id="app">
-<canvas id="game" aria-label="SiegeDolls game battlefield"></canvas>
-<div id="hud"><div class="stat">DEFENDERS<strong id="lives">❤ ❤ ❤</strong></div><div class="stat">CATS SAVED<strong id="kills">0 / 180</strong></div><div class="stat">TIME<strong id="clock">50</strong></div></div>
-<div id="toast"></div>
+</style></head><body><div id="app">
+<canvas id="game" aria-label="SiegeDolls battlefield"></canvas>
+<div id="hud"><div class="stat">BLUE CATS<b id="blueCount">0</b></div><div class="stat">ENEMY HORDE<b id="redCount">0</b></div><div class="stat">NEXT GATE<b id="gateProgress">×99: 0%</b></div></div>
+<div id="banner" aria-live="polite"></div>
 <div id="menu" class="overlay"><div class="panel">
-<div class="logo">🐱⚔️</div><div class="eyebrow">RAGDOLLLABS PRESENTS</div><h1>SiegeDolls</h1>
-<p class="subtitle">One cannon. Thousands of tiny cats.<br>Defend the castle before time runs out.</p>
-<div class="tip"><b>HOW TO PLAY</b><br>Slide your finger left and right to move the cannon. Mouse movement works too. No tapping needed: the cannon fires automatically.<br><br><b>🟡 ×20 RISKY:</b> Lots of cats, exposed to red artillery.<br><b>🔵 ×5 SAFE:</b> Fewer cats, but they get shields.<br><br>Stop 180 invaders before 50 seconds elapse. Don't let three reach your cannon!</div>
-<button id="start">PLAY LEVEL 1</button><div class="small">No ads · No accounts · Just cats</div>
+<div class="logo">🐱⚔️</div><div class="brand">RAGDOLLLABS PRESENTS</div><h1>SiegeDolls</h1>
+<p>Level 1 · The Last Stand<br>Hold the chokepoint. Unlock the gates. Turn the tide.</p>
+<div class="tip"><strong>ONE-FINGER CONTROLS</strong><br>Slide left or right to move your cannon. It fires automatically — never tap to shoot.<br><br>🔵 <strong>×20</strong> holds the horde.<br>🟠 <strong>×99</strong> unlocks when your cats break its barricade.<br>🟡 <strong>×999</strong> takes longer, but wins the war.<br><br>Every active gate sends a few cats to break the next barricade. Choose the stronger gate as soon as it opens!</div>
+<button id="play">DEFEND THE CASTLE</button><div class="fine">No ads · No energy system · Just cats</div>
 </div></div>
-<div id="result" class="overlay" hidden><div class="panel"><div class="logo" id="result-icon">🏆</div><h2 id="result-title">Victory!</h2><p id="result-detail"></p><button id="again">PLAY AGAIN</button><div class="small">Level 1 · The Castle Approach</div></div></div>
+<div id="result" class="overlay" hidden><div class="panel"><div class="logo" id="resultEmoji">🏆</div><h2 id="resultTitle">Victory!</h2><p id="resultText"></p><button id="replay">TRY AGAIN</button><div class="fine">SiegeDolls · Level 1</div></div></div>
 </div>
 <script>
-(() => {
+(()=>{
 'use strict';
-const W=420,H=760,canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
-const $=id=>document.getElementById(id);
-const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const W=420,H=760,TAU=Math.PI*2,canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),el=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+let mode='menu',last=0,t=0,gunX=210,dragId=null,dragStart=0,gunStart=0,nextShot=0,front=283,redTotal=22000,blueTotal=0,stage=0,work=[0,0],impact=0,flash=0,shots=[],burst=[],fireCount=0,frame=0,shown='',bannerUntil=0;
+const gates=[
+ {x:210,width:98,y:555,mult:20,name:'×20',color:'#399be9',open:true},
+ {x:90,width:96,y:555,mult:99,name:'×99',color:'#ffb740',open:false},
+ {x:329,width:106,y:555,mult:999,name:'×999',color:'#ffd561',open:false}
+];
+const workNeeded=[180,730];
 const rand=(a,b)=>a+Math.random()*(b-a);
-let state='menu',last=0,elapsed=0,fire=0,spawn=0,artillery=0,red=[],blue=[],shots=[],bolts=[],particles=[],kills=0,leaks=0,cannonX=210,shake=0,toastTime=0,winTarget=180;
-const gates=[{x1:39,x2:197,n:20,shield:0,color:'#ffc845'},{x1:223,x2:381,n:5,shield:3.4,color:'#58baff'}];
-const backdrop=()=>{
-ctx.fillStyle='#a1c5ac';ctx.fillRect(0,0,W,H);
-ctx.fillStyle='#537b62';ctx.fillRect(0,0,25,H);ctx.fillRect(W-25,0,25,H);
-ctx.fillStyle='#b8b7a7';ctx.fillRect(25,0,W-50,H);
-for(let y=0;y<H;y+=32){ctx.strokeStyle='#807e752a';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(25,y);ctx.lineTo(W-25,y);ctx.stroke();for(let x=25+(Math.floor(y/32)%2)*26;x<W-25;x+=52){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+32);ctx.stroke()}}
-for(let i=0;i<8;i++){let y=i*100;ctx.fillStyle='#718a72';ctx.fillRect(4,y,17,70);ctx.fillRect(W-21,y,17,70)}
-ctx.fillStyle='#596675';ctx.fillRect(25,315,12,240);ctx.fillRect(W-37,315,12,240);
-for(let y=315;y<555;y+=25){ctx.fillStyle='#81909a';ctx.fillRect(25,y,12,17);ctx.fillRect(W-37,y,12,17)}
-ctx.fillStyle='#758e70';ctx.fillRect(18,0,W-36,88);
-for(let i=0;i<70;i++){ctx.fillStyle=i%2?'#6e9e67':'#80aa74';ctx.beginPath();ctx.arc(randStable(i,1)*W,randStable(i,2)*95,randStable(i,3)*17+10,0,7);ctx.fill()}
-};
-function randStable(i,s){let t=Math.sin(i*127.1+s*311.7)*43758.5453;return t-Math.floor(t)}
-function rounded(x,y,w,h,r,fill){ctx.fillStyle=fill;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
-function cat(x,y,color,size=8,shield=false,phase=0){
-ctx.save();ctx.translate(x,y+Math.sin(elapsed*8+phase)*.8);
-if(shield){ctx.strokeStyle='#8fe5ffbb';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,0,size*1.6,0,7);ctx.stroke()}
-ctx.fillStyle='#26303a44';ctx.beginPath();ctx.ellipse(1,size*.8,size*.85,size*.32,0,0,7);ctx.fill();
-ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(-size*.75,-size*.35);ctx.lineTo(-size*.85,-size*1.07);ctx.lineTo(-size*.18,-size*.75);ctx.lineTo(size*.18,-size*.75);ctx.lineTo(size*.85,-size*1.07);ctx.lineTo(size*.75,-size*.35);ctx.arc(0,0,size*.78,-.5,Math.PI+.5);ctx.closePath();ctx.fill();
-ctx.beginPath();ctx.ellipse(0,size*.43,size*.72,size*.63,0,0,7);ctx.fill();
-ctx.fillStyle='#13253a';ctx.beginPath();ctx.arc(-size*.28,-size*.27,size*.09,0,7);ctx.arc(size*.28,-size*.27,size*.09,0,7);ctx.fill();ctx.restore();
+function notify(s,seconds=2){shown=s;bannerUntil=t+seconds;el('banner').textContent=s;el('banner').style.opacity=1}
+function mapY(y){return y} // battlefield projection is applied in path geometry and perspective scaling
+function landscape(){
+ const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#a8b9ab');g.addColorStop(1,'#c8c7bd');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ // Perspective stone roadway: narrows toward the enemy horizon.
+ const roadX=y=>52-36*(1-y/H),rightX=y=>W-roadX(y);
+ ctx.beginPath();ctx.moveTo(85,0);ctx.lineTo(335,0);ctx.lineTo(408,H);ctx.lineTo(12,H);ctx.closePath();ctx.fillStyle='#b9bab3';ctx.fill();
+ ctx.save();ctx.beginPath();ctx.moveTo(85,0);ctx.lineTo(335,0);ctx.lineTo(408,H);ctx.lineTo(12,H);ctx.closePath();ctx.clip();
+ for(let y=20;y<H;y+=30+y*.016){ctx.strokeStyle='#f5f2e752';ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();const step=28+y*.028,offset=(Math.floor(y/40)%2)*step/2;for(let x=offset;x<W;x+=step){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+4,y+31);ctx.stroke()}}
+ ctx.restore();
+ // Green banks and grey walls frame a narrow corridor near the horizon.
+ for(let side=0;side<2;side++){ctx.save();if(side) {ctx.translate(W,0);ctx.scale(-1,1)}
+ ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(122,0);ctx.lineTo(119,85);ctx.lineTo(145,140);ctx.lineTo(144,218);ctx.lineTo(88,350);ctx.lineTo(28,470);ctx.lineTo(0,510);ctx.closePath();ctx.fillStyle='#426e50';ctx.fill();
+ for(let i=0;i<34;i++){let x=(i*47)%125,y=(i*67)%335;ctx.fillStyle=i%2?'#598b59':'#3b7448';ctx.beginPath();ctx.arc(x,y,12+(i%4)*4,0,TAU);ctx.fill()}
+ ctx.beginPath();ctx.moveTo(125,140);ctx.lineTo(155,225);ctx.lineTo(101,370);ctx.lineTo(38,512);ctx.strokeStyle='#64717a';ctx.lineWidth=19;ctx.stroke();ctx.strokeStyle='#a7acaf';ctx.lineWidth=10;ctx.stroke();ctx.restore()}
+ // Clear, physically legible funnel walls; soldiers can only travel through the middle gap.
+ ctx.fillStyle='#72797e';ctx.fillRect(90,244,93,22);ctx.fillRect(237,244,93,22);ctx.fillStyle='#a7b0b5';ctx.fillRect(92,244,89,9);ctx.fillRect(239,244,89,9);
+ for(let x=94;x<330;x+=17){if(x>175&&x<244)continue;ctx.fillStyle='#8b9499';ctx.fillRect(x,235,13,14)}
+ ctx.fillStyle='#5b6469';ctx.fillRect(171,235,8,31);ctx.fillRect(241,235,8,31);
+ // Lower castle wall.
+ ctx.fillStyle='#7d8a95';ctx.fillRect(15,714,390,46);ctx.fillStyle='#abb6bd';for(let x=15;x<405;x+=35)ctx.fillRect(x,707,24,13);
 }
-function drawGate(g){
-ctx.save();ctx.shadowColor=g.color;ctx.shadowBlur=17;rounded(g.x1,478,g.x2-g.x1,34,6,g.color);ctx.restore();
-ctx.strokeStyle='#fff9';ctx.lineWidth=2;ctx.strokeRect(g.x1+2,480,g.x2-g.x1-4,30);
-ctx.font='900 25px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=5;ctx.strokeStyle='#253045';ctx.strokeText('×'+g.n,(g.x1+g.x2)/2,494);ctx.fillStyle='#fff';ctx.fillText('×'+g.n,(g.x1+g.x2)/2,494);
-ctx.font='800 12px system-ui';ctx.fillStyle=g.n===20?'#853916':'#d5f5ff';ctx.fillText(g.n===20?'EXPOSED':'SHIELDED',(g.x1+g.x2)/2,528);
+function round(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
+function cat(x,y,color,size,phase=0){
+ ctx.save();ctx.translate(x,y+Math.sin(t*7+phase)*1.1);
+ ctx.fillStyle='#20282b55';ctx.beginPath();ctx.ellipse(1,size*.7,size*.75,size*.25,0,0,TAU);ctx.fill();
+ ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(-size*.77,-size*.31);ctx.lineTo(-size*.78,-size);ctx.lineTo(-size*.2,-size*.68);ctx.lineTo(size*.2,-size*.68);ctx.lineTo(size*.78,-size);ctx.lineTo(size*.77,-size*.31);ctx.arc(0,0,size*.78,-.4,Math.PI+.4);ctx.fill();
+ ctx.beginPath();ctx.ellipse(0,size*.37,size*.73,size*.57,0,0,TAU);ctx.fill();
+ ctx.fillStyle='#172739';ctx.beginPath();ctx.arc(-size*.26,-size*.3,Math.max(.55,size*.1),0,TAU);ctx.arc(size*.26,-size*.3,Math.max(.55,size*.1),0,TAU);ctx.fill();ctx.restore();
+}
+// Packed formation silhouettes: hundreds of visible cats, tens of thousands simulated logically.
+function army(){
+ const redStrength=clamp(redTotal/22000,0,1),blueStrength=clamp(blueTotal/18000,0,1);
+ // Red crowd extends beyond screen, slides with the combat front.
+ const rows=Math.ceil(13+redStrength*27),cols=31;
+ for(let r=0;r<rows;r++){let y=front-r*7.1;if(y<-10||y>685)continue;
+ const spread=clamp((y-120)/270,0,1);
+ const half=31+spread*130;
+ for(let c=0;c<cols;c++){if((r*11+c*7)%29>Math.floor(29*redStrength)+1)continue;
+ let x=210+(c-(cols-1)/2)*half*2/(cols-1)+(r%2?2.3:0);
+ const size=clamp(3.4+y*.004,3.6,6.4);
+ cat(x,y,'#d8504d',size,r*.4+c*.13)}
+ }
+ // Friendly army visibly pushes at the front. Front cats are closer to red position.
+ const n=Math.min(320,Math.max(0,Math.floor(blueTotal/24))),columns=25;
+ for(let i=0;i<n;i++){
+ const row=Math.floor(i/columns),col=i%columns,y=front+10+row*9;
+ if(y>660)continue;
+ const half=clamp(33+(y-120)*.28,45,150);
+ const x=210+(col-12)*half/12+(row%2?2:0);
+ cat(x,y,'#379aff',clamp(3.8+y*.005,4,7),i*.31)
+ }
+}
+function drawBarricade(g,i){
+ const xx=g.x-g.width/2,y=g.y-31;
+ const progress=clamp(work[i]/workNeeded[i],0,1);
+ round(xx,y,g.width,31,5,'#4b4846');
+ for(let k=0;k<5;k++){let bx=xx+k*g.width/5+2;round(bx,y+2,g.width/5-4,25,2,k%2?'#a2784b':'#c18d53')}
+ round(xx+5,y+34,g.width-10,6,2,'#1f3041');round(xx+5,y+34,(g.width-10)*progress,6,2,'#ffd276');
+ ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#273440';ctx.font='900 15px system-ui';ctx.strokeText(Math.round(progress*100)+'%',g.x,y-11);ctx.fillStyle='#fff';ctx.fillText(Math.round(progress*100)+'%',g.x,y-11);
+ // Cats physically working on the blockage, driven by current gate production.
+ const workers=stage===i?Math.min(9,Math.floor(2+blueTotal/300)):0;
+ for(let k=0;k<workers;k++){cat(xx+13+k*(g.width-26)/Math.max(workers-1,1),y+47,'#3597f9',6,k)}
+}
+function drawGate(g,i){
+ const x=g.x-g.width/2,y=g.y;
+ if(!g.open){drawBarricade(g,i-1);return}
+ ctx.save();ctx.shadowColor=g.color;ctx.shadowBlur=18;round(x,y,g.width,34,5,g.color);ctx.restore();
+ ctx.strokeStyle='#e2f6ff';ctx.lineWidth=2;ctx.strokeRect(x+3,y+3,g.width-6,28);
+ ctx.font='900 24px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.strokeStyle='#172c49';ctx.lineWidth=4;ctx.strokeText(g.name,g.x,y+17);ctx.fillStyle='#fff';ctx.fillText(g.name,g.x,y+17);
 }
 function drawCannon(){
-ctx.save();ctx.translate(cannonX,694);
-ctx.fillStyle='#334a61';rounded(-19,4,38,22,5,'#354b66');rounded(-25,9,11,13,5,'#1e2d3a');rounded(14,9,11,13,5,'#1e2d3a');
-ctx.rotate(Math.sin(elapsed*4)*.015);rounded(-12,-26,24,43,9,'#a1b5c6');rounded(-9,-30,18,31,7,'#466785');rounded(-7,-33,14,8,4,'#162b3d');ctx.restore();
-cat(cannonX-27,717,'#75c6ff',9,false,1);cat(cannonX+28,717,'#75c6ff',9,false,2);
-}
-function reset(){
-elapsed=0;fire=0;spawn=0;artillery=0;red=[];blue=[];shots=[];bolts=[];particles=[];kills=0;leaks=0;cannonX=210;shake=0;toastTime=0;state='playing';
-$('menu').hidden=true;$('result').hidden=true;$('hud').style.display='flex';last=performance.now();requestAnimationFrame(loop);
-}
-function finish(won){
-state='end';$('hud').style.display='none';$('result').hidden=false;$('result-icon').textContent=won?'🏆':'😿';$('result-title').textContent=won?'Castle saved!':'The cats need you!';$('result-detail').textContent=won?('You stopped '+kills+' invaders with only a cannon and some very brave cats.'):('You stopped '+kills+' of '+winTarget+' invaders. Try shielding first, then exploit the ×20 gate.');}
-function puff(x,y,color,n=5){for(let i=0;i<n;i++)particles.push({x,y,vx:rand(-75,75),vy:rand(-65,40),life:rand(.15,.45),color})}
-function makeBlue(x,y,shield){if(blue.length>=300)return;blue.push({x:clamp(x,34,386),y,vx:rand(-9,9),speed:rand(43,58),shield,phase:rand(0,6),hp:shield?2:1})}
-function launch(){shots.push({x:cannonX,y:671,vy:-290});puff(cannonX,660,'#9fe7ff',3)}
-function spawnRed(){if(red.length>270)return;let x=rand(39,381);red.push({x,y:rand(82,112),speed:rand(22,32)+(elapsed>27?9:0),phase:rand(0,6),hp:1})}
-function update(dt){
-elapsed+=dt;fire-=dt;spawn-=dt;artillery-=dt;toastTime-=dt;shake=Math.max(0,shake-dt*18);
-if(fire<=0){launch();fire=.38}
-if(spawn<=0){for(let i=0;i<(elapsed>28?5:4);i++)spawnRed();spawn=.39}
-if(artillery<=0){bolts.push({x:rand(54,182),y:118,vy:300});artillery=1.55;if(elapsed>5){$('toast').textContent='⚠ RED ARTILLERY — LEFT LANE';toastTime=1.2}}
-for(let i=shots.length-1;i>=0;i--){let s=shots[i];s.y+=s.vy*dt;if(s.y<511){let gate=gates.find(g=>s.x>=g.x1&&s.x<=g.x2);if(gate){for(let k=0;k<gate.n;k++){let col=k%5,row=Math.floor(k/5);makeBlue(s.x+(col-2)*11+rand(-3,3),466-row*13+rand(-4,4),gate.shield)}puff(s.x,487,gate.color,9)}shots.splice(i,1)}}
-for(let i=bolts.length-1;i>=0;i--){let b=bolts[i];b.y+=b.vy*dt;if(b.y>640){bolts.splice(i,1);continue}for(let j=blue.length-1;j>=0;j--){let c=blue[j];if(Math.abs(c.x-b.x)<18&&Math.abs(c.y-b.y)<13){if(c.shield<=0){blue.splice(j,1);puff(c.x,c.y,'#7fcfff',2)}else c.shield=Math.max(0,c.shield-1);}}}
-for(let i=blue.length-1;i>=0;i--){let c=blue[i];c.shield=Math.max(0,c.shield-dt);c.y-=c.speed*dt;c.x=clamp(c.x+c.vx*dt,36,384);if(c.y<77)blue.splice(i,1)}
-for(let i=red.length-1;i>=0;i--){let e=red[i];e.y+=e.speed*dt;if(e.y>675){red.splice(i,1);leaks++;shake=7;puff(e.x,675,'#ef756c',8);if(leaks>=3){finish(false);return}}}
-const grid=new Map();for(let j=0;j<blue.length;j++){const c=blue[j],key=Math.floor(c.x/25)+','+Math.floor(c.y/25);if(!grid.has(key))grid.set(key,[]);grid.get(key).push(j)}
-const deadBlue=new Set(),deadRed=new Set();
-for(let i=0;i<red.length;i++){const e=red[i],gx=Math.floor(e.x/25),gy=Math.floor(e.y/25);let hit=-1;
-for(let dy=-1;dy<=1&&hit<0;dy++)for(let dx=-1;dx<=1&&hit<0;dx++){let list=grid.get((gx+dx)+','+(gy+dy));if(!list)continue;for(let j of list){if(deadBlue.has(j))continue;let c=blue[j];if(Math.abs(c.x-e.x)<12&&Math.abs(c.y-e.y)<12){hit=j;break}}}
-if(hit>=0){const c=blue[hit];deadRed.add(i);kills++;if(c.shield<=0)deadBlue.add(hit);else c.shield=Math.max(0,c.shield-.6);if(Math.random()<.28)puff(e.x,e.y,'#ff8b83',3)}
-}
-red=red.filter((_,i)=>!deadRed.has(i));blue=blue.filter((_,i)=>!deadBlue.has(i));
-for(let i=particles.length-1;i>=0;i--){let p=particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;if(p.life<=0)particles.splice(i,1)}
-$('kills').textContent=kills+' / '+winTarget;$('clock').textContent=Math.max(0,Math.ceil(50-elapsed));$('lives').textContent='❤ '.repeat(Math.max(0,3-leaks));
-$('toast').style.opacity=toastTime>0?'1':'0';
-if(elapsed>=50){finish(kills>=winTarget);return}
+ ctx.save();ctx.translate(gunX,665);
+ ctx.fillStyle='#0005';ctx.beginPath();ctx.ellipse(1,31,32,11,0,0,TAU);ctx.fill();
+ round(-28,9,15,24,5,'#25394d');round(13,9,15,24,5,'#25394d');
+ round(-23,2,46,24,7,'#456d9a');round(-18,-8,36,22,7,'#7e9abb');
+ ctx.save();ctx.rotate(Math.sin(t*8)*.01);
+ round(-14,-49,28,62,11,'#3b628a');round(-10,-52,20,53,9,'#bfd0db');
+ round(-12,-59,24,12,6,'#355a80');ctx.fillStyle='#14283a';ctx.beginPath();ctx.ellipse(0,-53,8,3.6,0,0,TAU);ctx.fill();ctx.restore();
+ round(-9,7,18,10,4,'#c4d5dc');ctx.restore();
 }
 function draw(){
-ctx.clearRect(0,0,W,H);ctx.save();if(shake)ctx.translate(rand(-shake,shake),rand(-shake,shake));
-backdrop();
-rounded(39,449,158,23,7,'#3b566c');rounded(223,449,158,23,7,'#3b566c');
-ctx.fillStyle='#bd4440';ctx.fillRect(38,98,344,9);
-ctx.fillStyle='#e2d8c1';ctx.fillRect(23,744,374,16);
-for(const g of gates)drawGate(g);
-ctx.font='800 14px system-ui';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.shadowColor='#192437';ctx.shadowBlur=5;ctx.fillText('🐾  THE CASTLE APPROACH  🐾',210,132);ctx.shadowBlur=0;
-for(const s of shots){ctx.fillStyle='#7cf0ff';ctx.beginPath();ctx.arc(s.x,s.y,5,0,7);ctx.fill();ctx.fillStyle='#d5ffff';ctx.beginPath();ctx.arc(s.x,s.y,2,0,7);ctx.fill()}
-for(const c of blue)cat(c.x,c.y,'#3995f8',6.5,c.shield>0,c.phase);
-for(const e of red)cat(e.x,e.y,'#db5955',6.5,false,e.phase);
-for(const b of bolts){ctx.fillStyle='#ff5d43';ctx.shadowColor='#ff3c2c';ctx.shadowBlur=12;ctx.beginPath();ctx.arc(b.x,b.y,7,0,7);ctx.fill();ctx.shadowBlur=0}
-for(const p of particles){ctx.globalAlpha=clamp(p.life*3,0,1);ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,4,4)}ctx.globalAlpha=1;drawCannon();ctx.font="800 12px system-ui";ctx.fillStyle="#f5f8ff";ctx.textAlign="center";ctx.shadowColor="#142137";ctx.shadowBlur=5;ctx.fillText("◀  SLIDE TO MOVE  ▶",210,752);ctx.shadowBlur=0;ctx.restore();
+ ctx.clearRect(0,0,W,H);ctx.save();
+ landscape();army();
+ // Three gates, two barricades visible at once; one live gate initially.
+ for(let i=0;i<gates.length;i++)drawGate(gates[i],i);
+ for(const s of shots){ctx.fillStyle='#a0efff';ctx.shadowBlur=8;ctx.shadowColor='#5acfff';ctx.beginPath();ctx.arc(s.x,s.y,5,0,TAU);ctx.fill();ctx.shadowBlur=0}
+ for(const b of burst){ctx.globalAlpha=clamp(b.life*3,0,1);ctx.fillStyle=b.color;ctx.fillRect(b.x,b.y,3.5,3.5)}ctx.globalAlpha=1;
+ drawCannon();
+ if(flash>0){ctx.fillStyle='rgba(255,94,68,'+(flash*.15)+')';ctx.fillRect(0,0,W,H)}
+ ctx.textAlign='center';ctx.font='900 12px system-ui';ctx.fillStyle='#f9fbff';ctx.shadowColor='#0d2437';ctx.shadowBlur=5;ctx.fillText('◀ SLIDE CANNON LEFT / RIGHT ▶',210,751);ctx.shadowBlur=0;
+ ctx.restore();
 }
-function loop(t){if(state!=='playing')return;const dt=Math.min((t-last)/1000,.045);last=t;update(dt);draw();if(state==='playing')requestAnimationFrame(loop)}
-// Pointer control: on touch, drag relative to the finger's starting position.
-// Tapping does NOTHING; cannon fire is fully automatic and time-based.
-// Mouse movement aims directly, without requiring a click.
-let dragPointer=null,dragStartX=0,dragCannonStart=0;
-function screenToWorldDelta(dx){return dx/canvas.getBoundingClientRect().width*W}
-function mouseAim(clientX){const rect=canvas.getBoundingClientRect();cannonX=clamp((clientX-rect.left)/rect.width*W,57,363)}
-canvas.addEventListener('pointerdown',e=>{
-  if(state!=='playing'||e.pointerType==='mouse'||dragPointer!==null)return;
-  dragPointer=e.pointerId;
-  dragStartX=e.clientX;
-  dragCannonStart=cannonX;
-  canvas.setPointerCapture(e.pointerId);
-});
-canvas.addEventListener('pointermove',e=>{
-  if(state!=='playing')return;
-  if(e.pointerType==='mouse'){mouseAim(e.clientX);return}
-  if(e.pointerId===dragPointer){
-    cannonX=clamp(dragCannonStart+screenToWorldDelta(e.clientX-dragStartX),57,363);
+function sprinkle(x,y,color,n){for(let k=0;k<n;k++)burst.push({x,y,dx:rand(-65,65),dy:rand(-95,20),life:rand(.2,.6),color})}
+function fire(){
+ shots.push({x:gunX,y:609});fireCount++;sprinkle(gunX,615,'#c7f5ff',3);
+}
+function end(won){
+ mode='end';el('result').hidden=false;el('hud').style.display='none';el('banner').style.opacity=0;
+ el('resultEmoji').textContent=won?'🏆':'😿';el('resultTitle').textContent=won?'The castle stands!':'The horde broke through';
+ el('resultText').textContent=won?'Your cat army overwhelmed the invaders and cleared the battlefield. The Last Stand is won!':'The enemy reached your castle before you could turn the tide. Keep the ×20 gate firing, and switch to unlocked multipliers!';
+}
+function reset(){
+ mode='playing';t=0;gunX=210;dragId=null;nextShot=.1;front=283;redTotal=22000;blueTotal=0;stage=0;work=[0,0];impact=0;flash=0;shots=[];burst=[];fireCount=0;bannerUntil=0;shown='';
+ gates[1].open=false;gates[2].open=false;
+ el('menu').hidden=true;el('result').hidden=true;el('hud').style.display='flex';
+ notify('HOLD THE CHOKEPOINT!',2.2);last=performance.now();requestAnimationFrame(loop);
+}
+function update(dt){
+ t+=dt;nextShot-=dt;flash=Math.max(0,flash-dt*4);
+ if(nextShot<=0){fire();nextShot+=.27}
+ for(let j=shots.length-1;j>=0;j--){
+ const s=shots[j];s.y-=365*dt;if(s.y<=571){
+  shots.splice(j,1);
+  const g=gates.find(g=>g.open&&Math.abs(s.x-g.x)<g.width/2);
+  if(!g)continue;
+  blueTotal+=g.mult;
+  sprinkle(s.x,g.y-7,g.color,13);
+  // Each arriving batch sends its worker quota to the next gate.
+  if(stage<2){
+   const contribution=g.mult===20?6:g.mult===99?16:0;
+   work[stage]+=contribution;
+   if(work[stage]>=workNeeded[stage]){
+    gates[stage+1].open=true;
+    stage++;notify(stage===1?'×99 UNLOCKED! MOVE LEFT!':'×999 UNLOCKED! MOVE RIGHT!',3);
+    sprinkle(gates[stage].x,gates[stage].y,'#ffcf5d',38);
+   }
   }
-});
-function endDrag(e){if(e.pointerId===dragPointer)dragPointer=null}
-canvas.addEventListener('pointerup',endDrag);
-canvas.addEventListener('pointercancel',endDrag);
-canvas.addEventListener('lostpointercapture',endDrag);
-document.addEventListener('keydown',e=>{if(state!=='playing')return;if(e.key==='ArrowLeft'||e.key==='a')cannonX=clamp(cannonX-24,57,363);if(e.key==='ArrowRight'||e.key==='d')cannonX=clamp(cannonX+24,57,363)});
-$('start').addEventListener('click',reset);$('again').addEventListener('click',reset);
-function resize(){const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.floor(W*dpr);canvas.height=Math.floor(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);draw()}
-window.addEventListener('resize',resize);resize();
+ }
+ }
+ // Enemy: slower than blue. Mass matters, not speed. Before final gate, reinforcements
+ // arrive continuously from beyond the top of the screen.
+ if(stage<2)redTotal=Math.min(26000,redTotal+dt*(stage===0?175:125));
+ // Battles cost both sides cats; pressure depends on the sizes and stage.
+ const battle=blueTotal>0&&redTotal>0;
+ if(battle){
+ const blueLoss=Math.min(blueTotal,dt*(stage===2?140:stage===1?125:115));
+ const redLoss=Math.min(redTotal,dt*(stage===2?2550:stage===1?225:130));
+ blueTotal-=blueLoss;redTotal-=redLoss;
+ }
+ // Red advance by default; ×20 buys time, ×99 halts the horde,
+ // ×999 creates a decisive counterattack through the funnel.
+ let velocity=stage===0?(blueTotal>90?0.9:2.9):stage===1?(blueTotal>180?-.65:1.15):(blueTotal>200?-12.5:1);
+ front=clamp(front+velocity*dt,30,712);
+ // Once the final gate opens, the enemy reserve becomes finite.
+ if(stage===2&&redTotal<=0){redTotal=0;front=Math.max(45,front-18*dt);if(front<=47){end(true);return}}
+ if(front>=690){end(false);return}
+ for(let j=burst.length-1;j>=0;j--){let b=burst[j];b.x+=b.dx*dt;b.y+=b.dy*dt;b.life-=dt;if(b.life<=0)burst.splice(j,1)}
+ if(t>bannerUntil)el('banner').style.opacity=0;
+ el('blueCount').textContent=Math.floor(blueTotal).toLocaleString('en-US');
+ el('redCount').textContent=Math.ceil(redTotal).toLocaleString('en-US');
+ el('gateProgress').textContent=stage<2?('×'+gates[stage+1].mult+': '+Math.min(100,Math.floor(work[stage]/workNeeded[stage]*100))+'%'):'PUSH BACK!';
+}
+function loop(now){if(mode!=='playing')return;let dt=Math.min((now-last)/1000,.045);last=now;update(dt);draw();if(mode==='playing')requestAnimationFrame(loop)}
+// Touch: anchor at initial press, move continuously *relative* to drag distance.
+// A tap does not reposition the cannon and does not fire.
+function moveMouse(x){const r=canvas.getBoundingClientRect();gunX=clamp((x-r.left)/r.width*W,45,375)}
+canvas.addEventListener('pointerdown',e=>{if(mode!=='playing'||dragId!==null||e.pointerType==='mouse')return;dragId=e.pointerId;dragStart=e.clientX;gunStart=gunX;canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener('pointermove',e=>{if(mode!=='playing')return;if(e.pointerType==='mouse'){moveMouse(e.clientX);return}if(e.pointerId===dragId){const r=canvas.getBoundingClientRect();gunX=clamp(gunStart+(e.clientX-dragStart)/r.width*W,45,375)}});
+function release(e){if(e.pointerId===dragId)dragId=null}
+canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);canvas.addEventListener('lostpointercapture',release);
+document.addEventListener('keydown',e=>{if(mode!=='playing')return;if(['ArrowLeft','a','A'].includes(e.key))gunX=clamp(gunX-23,45,375);if(['ArrowRight','d','D'].includes(e.key))gunX=clamp(gunX+23,45,375)});
+el('play').addEventListener('click',reset);el('replay').addEventListener('click',reset);
+function resize(){const pixel=Math.min(devicePixelRatio||1,2);canvas.width=Math.floor(W*pixel);canvas.height=Math.floor(H*pixel);ctx.setTransform(pixel,0,0,pixel,0,0);draw()}
+addEventListener('resize',resize);resize();
 })();
-</script>
-</body>
-</html>
+</script></body></html>
