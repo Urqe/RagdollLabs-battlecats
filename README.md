@@ -2,27 +2,31 @@
 
 **Level 1: The Last Stand** — a small, ad-free, one-finger cat siege game, playable in a mobile browser.
 
-**Play on GitHub Pages:** https://urqe.github.io/RagdollLabs-battlecats/
+**Play:** https://urqe.github.io/RagdollLabs-battlecats/
 
-## How to play
+## Controls
 
-- **Finger:** Slide across the game to move the cannon sideways. Tapping does not fire or teleport it.
-- **Mouse:** Move the pointer over the battlefield to aim.
+- **Finger:** Slide across the battlefield to move the cannon sideways. No tap-to-fire.
+- **Mouse:** Move horizontally over the battlefield.
 - **Keyboard:** Arrow keys or A/D.
-- Your cannon fires **automatically**.
+- The cannon automatically shoots **three tiny cats per volley**.
 
-## Three-stage siege
+## Level 1
 
-1. **Middle ×20:** Available at the start. Reinforcements help hold back the enormous, slow red horde. A small detachment works on the ×99 barricade.
-2. **Left ×99:** Once unlocked, **move the cannon into this lane**. Larger reinforcements stabilize the battle and chip away at the ×999 barricade. Staying on ×20 will *not* unlock the third gate.
-3. **Right ×999:** Once unlocked, **move the cannon into this lane**. Firing through it starts the decisive counterattack. Keep firing until the red army has been pushed entirely off the screen.
+The enemy horde is slower than your blue cats, but initially has an overwhelming numerical advantage. You must choose when to reinforce the front line and when to unlock the stronger multipliers:
 
-The enemy army moves more slowly than blue cats but begins with overwhelming numbers. Gates only unlock through the previous active gate; opening a gate is not enough — use it. There is **no kill-count or countdown victory**. If the red front breaches the castle, you lose; if every red enemy is removed and the line is pushed back, you win.
+1. **Middle ×20:** Open from the start. Every incoming cat through the gate becomes 20. Three shots become a marching squad of **60 blue cats**. This can delay the invasion, but cannot sustainably defeat it.
+2. **Left ×99 barricade:** Aim your cannon directly at the wood barrier instead of producing reinforcements. Each hit damages it, and a progress indicator shows your work. Once broken, fire through the ×99 gate for a larger army.
+3. **Right ×999 barricade:** Takes more hits to break. Again you must personally aim at the wood, temporarily sacrificing reinforcements. Once open, send three cats through the gate to produce a **2,997-cat** counterattack per volley.
+
+Cats do not instantly teleport to the front. Each gate creates a visible **marching formation** that moves toward the enemy; their army count is delivered when the formation reaches combat. Large squads render representative soldiers with their total still accounted for in the battle simulation.
+
+**Victory:** After firing through ×999, eliminate the red army and push the frontline beyond the top of the screen. **Defeat:** Allow the red horde to reach the castle. There is no arbitrary countdown.
 
 ## Technology
 
-A self-contained HTML5 Canvas and vanilla JavaScript prototype with no build dependencies or backend. The camera perspective is simulated in 2D; logical army strength is separate from the hundreds of displayed cats to keep rendering responsive on phones.
+One HTML file with HTML5 Canvas and vanilla JavaScript. No dependencies, backend, assets, accounts, or tracking. 2D perspective effects and formation aggregation support mobile browsers.
 
-## Scope
+## Next
 
-One playable level and a quick start/restart menu. Next: mobile playtesting, better combat feedback, true 3D/isometric rendering only if required, and level balancing before adding a second level.
+Playtest the timing and risk/reward of barricade clearing, animation smoothness, and the satisfaction of visible reinforcements. Keep the core one-finger controls.
