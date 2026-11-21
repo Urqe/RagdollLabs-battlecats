@@ -1,31 +1,28 @@
 # SiegeDolls 🐱⚔️
 
-A tiny, ad-free, one-level browser arcade game by RagDollLabs.
+**Level 1: The Last Stand** — a small, ad-free, one-finger cat siege game, playable in a mobile browser.
 
-## Play
+**Play on GitHub Pages:** https://urqe.github.io/RagdollLabs-battlecats/
 
-Open `index.html` in a modern browser, or publish this repository through **Settings → Pages → Deploy from a branch → main → / (root)**.
+## How to play
 
-## Controls
+- **Finger:** Slide across the game to move the cannon sideways. Tapping does not fire or teleport it.
+- **Mouse:** Move the pointer over the battlefield to aim.
+- **Keyboard:** Arrow keys or A/D.
+- Your cannon fires **automatically**.
 
-- Mouse: move left/right over the battlefield.
-- Touch: drag your finger across the battlefield.
-- Keyboard: left/right arrows or A/D.
-- Cannon fires automatically.
+## Three-stage siege
 
-## Level 1: The Castle Approach
+1. **Middle ×20:** Available at the start. Reinforcements help hold back the enormous, slow red horde. A small detachment works on the ×99 barricade.
+2. **Left ×99:** Once unlocked, **move the cannon into this lane**. Larger reinforcements stabilize the battle and chip away at the ×999 barricade. Staying on ×20 will *not* unlock the third gate.
+3. **Right ×999:** Once unlocked, **move the cannon into this lane**. Firing through it starts the decisive counterattack. Keep firing until the red army has been pushed entirely off the screen.
 
-Defend for 50 seconds and defeat at least 180 red cats. Three invaders reaching the cannon ends the round.
+The enemy army moves more slowly than blue cats but begins with overwhelming numbers. Gates only unlock through the previous active gate; opening a gate is not enough — use it. There is **no kill-count or countdown victory**. If the red front breaches the castle, you lose; if every red enemy is removed and the line is pushed back, you win.
 
-- **Yellow ×20 gate:** creates a much larger army, but its lane is exposed to artillery.
-- **Blue ×5 gate:** creates fewer cats, protected by temporary shields.
+## Technology
 
-Quick start, victory/defeat screens, and instant replay are included.
-
-## Implementation
-
-No dependencies, backend, accounts, tracking, or build step. HTML5 Canvas, CSS, and JavaScript.
+A self-contained HTML5 Canvas and vanilla JavaScript prototype with no build dependencies or backend. The camera perspective is simulated in 2D; logical army strength is separate from the hundreds of displayed cats to keep rendering responsive on phones.
 
 ## Scope
 
-First playable prototype, not final art or tuned gameplay. Next: playtest on iPhone Safari, adjust safe/risky trade-offs, polish art and impact feedback, then consider a second level.
+One playable level and a quick start/restart menu. Next: mobile playtesting, better combat feedback, true 3D/isometric rendering only if required, and level balancing before adding a second level.
