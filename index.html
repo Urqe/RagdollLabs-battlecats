@@ -39,7 +39,7 @@ const gates=[
 ];
 // Each shot against a locked gate chips the barricade. No passive unlocking.
 const workNeeded=[95,210];
-const SHOT_INTERVAL=.28,BLUE_SPEED=104,MAX_SQUADS=32;
+const SHOT_INTERVAL=.28,BLUE_SPEED=104;
 const rand=(a,b)=>a+Math.random()*(b-a);
 function notify(s,seconds=2){shown=s;bannerUntil=t+seconds;el('banner').textContent=s;el('banner').style.opacity=1}
 function mapY(y){return y} // battlefield projection is applied in path geometry and perspective scaling
@@ -75,7 +75,7 @@ function cat(x,y,color,size,phase=0){
 function army(){
  const redStrength=clamp(redTotal/22000,0,1);
  // An enormous enemy reserve approaches slowly through the stone funnel.
- const rows=Math.ceil(12+redStrength*34),cols=30;
+ const rows=redTotal>0?Math.ceil(12+redStrength*34):0,cols=30;
  for(let r=0;r<rows;r++){
   const y=front-r*7;
   if(y<-15||y>705)continue;
@@ -88,7 +88,7 @@ function army(){
  }
  // Blue cats actually march from the gate: each squad travels from y=540 to the frontline.
  for(const q of squads){
-  const show=Math.min(q.count, q.mult===20?60:q.mult===99?105:150);
+  const show=Math.min(q.count, q.mult===20?60:q.mult===99?90:75);
   const cols=Math.min(15,Math.ceil(Math.sqrt(show*1.35)));
   const rows=Math.ceil(show/cols),spacing=clamp(7.5+q.y*.004,8,10);
   const cx=q.x+(210-q.x)*clamp((555-q.y)/330,0,1);
@@ -165,8 +165,7 @@ function fire(){
 function spawnSquad(g,fromX){
  const count=g.mult;
  squads.push({x:clamp(fromX,46,374),y:532,count,mult:g.mult,phase:rand(0,6)});
- // The logical army moves together with its visual formation; no instant teleport.
- if(squads.length>MAX_SQUADS){const older=squads.shift();blueTotal+=older.count}
+ // Each squad remains in flight until it reaches the frontline.
  sprinkle(fromX,g.y-10,g.color,8);
  if(g.mult===999&&!finalActivated){finalActivated=true;notify('COUNTERATTACK! KEEP FIRING ×999!',3)}
 }
