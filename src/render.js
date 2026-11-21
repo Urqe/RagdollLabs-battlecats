@@ -1,3 +1,4 @@
+import { smoothStep, victoryAdvance } from "./army-movement.js";
 import { H, TAU, W, clamp } from "./config.js";
 import {
   drawArtilleryShot,
@@ -343,8 +344,8 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     }
   }
 
-  function drawVictory(progress) {
-    const y = Math.max(29, state.front - progress * 67);
+  function drawVictory(progress, front) {
+    const y = Math.max(30, front + 8);
     ctx.save();
     ctx.globalAlpha = clamp(progress * 2.6, 0, 1);
     ctx.strokeStyle = "#37546a";
@@ -468,7 +469,12 @@ export function createRenderer(state, canvas, motion = createMotion()) {
       drawArtilleryShot(ctx, state);
       drawImpactAir(ctx, figures, motion.impact, impactAge);
     }
-    if (celebration) drawVictory(surge);
+    if (celebration > 0.54) {
+      const front = state.front - victoryAdvance(
+        state.front, state.victoryElapsed, state.level.combat.victoryDuration,
+      );
+      drawVictory(smoothStep((celebration - 0.54) / 0.46), front);
+    }
   }
 
   return {

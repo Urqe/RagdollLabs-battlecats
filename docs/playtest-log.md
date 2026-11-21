@@ -63,3 +63,12 @@ One entry and a short documentation edit are enough for most reviews.
 **Observations.** The largest old blue cut in the winning traces occurred at victory with no casualties that frame. Live attrition and forced depletion exposed smaller density cuts and reserve rearrangement. The updated clips retain the large arriving waves and show losses through falling ranks and local contact reactions. The unchanged strategies still produce the same simulation results. [Traces and recordings](army-visual-scale.md#milestone-10--army-continuity)
 
 **Player impressions.** The disappearing formation was the reported issue. Human impressions of the correction and physical iPhone frame rate are still unmeasured.
+
+
+## Milestone 11 · Reinforcement movement and victory advance
+
+**Session.** A report described reinforcements reappearing at the rear and the front holding after the last red casualty. The follow-up traced the second ×20 arrival and recorded both complete winning battles in portrait Chromium with the HUD hidden.
+
+**Observations.** The old wave tail and new field rows drew independently. The old celebration moved the flag while the blue formation stayed on the frozen front. Bounded handoffs now connect representative sprites to local slots. The lead enters the cleared approach on the existing victory clock and the reserves follow. [Before and after gameplay](army-visual-scale.md#portrait-gameplay-evidence)
+
+**Player impressions.** No human feedback on the revised movement or physical-device timing was collected.

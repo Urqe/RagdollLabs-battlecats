@@ -94,3 +94,34 @@ The battle clips are uncut at 390 × 844 with the HUD hidden, from first defense
 Run `npm run dev` and `node scripts/capture-army-continuity.js` to reproduce the recordings. Run `node scripts/trace-army-continuity.js` for the 60 Hz data. Pass an output directory, a server URL, and a prefix such as `a-` to the capture script to run one scenario. Pass a baseline checkout directory to the trace script to compare builds. Concurrent headless recording slowed game time relative to wall time. The timing file records both. The overlays in D identify the imposed population steps. The live videos use the regular cannon inputs and outcomes. [Capture event timings](evidence/army-continuity/timing.json)
 
 Representative deaths are a short-lived visual approximation. They illustrate the location and scale of losses, while exact combat remains aggregate. Packed ranks still compress through narrow ground. A near-empty defense can lose several literal cats on the same tick and should look like a collapse. During a shared Chromium run at 2× pixel density, median frame intervals were 33.4 ms with ×999 and artillery, 16.7 ms in the fixed 500,000-red and 200,000-blue fixture, and 33.3 ms during rapid depletion. Median update and draw submission took 3.5, 1.8 and 1.5 ms respectively. Reproduce these scenes with `node scripts/profile-army-scale.js`. Physical iPhone frame rate remains unmeasured. [Shared-runner timing](evidence/army-continuity/headless-shared-profile.json)
+
+## Milestone 11 · Reinforcement movement and victory advance
+
+### Reproduced behavior
+
+In the 60 Hz Level 1 trace, the second ×20 volley reached the logical arrival plane at about 1.90 seconds. Its leading representative was near y=386 while new fixed field slots began in the fifth row behind the front, about 30 pixels farther back. The old tail kept its own approach-and-fade animation and new fixed slots appeared independently. At victory, the engine correctly stopped combat and froze the logical frontline at about y=66. The renderer used that frozen line for every blue formation frame, while the victory flag moved on a separate curve. That made a won battlefield look like a held line.
+
+### Reinforcement movement
+
+The moving wave slows through a receiving band derived from occupied field rows and nearby reserve depth. The band stays on the travelling side of the portal and changes position at a limited rate. The simulation still credits the exact squad at the same tick. After credit, newly available field and reserve slots can borrow a few of that wave's representative sprites. A nearby receiving slot draws one sprite travelling from the wave's continuing position into the rank. The regular traveller skips that member while the slot owns it. More distant reserve tiles and positions separated by gate scenery trade opacity with the traveller over the same interval. That preserves the silhouette budget without sending a cat through the scenery.
+
+The handoff tracks at most 12 recently credited cohorts, with a ceiling of 24 representatives per cohort. Small blue arrivals also fill living slots progressively, while losses still reduce living occupancy immediately. Ordinary rear ranks follow the front with a limited delay, and their spacing responds to the existing pressure and casualty signals.
+
+### Victory occupation
+
+Authoritative victory stops contact reactions, freezes the real front, and cancels pending artillery through the existing engine. The presentation begins at that frozen line and moves the blue lead toward y=21, just inside the enemy entry. Field ranks and reserve bands follow with progressively greater delay. The flag appears during occupation. Existing marching sprites keep moving toward the force and fade in the last part of the celebration. Artillery gaps and grounded or airborne casualties can finish cosmetically. The result still appears after the existing 1.5-second victory interval.
+
+### Portrait gameplay evidence
+
+All clips use the normal game, a 390 × 844 viewport, and a hidden HUD. The large-wave clip is a continuous section from the ×99 unlock through the ×999 flood. The victory clips begin before elimination so the last resistance, the advance, and the result are visible together. The complete Level 2 capture recorded 24 resolved artillery impacts.
+
+| Clip | Recording |
+| --- | --- |
+| A · Small ×20 handoff | [Previous build](evidence/army-movement/before-small.mp4) · [New handoff](evidence/army-movement/a-small-handoff.mp4) |
+| B · Overlapping ×99 and ×999 | [Continuous large waves](evidence/army-movement/b-large-handoff.mp4) |
+| C · Level 1 occupation | [Previous victory](evidence/army-movement/before-victory.mp4) · [New victory advance](evidence/army-movement/c-level-1-victory.mp4) |
+| D · Level 2 occupation | [Artillery-assisted victory advance](evidence/army-movement/d-level-2-victory.mp4) |
+
+Use `node scripts/capture-army-continuity.js test-results/army-movement http://127.0.0.1:4173 a- c-` with the dev server running to record both complete wins. The timing file marks the gates, first artillery impact, elimination, and result. [Capture timings](evidence/army-movement/timing.json)
+
+The receiving band represents a group moving into another group. Each cat in a compressed reserve has a representative slot, and distant slots can blend their coverage with the incoming group. Dense overlaps can obscure an individual sprite on a portrait display. The recordings and browser checks use a mobile viewport in headless desktop browsers. Physical iPhone performance remains unmeasured.
