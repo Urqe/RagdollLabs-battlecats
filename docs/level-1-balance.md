@@ -38,6 +38,8 @@ The notes below describe the original motion captures. The current shared model 
 
 ## Recorded motion
 
+Milestone 10 adds complete Level 1 win and defeat recordings with the HUD hidden, including a comparison at the victory transition. [Continuous battle recordings](army-visual-scale.md#continuous-mobile-recordings)
+
 The muted Chromium recordings use a 390 × 844 viewport, native touch input, and the normal animation loop. The HUD and banner are hidden for visual review.
 
 | Clip | What to watch |

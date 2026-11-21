@@ -431,7 +431,7 @@ export function createRenderer(state, canvas, motion = createMotion()) {
           : 0;
       gateGround(gate, gate.style);
     }
-    drawImpactGround(ctx, motion.impact, impactAge);
+    if (state.mode !== "end") drawImpactGround(ctx, motion.impact, impactAge);
     figures.redArmy(state, motion.contact, motion.impact);
     figures.blueArmy(state, surge, motion.contact, motion.tails);
     for (const gate of state.gates) drawGate(gate, gate.style);
@@ -449,9 +449,9 @@ export function createRenderer(state, canvas, motion = createMotion()) {
       }
     }
     supplyFlags();
-    if (state.mode === "playing" || (state.mode === "end" && !celebration)) {
+    if (state.mode !== "end") figures.fallen(motion.falls);
+    if (state.mode === "playing") {
       contactEffects();
-      figures.fallen(motion.falls);
       for (const gate of state.gates) brokenWood(gate);
       if (emplacement) brokenWood(emplacement, state.support.open);
       for (const shot of state.shots) figures.projectile(shot);

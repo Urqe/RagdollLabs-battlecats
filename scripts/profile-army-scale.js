@@ -70,9 +70,17 @@ try {
     game.reset();
     motion.reset();
     Object.assign(state, { redTotal: 500000, blueTotal: 200000, redEntryRate: 2200 });
-    motion.contact.blueStrength = state.blueTotal;
+    motion.step(state.t, 0, state.blueTotal, state.redEntryOpen, state.level, state);
     const enormousFixture = await sample(() => { state.t += 1 / 60; });
-    return { gatesAndArtillery, enormousFixture };
+    let age = 0;
+    const populations = [200000, 150000, 100000, 50000, 10000, 1000];
+    const rapidDecline = await sample(() => {
+      age += 1 / 60;
+      state.t += 1 / 60;
+      state.blueTotal = populations[Math.min(5, Math.floor(age))];
+      motion.step(state.t, 0, state.blueTotal, true, state.level, state);
+    });
+    return { gatesAndArtillery, enormousFixture, rapidDecline };
   });
   console.log(JSON.stringify(results, null, 2));
 } finally {
