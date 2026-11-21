@@ -1,5 +1,6 @@
 import { clamp } from "./config.js";
 import { LEVEL_ONE } from "./levels.js";
+import { impactShape } from "./formation.js";
 
 const profiles = {
   20: {
@@ -15,19 +16,19 @@ const profiles = {
     count: 9,
     cols: 3,
     rankDelay: 0.109,
-    spacing: 8,
+    spacing: 12,
     spread: 0.25,
     flare: 0.34,
-    laneOffset: 10,
+    laneOffset: 13,
   },
   999: {
     count: 24,
     cols: 4,
     rankDelay: 0.143,
-    spacing: 8.1,
+    spacing: 12.8,
     spread: 0.29,
     flare: 0.57,
-    laneOffset: 17,
+    laneOffset: 21,
   },
 };
 export const waveProfile = (mult) => profiles[mult] ?? profiles[20];
@@ -68,10 +69,21 @@ export function createMotion(onReversal = () => {}) {
   let nextDirection = 0;
   let directionTime = 0;
   const contact = {};
+  const impact = {};
 
   function reset() {
     clock = direction = nextDirection = directionTime = 0;
     tails.length = falls.length = 0;
+    Object.assign(impact, {
+      x: 0,
+      y: 0,
+      at: -Infinity,
+      loss: 0,
+      force: 0,
+      radiusX: 0,
+      radiusY: 0,
+      airborne: 0,
+    });
     pulses.fill(-Infinity);
     arrivals.fill(-Infinity);
     Object.assign(contact, {
@@ -79,6 +91,10 @@ export function createMotion(onReversal = () => {}) {
       red: 0,
       blue: 0,
       foughtAt: -1,
+      clashX: 210,
+      clashAge: 0,
+      hold: 0,
+      surgeAt: -Infinity,
       blueStrength: null,
       blueAnchor: 210,
       cutoffAt: null,
@@ -107,6 +123,9 @@ export function createMotion(onReversal = () => {}) {
       (velocity > 0 ? level.combat.redAdvance : level.combat.blueAdvance);
     contact.pressure +=
       (normalized - contact.pressure) * (1 - Math.exp(-dt / 0.24));
+    const hold = 1 - Math.min(1, Math.abs(contact.pressure) * 2.6);
+    contact.hold += (hold - contact.hold) * (1 - Math.exp(-dt / 0.21));
+    contact.clashAge = clock - contact.foughtAt;
     const sign =
       contact.pressure > 0.13 ? 1 : contact.pressure < -0.13 ? -1 : 0;
     if (sign !== nextDirection) {
@@ -115,7 +134,10 @@ export function createMotion(onReversal = () => {}) {
     }
     directionTime += dt;
     if (sign && sign !== direction && directionTime > 0.37) {
-      if (direction && clock - contact.foughtAt < 0.35) onReversal(sign);
+      if (direction && contact.clashAge < 0.35) {
+        contact.surgeAt = clock;
+        onReversal(sign);
+      }
       direction = sign;
     }
     for (let i = tails.length - 1; i >= 0; i--) {
@@ -131,6 +153,7 @@ export function createMotion(onReversal = () => {}) {
   }
 
   function receive(kind, time, value, front, redLoss, blueLoss) {
+    if (kind === "artilleryImpact" && value?.loss > 0) impactShape(impact, value);
     if (kind === "multiply") pulses[indexOf(value)] = time;
     if (kind === "arrival") {
       arrivals[indexOf(value.mult)] = time;
@@ -145,11 +168,12 @@ export function createMotion(onReversal = () => {}) {
       contact.red = Math.min(1, redLoss / 35);
       contact.blue = Math.min(1, blueLoss / 26);
       contact.foughtAt = time;
+      contact.clashX = value;
       addFall(value, front, redLoss, true, time);
       addFall(420 - value, front, blueLoss, false, time);
     }
   }
 
   reset();
-  return { contact, tails, falls, pulses, arrivals, receive, reset, step };
+  return { contact, impact, tails, falls, pulses, arrivals, receive, reset, step };
 }

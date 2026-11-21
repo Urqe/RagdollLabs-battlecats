@@ -9,7 +9,10 @@ import {
   waveRelease,
   waveY,
 } from "../src/motion.js";
-import { redFormationSize } from "../src/figures.js";
+import { createFigures, redFormationSize } from "../src/figures.js";
+import { updateArtillery } from "../src/artillery.js";
+import { LEVEL_ONE, LEVEL_TWO } from "../src/levels.js";
+import { AIRBORNE_LIMIT, IMPACT_LIFE, gapShift, gapStrength } from "../src/formation.js";
 
 test("gate releases are ordered, bounded and start on the projectile crossing", () => {
   const quick = waveProfile(20);
@@ -87,6 +90,8 @@ test("contact, casualties, reversals and reset are driven by the live battle", (
     motion.step(time, frame < 25 ? 11 : frame < 37 ? 0 : -10);
   }
   assert.deepEqual(directions, [-1]);
+  assert.ok(motion.contact.surgeAt > 1.85);
+  assert.ok(motion.contact.pressure < 0);
   assert.ok(motion.falls.length > 0 && motion.falls.length <= 12);
   motion.receive("multiply", 3.5, 999);
   motion.receive("arrival", 3.5, { mult: 999, marchTime: 0.25 });
@@ -125,4 +130,83 @@ test("the red population scales down to the last visible remnant", () => {
     [...new Set(remaining)].sort((a, b) => a - b),
   );
   assert.ok(redFormationSize(1_000_000) <= 1230);
+});
+
+test("only resolved losses launch bounded casualties at the simulation's impact point", () => {
+  const motion = createMotion();
+  const game = createGame({ level: LEVEL_TWO, onEffect: motion.receive });
+  game.reset();
+  const { state } = game;
+  state.support.open = true;
+  state.support.readyAt = 0;
+  state.redTotal = 21000;
+  updateArtillery(state, motion.receive);
+  const { x, y, impactAt } = state.support.shot;
+  state.t = impactAt;
+  updateArtillery(state, motion.receive);
+  const hit = state.support.impact;
+  assert.deepEqual([hit.x, hit.y, hit.at], [x, y, impactAt]);
+  assert.equal(hit.loss, LEVEL_TWO.support.damage);
+  assert.equal(state.redTotal, 21000 - hit.loss);
+  assert.equal(motion.impact.loss, hit.loss);
+  assert.deepEqual([motion.impact.x, motion.impact.y, motion.impact.at], [x, y, impactAt]);
+  assert.ok(motion.impact.airborne >= 8 && motion.impact.airborne <= AIRBORNE_LIMIT);
+
+  // The battle can move far enough during flight to leave the window empty.
+  state.t = state.support.readyAt;
+  updateArtillery(state, motion.receive);
+  state.front = 620;
+  state.t = state.support.shot.impactAt;
+  updateArtillery(state, motion.receive);
+  assert.equal(state.support.impact.loss, 0);
+  assert.equal(motion.impact.at, impactAt);
+
+  motion.reset();
+  game.reset(LEVEL_ONE);
+  assert.equal(motion.impact.airborne, 0);
+  assert.equal(gapStrength(game.state.t - motion.impact.at), 0);
+  assert.equal(motion.contact.surgeAt, -Infinity);
+});
+
+test("surviving red ranks open and refill a local pocket at each refresh rate", () => {
+  const motion = createMotion();
+  const state = createGame().state;
+  state.redTotal = 7500;
+  state.front = 318;
+  motion.receive("artilleryImpact", 0, { x: 210, y: 289, loss: 2250, at: 0 });
+  const { impact } = motion;
+  const measure = (seconds) =>
+    gapShift(210, 294, impact, gapStrength(seconds), 2);
+  assert.ok(measure(0.2) > 16);
+  assert.equal(gapShift(320, 294, impact, gapStrength(0.2), 2), 0);
+  for (const hz of [30, 60, 120]) {
+    for (let frame = 0; frame <= hz * 1.4; frame++) {
+      motion.step(frame / hz, 0);
+      assert.equal(state.redTotal, 7500);
+    }
+    assert.ok(measure(0.77) > 0 && measure(0.77) < measure(0.4));
+    assert.equal(measure(Math.ceil(IMPACT_LIFE * hz) / hz), 0);
+  }
+  const positions = [];
+  const atlasContext = new Proxy({}, { get: () => () => {} });
+  const plot = createFigures(
+    {
+      drawImage(atlas, sx, sy, sw, sh, x, y, w, h) {
+        positions.push([x + w / 2, y + h / 2]);
+      },
+    },
+    { createElement: () => ({ getContext: () => atlasContext }) },
+  );
+  plot.setClock(0.2);
+  plot.redArmy(state, false, motion.contact, impact);
+  const displaced = positions.splice(0);
+  plot.redArmy(state, false, motion.contact);
+  const inside = ([x, y]) => Math.abs(x - impact.x) < 14 && Math.abs(y - impact.y) < 11;
+  assert.equal(displaced.length, positions.length);
+  assert.ok(positions.some(inside));
+  assert.ok(displaced.filter(inside).length < positions.filter(inside).length);
+  state.redTotal = 1500;
+  positions.length = 0;
+  plot.redArmy(state, false, motion.contact, impact);
+  assert.ok(positions.length < displaced.length);
 });

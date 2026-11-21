@@ -45,3 +45,12 @@ One entry and a short documentation edit are enough for most reviews.
 **Player impressions.** First-attempt targeting clarity, fairness, and the appeal of the artillery payoff remain open.
 
 **Recommended changes.** In Milestone 8, watch whether players distinguish the catapult's aim lane and notice the difference between landing an impact and holding the line. Check responsiveness and sound on a physical iPhone. Use those findings when reconsidering the proposed archer level.
+
+
+## Milestone 8 automated and visual review
+
+**Session.** Deterministic strategies at 30, 60, and 120 Hz. Playwright browser runs at 390 × 844 and muted Chromium motion capture with native touch input. [Before and after results and recordings](purrapult-balance.md)
+
+**Observations.** The Level 1 simulation matched the baseline. All five Level 2 policies retained their outcomes. The early support route made five more impacts before the win at 60 Hz. The encoded motion shows the projectile arriving, the red line opening and reforming, and reinforcement scale across all three gates.
+
+**Player impressions.** Human impressions, device frame rate, and the sound mix on iPhone remain unmeasured.

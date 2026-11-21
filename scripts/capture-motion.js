@@ -3,8 +3,14 @@ import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import { chromium } from "@playwright/test";
 import { createAim } from "../tests/helpers/strategies.js";
+import { purrapultAim } from "../tests/helpers/purrapult.js";
+import { LEVEL_TWO } from "../src/levels.js";
 
-const output = resolve(process.argv[2] ?? "test-results/motion");
+const args = process.argv.slice(2);
+const purrapult = args.includes("--purrapult");
+const output = resolve(
+  args.find((arg) => !arg.startsWith("--")) ?? "test-results/motion",
+);
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch();
 const context = await browser.newContext({
@@ -29,16 +35,25 @@ try {
   await page.addStyleTag({
     content: "#hud, #banner { visibility: hidden !important; }",
   });
-  await page.locator("#play").click();
+  if (purrapult) {
+    await page.locator("#chooseLevel").click();
+    await page.locator(`[data-level="${LEVEL_TWO.id}"]`).click();
+  } else {
+    await page.locator("#play").click();
+  }
   marks.start = elapsed();
   const box = await page.locator("#game").boundingBox();
   const client = await context.newCDPSession(page);
-  const aim = createAim("C");
+  const aim = purrapult ? purrapultAim("artillery-first") : createAim("C");
   const snapshot = () =>
     page.evaluate(async () => (await import("/src/main.js")).getSnapshot());
-  let target = 210;
+  let target = (await snapshot()).gunX;
   while (elapsed() < 140) {
     const state = await snapshot();
+    if (state.support?.open) marks.unlocked ??= elapsed();
+    if (state.support?.shot) marks.launch ??= elapsed();
+    if (state.support?.impact?.loss > 0) marks.impact ??= elapsed();
+    if (purrapult && marks.impact && elapsed() > marks.impact + 2.05) break;
     if (state.squads.some((q) => q.mult === 99)) marks.gate99 ??= elapsed();
     if (state.squads.some((q) => q.mult === 999)) marks.gate999 ??= elapsed();
     if (state.mode === "victory") marks.cleared ??= elapsed();
@@ -49,7 +64,7 @@ try {
     if (state.mode === "playing") {
       const next = aim(state);
       if (next !== target) {
-        const x = box.x + box.width / 2;
+        const x = box.x + (state.gunX / 420) * box.width;
         const y = box.y + box.height * 0.88;
         await client.send("Input.dispatchTouchEvent", {
           type: "touchStart",
@@ -68,13 +83,16 @@ try {
     }
     await new Promise((done) => setTimeout(done, 23));
   }
-  if (!marks.result || !marks.cleared || errors.length) {
+  const incomplete = purrapult ? !marks.impact : !marks.result || !marks.cleared;
+  if (incomplete || errors.length) {
     throw new Error(
-      `Recording did not reach a clean victory: ${JSON.stringify({ marks, errors })}`,
+      `Recording did not complete the requested sequence: ${JSON.stringify({ marks, errors })}`,
     );
   }
-  await page.getByRole("heading", { name: "The castle stands!" }).waitFor();
-  await page.screenshot({ path: victoryFrame, scale: "css" });
+  if (!purrapult) {
+    await page.getByRole("heading", { name: "The castle stands!" }).waitFor();
+    await page.screenshot({ path: victoryFrame, scale: "css" });
+  }
   await new Promise((done) => setTimeout(done, 400));
   const video = page.video();
   await context.close();
@@ -133,20 +151,29 @@ function clip(name, segments, ending = null) {
     throw new Error(`FFmpeg failed for ${name}`, { cause: result.error });
 }
 
-clip("a-gate-multiplication.mp4", [
-  [marks.start + 1.7, marks.start + 5.8],
-  [marks.gate99 - 0.65, marks.gate99 + 4.8],
-  [marks.gate999 - 0.7, marks.gate999 + 5.3],
-]);
-clip("b-frontline-reversal.mp4", [[marks.gate99 - 5.3, marks.gate99 + 11.4]]);
-clip(
-  "c-final-counterattack.mp4",
-  [
+if (purrapult) {
+  clip("a-purrapult-impact.mp4", [[marks.unlocked - 0.25, marks.impact + 1.8]]);
+} else {
+  const gateCuts = [
+    [marks.start + 1.7, marks.start + 5.8],
+    [marks.gate99 - 0.65, marks.gate99 + 4.8],
+    [marks.gate999 - 0.7, marks.gate999 + 5.3],
+  ];
+  clip("a-gate-multiplication.mp4", gateCuts);
+  clip("b-frontline-reversal.mp4", [
+    [marks.start + 5, marks.start + 8.4],
+    [marks.gate99 - 8.3, marks.gate99 + 10.8],
+  ]);
+  const endCuts = [
     [marks.gate999 - 0.6, marks.gate999 + 6.5],
     [marks.gate999 + 12, marks.cleared - 6.5, 2.2],
     [marks.cleared - 6.5, marks.result],
-  ],
-  victoryFrame,
-);
+  ];
+  clip("c-final-counterattack.mp4", endCuts, victoryFrame);
+  clip("c-multiplication-counterattack.mp4", [
+    ...gateCuts.slice(0, 2),
+    ...endCuts,
+  ], victoryFrame);
+}
 await writeFile(resolve(output, "timing.json"), JSON.stringify(marks, null, 2));
-console.log(`Recorded three clips in ${output}`);
+console.log(`Recorded gameplay clips in ${output}`);

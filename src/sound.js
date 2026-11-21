@@ -22,11 +22,18 @@ const cues = {
     ],
   },
   wood: { cooldown: 0.23, notes: [[0, 249, 114, 0.055, 0.075, "triangle"]] },
-  break: {
+  gateUnlock: {
     cooldown: 0.35,
     notes: [
       [0, 230, 62, 0.18, 0.16, "triangle"],
-      [0.038, 370, 149, 0.11, 0.1, "triangle"],
+      [0.045, 460, 640, 0.15, 0.085, "sine"],
+    ],
+  },
+  artilleryReady: {
+    cooldown: 0.35,
+    notes: [
+      [0, 240, 108, 0.12, 0.14, "triangle"],
+      [0.08, 190, 325, 0.18, 0.09, "sine"],
     ],
   },
   clash: { cooldown: 0.36, notes: [[0, 234, 128, 0.046, 0.06, "triangle"]] },
