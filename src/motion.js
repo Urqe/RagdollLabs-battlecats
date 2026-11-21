@@ -2,6 +2,9 @@ import { clamp } from "./config.js";
 import { LEVEL_ONE } from "./levels.js";
 import { impactShape } from "./formation.js";
 import { LITERAL_ARMY } from "./army-visual.js";
+import {
+  createArmyPresentation, resetArmyPresentation, stepArmyPresentation,
+} from "./army-continuity.js";
 
 const profiles = {
   20: {
@@ -69,7 +72,10 @@ export function createMotion(onReversal = () => {}) {
   let direction = 0;
   let nextDirection = 0;
   let directionTime = 0;
-  const contact = {};
+  const contact = {
+    redArmy: createArmyPresentation(),
+    blueArmy: createArmyPresentation(),
+  };
   const impact = {};
   let lastRed = null;
   let lastBlue = null;
@@ -78,6 +84,8 @@ export function createMotion(onReversal = () => {}) {
     clock = direction = nextDirection = directionTime = 0;
     tails.length = falls.length = 0;
     lastRed = lastBlue = null;
+    resetArmyPresentation(contact.redArmy);
+    resetArmyPresentation(contact.blueArmy);
     Object.assign(impact, {
       x: 0,
       y: 0,
@@ -99,7 +107,7 @@ export function createMotion(onReversal = () => {}) {
       clashAge: 0,
       hold: 0,
       surgeAt: -Infinity,
-      blueStrength: null,
+
       blueAnchor: 210,
       cutoffAt: null,
       entryRate: 0,
@@ -116,10 +124,8 @@ export function createMotion(onReversal = () => {}) {
   ) {
     const dt = Math.max(0, time - clock);
     clock = time;
-    const visible = contact.blueStrength ?? 0;
-    contact.blueStrength = blueStrength <= LITERAL_ARMY
-      ? blueStrength
-      : Math.min(blueStrength, visible + (blueStrength - visible) * (1 - Math.exp(-dt / 0.46)));
+    stepArmyPresentation(contact.blueArmy, blueStrength, dt);
+    if (battle) stepArmyPresentation(contact.redArmy, battle.redTotal, dt);
     contact.blueAnchor +=
       (210 - contact.blueAnchor) * (1 - Math.exp(-dt / 0.57));
     if (!redEntryOpen) contact.cutoffAt ??= time;
@@ -127,10 +133,10 @@ export function createMotion(onReversal = () => {}) {
     if (battle) {
       const red = Math.ceil(battle.redTotal);
       const blue = Math.ceil(blueStrength);
-      if (lastRed > red && lastRed <= LITERAL_ARMY && impact.at !== time)
-        addFall(210, battle.front, true, time);
-      if (lastBlue > blue && lastBlue <= LITERAL_ARMY)
-        addFall(210, battle.front, false, time);
+      if (lastRed > red && impact.at !== time)
+        showLoss(lastRed, red, battle.front, true, time);
+      if (lastBlue > blue)
+        showLoss(lastBlue, blue, battle.front, false, time);
       lastRed = red;
       lastBlue = blue;
     }
@@ -160,6 +166,19 @@ export function createMotion(onReversal = () => {}) {
       if (tails[i].until <= clock) tails.splice(i, 1);
     }
     while (falls.length && falls[0].at + FALL_LIFE <= clock) falls.shift();
+    if (battle?.mode === "end") tails.length = falls.length = 0;
+  }
+
+  function showLoss(previous, current, front, red, time) {
+    const lost = previous - current;
+    const fraction = lost / previous;
+    const count = previous <= LITERAL_ARMY ? Math.min(3, lost)
+      : fraction >= 0.075 ? Math.min(7, 2 + Math.floor(fraction * 8)) : 0;
+    const spread = Math.min(25, 4 + Math.abs(front - 266) * 0.14);
+    for (let i = 0; i < count; i++) {
+      const x = 210 + Math.sin(time * 9 + i * 2.4) * spread;
+      addFall(x, front, red, time);
+    }
   }
 
   function addFall(x, front, red, time) {
@@ -172,7 +191,7 @@ export function createMotion(onReversal = () => {}) {
     if (kind === "multiply") pulses[indexOf(value)] = time;
     if (kind === "arrival") {
       arrivals[indexOf(value.mult)] = time;
-      if ((contact.blueStrength ?? 0) < 115)
+      if ((contact.blueArmy.population ?? 0) < 115)
         contact.blueAnchor = value.x ?? 210;
       const duration = waveDuration(waveProfile(value.mult));
       const age = value.marchTime;

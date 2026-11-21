@@ -54,3 +54,12 @@ One entry and a short documentation edit are enough for most reviews.
 **Observations.** The Level 1 simulation matched the baseline. All five Level 2 policies retained their outcomes. The early support route made five more impacts before the win at 60 Hz. The encoded motion shows the projectile arriving, the red line opening and reforming, and reinforcement scale across all three gates.
 
 **Player impressions.** Human impressions, device frame rate, and the sound mix on iPhone remain unmeasured.
+
+
+## Milestone 10 · Army continuity
+
+**Session.** The Milestone 9 visual population tests passed, then a gameplay report identified an abrupt disappearance of large blue formations. The follow-up traced actual 60 Hz combat, reproduced a fixed-front decline, and recorded three full battles at 390 × 844.
+
+**Observations.** The largest old blue cut in the winning traces occurred at victory with no casualties that frame. Live attrition and forced depletion exposed smaller density cuts and reserve rearrangement. The updated clips retain the large arriving waves and show losses through falling ranks and local contact reactions. The unchanged strategies still produce the same simulation results. [Traces and recordings](army-visual-scale.md#milestone-10--army-continuity)
+
+**Player impressions.** The disappearing formation was the reported issue. Human impressions of the correction and physical iPhone frame rate are still unmeasured.

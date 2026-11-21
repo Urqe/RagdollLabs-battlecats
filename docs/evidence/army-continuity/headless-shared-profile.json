@@ -1,0 +1,47 @@
+{
+  "gatesAndArtillery": {
+    "counts": {
+      "red": 48954,
+      "blue": 18307
+    },
+    "frames": 134,
+    "frameMs": {
+      "median": 33.4,
+      "p95": 83.4
+    },
+    "drawAndStepMs": {
+      "median": 3.5,
+      "p95": 39.1
+    }
+  },
+  "enormousFixture": {
+    "counts": {
+      "red": 500000,
+      "blue": 200000
+    },
+    "frames": 188,
+    "frameMs": {
+      "median": 16.7,
+      "p95": 66.7
+    },
+    "drawAndStepMs": {
+      "median": 1.8,
+      "p95": 7.8
+    }
+  },
+  "rapidDecline": {
+    "counts": {
+      "red": 500000,
+      "blue": 200000
+    },
+    "frames": 185,
+    "frameMs": {
+      "median": 33.3,
+      "p95": 66.7
+    },
+    "drawAndStepMs": {
+      "median": 1.5,
+      "p95": 6.6
+    }
+  }
+}

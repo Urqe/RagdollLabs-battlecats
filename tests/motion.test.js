@@ -108,16 +108,20 @@ test("contact, casualties, reversals and reset are driven by the live battle", (
 test("blue ranks ease outward from a new arrival lane at every tested frame rate", () => {
   const end = [30, 60, 120].map((hz) => {
     const motion = createMotion();
+    motion.step(0, 0, 0, false);
     motion.receive("arrival", 0, { mult: 999, marchTime: 0.25, x: 329 });
     for (let frame = 1; frame <= hz / 2; frame++) {
       motion.step(frame / hz, -11, 2997, false);
     }
-    const { blueStrength, blueAnchor } = motion.contact;
-    assert.ok(blueStrength > 0 && blueStrength < 2997);
+    const { blueArmy, blueAnchor } = motion.contact;
+    assert.ok(blueArmy.field > 0 && blueArmy.field < blueArmy.target.field);
+    assert.ok(blueArmy.reserve > 0 && blueArmy.reserve < blueArmy.target.reserve);
     assert.ok(blueAnchor > 210 && blueAnchor < 329);
+    const visibleReserve = blueArmy.reserve;
     motion.step(0.51, 0, 0, false);
-    assert.equal(motion.contact.blueStrength, 0);
-    return blueStrength;
+    assert.equal(blueArmy.field + blueArmy.reserve, 0);
+    assert.ok(blueArmy.fieldExtent + blueArmy.reserveExtent > 0);
+    return visibleReserve;
   });
   assert.ok(Math.max(...end) - Math.min(...end) < 1e-8);
 });

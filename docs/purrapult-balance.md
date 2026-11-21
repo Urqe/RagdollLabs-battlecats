@@ -32,6 +32,8 @@ The shared animation uses position and momentum from the battle to vary lunges, 
 
 ## Browser evidence
 
+The Milestone 10 recording follows an entire artillery-assisted win with the HUD hidden. It shows repeated impacts, survivors refilling openings, and the final blue advance. [Continuous battle recordings](army-visual-scale.md#continuous-mobile-recordings)
+
 The current recordings use muted Chromium at 390 × 844 with native touch input and the HUD hidden. Clip B cuts from the initial hold to the sustained retreat and reversal. Clip C cuts among the three gate outputs and speeds up the middle of the counterattack to 2.2×. The impact, refill, and final casualties play in real time.
 
 - [A · Purrapult loading, flight, impact, and formation refill](evidence/battlefield-impact/a-purrapult-impact.mp4)

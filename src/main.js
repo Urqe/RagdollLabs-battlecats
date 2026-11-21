@@ -178,11 +178,13 @@ function loop(now) {
   const wasPlaying = state.mode === "playing";
   const previousFront = state.front;
   const previousTime = state.t;
+  const previousPresentation = state.t + state.victoryElapsed;
   game.update(dt);
-  if (state.t > previousTime) {
+  const presentationTime = state.t + state.victoryElapsed;
+  if (presentationTime > previousPresentation) {
     motion.step(
-      state.t,
-      (state.front - previousFront) / (state.t - previousTime),
+      presentationTime,
+      state.t > previousTime ? (state.front - previousFront) / (state.t - previousTime) : 0,
       state.blueTotal,
       state.redEntryOpen,
       state.level,
