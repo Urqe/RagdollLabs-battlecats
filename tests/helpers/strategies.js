@@ -60,6 +60,7 @@ export function simulate(
   game.reset();
   const s = game.state;
   let furthest = s.front;
+  let cutoff = null;
   let activation = null;
   let atActivation = null;
   let direction = 0;
@@ -79,6 +80,7 @@ export function simulate(
       }
     }
     furthest = Math.max(furthest, s.front);
+    if (!s.redEntryOpen) cutoff ??= round(s.t);
     if (s.finalActivated && activation === null) {
       activation = s.t;
       atActivation = s.front;
@@ -103,7 +105,8 @@ export function simulate(
   }
   return {
     strategy,
-    won,
+    won: s.mode === "victory" ? true : won,
+    cutoff,
     seconds: round(s.t),
     furthest: round(furthest),
     activation: activation === null ? null : round(activation),

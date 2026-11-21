@@ -1,5 +1,5 @@
 import { createState, resetState } from "./state.js";
-import { SHOT_INTERVAL } from "./config.js";
+import { LEVEL, SHOT_INTERVAL } from "./config.js";
 import { createMultipliers } from "./multipliers.js";
 import { fire, updateProjectiles } from "./projectiles.js";
 import { updateArmy } from "./army.js";
@@ -11,8 +11,8 @@ export function createGame({
   const state = createState();
   const rand = (a, b) => a + random() * (b - a);
   function end(won) {
-    state.mode = "end";
-    onEnd(won);
+    state.mode = won ? "victory" : "end";
+    if (!won) onEnd(false);
   }
   function sprinkle(x, y, color, n) {
     for (let k = 0; k < n; k++)
@@ -26,16 +26,27 @@ export function createGame({
       });
   }
 
-  const { spawnSquad } = createMultipliers(state, sprinkle, notify, random);
+  const { spawnSquad } = createMultipliers(state, sprinkle, random);
   function reset() {
     resetState(state);
     notify("HOLD THE CHOKEPOINT!", 2.2);
   }
   function update(dt) {
+    if (state.mode === "victory") {
+      state.victoryElapsed = Math.min(
+        LEVEL.victoryDuration,
+        state.victoryElapsed + dt,
+      );
+      if (state.victoryElapsed === LEVEL.victoryDuration) {
+        state.mode = "end";
+        onEnd(true);
+      }
+      return;
+    }
     if (state.mode !== "playing") return;
     state.t += dt;
     state.nextShot -= dt;
-    state.flash = Math.max(0, state.flash - dt * 4);
+    state.recoil = Math.max(0, state.recoil - dt * 6);
     if (state.nextShot <= 0) {
       fire(state, sprinkle);
       state.nextShot += SHOT_INTERVAL;

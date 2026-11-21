@@ -52,7 +52,10 @@ for (const hz of [30, 60, 120]) {
       assert.equal(result.won, true);
       assert.ok(result.seconds >= 60 && result.seconds <= 120);
       assert.equal(result.red, 0);
-      assert.ok(result.state.front <= LEVEL.clearedFront);
+      assert.equal(result.state.mode, "victory");
+      assert.equal(result.state.redEntryOpen, false);
+      assert.ok(result.cutoff > result.activation);
+      assert.ok(result.cutoff < result.seconds);
       assert.ok(result.furthest < LEVEL.castleFront - 30);
       assert.deepEqual([left.gate, right.gate], [99, 999]);
       assert.ok(

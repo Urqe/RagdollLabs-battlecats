@@ -13,6 +13,7 @@ function notify(s, seconds = 2) {
   el("banner").style.opacity = 1;
 }
 function end(won) {
+  el("result").classList.toggle("won", won);
   el("result").hidden = false;
   el("hud").style.display = "none";
   el("banner").style.opacity = 0;
@@ -51,13 +52,16 @@ function updateHud() {
 }
 function loop(now) {
   frame = null;
-  if (state.mode !== "playing") return;
   const dt = Math.min((now - last) / 1000, 0.045);
   last = now;
+  const wasPlaying = state.mode === "playing";
   game.update(dt);
-  updateHud();
+  if (wasPlaying && state.mode === "victory") el("banner").style.opacity = 0;
+  if (state.mode === "playing" || state.mode === "victory") updateHud();
   renderer.draw();
-  if (state.mode === "playing") frame = requestAnimationFrame(loop);
+  if (state.mode === "playing" || state.mode === "victory") {
+    frame = requestAnimationFrame(loop);
+  }
 }
 bindControls(state, canvas, document);
 el("play").addEventListener("click", reset);

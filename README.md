@@ -21,7 +21,7 @@ The red horde starts larger and recruits faster as the siege goes on. Switch bet
 
 Cats do not instantly teleport to the front. Each gate creates a visible **marching formation** that moves toward the enemy; their army count is delivered when the formation reaches combat. Large squads render representative soldiers with their total still accounted for in the battle simulation.
 
-**Victory** comes when your blue army eliminates the horde and clears the far end of the battlefield. **Defeat** comes when the red frontline reaches the castle.
+**Victory** comes when your blue army cuts off the enemy supply route and eliminates the last invader. A short celebration shows blue taking the yard. **Defeat** comes when the red frontline reaches the castle.
 
 ## Local development
 
@@ -56,7 +56,8 @@ npm run test:all
 - `src/barricades.js`: direct-hit damage and gate unlocking.
 - `src/multipliers.js`: multiplied marching formations.
 - `src/army.js`: marching, combat, frontline movement, and outcomes.
-- `src/render.js`: Canvas drawing, formation aggregation, and resizing.
+- `src/render.js`: Canvas layers, gates, cannon, and victory effects.
+- `src/terrain.js` / `src/figures.js`: cached terrain, cat sprites, and representative formations.
 
 For AI-assisted changes, keep simulation code independent of DOM and animation timing. Add a regression test for gameplay changes, run `npm run test:all`, and review mobile behavior. Preserve the single level, three-cat automatic volleys, manually destroyed barricades, and travel time before combat. No runtime libraries, backend, monetization, or additional levels are needed.
 

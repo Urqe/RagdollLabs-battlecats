@@ -1,5 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import { test, expect } from "@playwright/test";
+import { LEVEL } from "../../src/config.js";
 async function snapshot(page) {
   return page.evaluate(async () =>
     (await import("/src/main.js")).getSnapshot(),
@@ -60,12 +61,18 @@ async function setup(page, browserName) {
   return { errors, hold };
 }
 
-async function advanceUntil(page, predicate, maxSeconds) {
-  for (let i = 0; i < maxSeconds; i++) {
-    if (predicate(await snapshot(page))) return;
-    await page.clock.runFor(1000);
+async function advanceUntil(page, predicate, maxSeconds, step = 1000) {
+  let s = await snapshot(page);
+  for (
+    let elapsed = 0;
+    elapsed < maxSeconds * 1000 && !predicate(s);
+    elapsed += step
+  ) {
+    await page.clock.runFor(step);
+    s = await snapshot(page);
   }
-  expect(predicate(await snapshot(page))).toBe(true);
+  expect(predicate(s)).toBe(true);
+  return s;
 }
 
 function battlefield(s) {
@@ -75,6 +82,8 @@ function battlefield(s) {
     red: s.redTotal,
     blue: s.blueTotal,
     redEntryRate: s.redEntryRate,
+    redEntryOpen: s.redEntryOpen,
+    victoryElapsed: s.victoryElapsed,
     work: s.work,
     marching: s.squads.reduce((count, q) => count + q.count, 0),
   };
@@ -117,6 +126,12 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
         path: testInfo.outputPath("phase-2-reversal.png"),
       });
     }
+    if (i === 6) {
+      milestones.push({ event: "renewed red pressure", ...battlefield(s) });
+      await page.screenshot({
+        path: testInfo.outputPath("phase-2-pressure.png"),
+      });
+    }
     const damage = s.work[1];
     await hold(329, 250);
     for (let elapsed = 250; elapsed < 3250; elapsed += 250) {
@@ -134,9 +149,24 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
   expect(s.redTotal).toBeGreaterThan(milestones[1].red * 2);
   const frontBefore = s.front;
   milestones.push({ event: "×999 unlocked", ...battlefield(s) });
-  await advanceUntil(page, (state) => state.finalActivated, 5);
+  const multiplying = await advanceUntil(
+    page,
+    (state) =>
+      state.squads.some(
+        (q) => q.mult === 999 && q.marchTime > 0.18 && q.marchTime < 0.25,
+      ),
+    2,
+    40,
+  );
+  await page.screenshot({
+    path: testInfo.outputPath("phase-3-multiplication.png"),
+  });
+  milestones.push({
+    event: "×999 multiplying at the gate",
+    ...battlefield(multiplying),
+  });
+  const arrival = await advanceUntil(page, (state) => state.finalActivated, 5);
   await expect(page.locator("#banner")).toContainText("REINFORCEMENTS ARRIVED");
-  const arrival = await snapshot(page);
   milestones.push({
     event: "×999 reaches the frontline",
     ...battlefield(arrival),
@@ -153,14 +183,42 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
     path: testInfo.outputPath("phase-3-counterattack.png"),
   });
 
-  await advanceUntil(page, (state) => state.mode === "end", 75);
-  await expect(page.locator("#resultTitle")).toHaveText("The castle stands!");
+  const cutoff = await advanceUntil(page, (state) => !state.redEntryOpen, 40);
+  expect(cutoff.mode).toBe("playing");
+  expect(cutoff.redTotal).toBeGreaterThan(0);
+  milestones.push({ event: "supply entrance secured", ...battlefield(cutoff) });
+
+  const cleared = await advanceUntil(
+    page,
+    (state) => state.mode === "victory",
+    10,
+    100,
+  );
+  expect(cleared.redTotal).toBe(0);
+  expect(cleared.t).toBeGreaterThan(60);
+  expect(cleared.t).toBeLessThan(120);
+  expect(cleared.front).toBeGreaterThan(30);
+  await expect(page.locator("#result")).toBeHidden();
+  await page.keyboard.press("ArrowLeft");
+  await page.clock.runFor(850);
   s = await snapshot(page);
-  expect(s.redTotal).toBe(0);
-  expect(s.front).toBeLessThanOrEqual(30);
-  expect(s.t).toBeGreaterThan(60);
-  expect(s.t).toBeLessThan(120);
-  milestones.push({ event: "victory", ...battlefield(s) });
+  expect(s.mode).toBe("victory");
+  expect(s.victoryElapsed).toBeGreaterThan(0.7);
+  expect(s.front).toBe(cleared.front);
+  expect(s.gunX).toBe(cleared.gunX);
+  expect(s.t).toBe(cleared.t);
+  milestones.push({
+    event: "cleared battlefield celebration",
+    ...battlefield(s),
+  });
+  await page.screenshot({ path: testInfo.outputPath("phase-3-cleared.png") });
+
+  s = await advanceUntil(page, (state) => state.mode === "end", 2, 100);
+  await expect(page.locator("#resultTitle")).toHaveText("The castle stands!");
+  expect(s.victoryElapsed).toBe(LEVEL.victoryDuration);
+  expect(s.front).toBe(cleared.front);
+  expect(s.t).toBe(cleared.t);
+  milestones.push({ event: "victory result", ...battlefield(s) });
   await page.screenshot({ path: testInfo.outputPath("victory.png") });
   const evidencePath = testInfo.outputPath("playthrough.json");
   await writeFile(
@@ -181,6 +239,8 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
   expect(s.redTotal).toBe(initial.redTotal);
   expect(s.squads).toEqual([]);
   expect(s.finalActivated).toBe(false);
+  expect(s.redEntryOpen).toBe(true);
+  expect(s.victoryElapsed).toBe(0);
   await expect(page.locator("#result")).toBeHidden();
   expect(errors).toEqual([]);
 });

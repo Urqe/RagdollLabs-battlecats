@@ -73,7 +73,7 @@ test("marching ×999 cats do not activate combat or affect frontline before arri
   const game = fixture(),
     s = game.state;
   const control = fixture();
-  createMultipliers(s, noop, noop).spawnSquad(s.gates[2], 329);
+  createMultipliers(s, noop).spawnSquad(s.gates[2], 329);
   game.update(0.01);
   control.update(0.01);
   assert.equal(s.finalActivated, false);
