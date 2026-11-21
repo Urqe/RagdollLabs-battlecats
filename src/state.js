@@ -1,0 +1,73 @@
+export function createState() {
+  const mode = "menu",
+    t = 0,
+    gunX = 210,
+    dragId = null,
+    dragStart = 0,
+    gunStart = 0,
+    nextShot = 0,
+    front = 283,
+    redTotal = 22000,
+    blueTotal = 0,
+    work = [0, 0],
+    flash = 0,
+    shots = [],
+    squads = [],
+    burst = [],
+    finalActivated = false,
+    bannerUntil = 0,
+    barricadeFlashes = [0, 0];
+  const gates = [
+    {
+      x: 210,
+      width: 98,
+      y: 555,
+      mult: 20,
+      name: "×20",
+      color: "#399be9",
+      open: true,
+    },
+    {
+      x: 90,
+      width: 96,
+      y: 555,
+      mult: 99,
+      name: "×99",
+      color: "#ffb740",
+      open: false,
+    },
+    {
+      x: 329,
+      width: 106,
+      y: 555,
+      mult: 999,
+      name: "×999",
+      color: "#ffd561",
+      open: false,
+    },
+  ];
+  return {
+    mode,
+    t,
+    gunX,
+    dragId,
+    dragStart,
+    gunStart,
+    nextShot,
+    front,
+    redTotal,
+    blueTotal,
+    work,
+    flash,
+    shots,
+    squads,
+    burst,
+    finalActivated,
+    bannerUntil,
+    barricadeFlashes,
+    gates,
+  };
+}
+export function resetState(state) {
+  Object.assign(state, createState(), { mode: "playing", nextShot: 0.1 });
+}
