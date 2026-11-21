@@ -1,6 +1,7 @@
 import { TAU, clamp } from "./config.js";
 import { laneHalfWidth, polygon } from "./terrain.js";
 import { waveProfile, waveRelease, waveY } from "./motion.js";
+import { gapShift, gapStrength } from "./formation.js";
 
 const colors = [
   "#df544b",
@@ -9,6 +10,7 @@ const colors = [
   "#1d72d3",
   "#83d9ff",
   "#a9eaff",
+  "#ff886f",
 ];
 const RED = 0;
 const DARK_RED = 1;
@@ -16,6 +18,7 @@ const BLUE = 2;
 const DARK_BLUE = 3;
 const BRIGHT_BLUE = 4;
 const PROJECTILE = 5;
+const AIR_RED = 6;
 const CELL = 48;
 const spacingNoise = new Float32Array(1232);
 let seed = 1729;
@@ -50,8 +53,15 @@ function ellipse(ctx, x, y, rx, ry, color) {
   ctx.fill();
 }
 
-function paintCat(ctx, color, frame, detail) {
-  ellipse(ctx, 0.7, 3.5, 4.2, 1.8, "#20262c55");
+function paintCat(ctx, color, frame, detail, airborne) {
+  if (airborne) {
+    const flail = Math.sin((frame * TAU) / 4);
+    ellipse(ctx, 0, 0.6, 4.1, 5.1, "#853e42");
+    ellipse(ctx, -4, 1.2 + flail * 1.5, 1.9, 1.15, "#ffb080");
+    ellipse(ctx, 4, 1.2 - flail * 1.5, 1.9, 1.15, "#ffb080");
+  } else {
+    ellipse(ctx, 0.7, 3.5, 4.2, 1.8, "#20262c55");
+  }
   if (detail) {
     ctx.strokeStyle = color;
     ctx.lineWidth = 1.3;
@@ -98,7 +108,7 @@ export function createFigures(ctx, ownerDocument) {
     for (let i = 0; i < colors.length; i++) {
       for (let pose = 0; pose < 5; pose++) {
         sprites.setTransform(3, 0, 0, 3, CELL * (pose + 0.5), CELL * (i + 0.5));
-        paintCat(sprites, colors[i], pose, pose !== 4);
+        paintCat(sprites, colors[i], pose, pose !== 4, i === AIR_RED);
       }
     }
   }
@@ -124,12 +134,12 @@ export function createFigures(ctx, ownerDocument) {
       ctx.save();
       ctx.translate(x, y + bob);
       ctx.scale(size / 5, size / 5);
-      paintCat(ctx, colors[tint], pose, detail);
+      paintCat(ctx, colors[tint], pose, detail, tint === AIR_RED);
       ctx.restore();
     }
   }
 
-  function drawYard(state, tip, reserve, cutoffAt) {
+  function drawYard(state, tip, reserve, cutoffAt, gap, strength) {
     // Occupancy hides stable slots. Losses open holes in the ranks without
     // relocating all survivors every time the representative count changes.
     const rows = Math.min(YARD_ROWS, Math.max(1, Math.ceil((tip - 8) / 8)));
@@ -148,9 +158,11 @@ export function createFigures(ctx, ownerDocument) {
         if (yardPriority[i] >= threshold) continue;
         const x =
           210 + (((col + 0.5 + (row % 2) * 0.22) / YARD_COLS) * 2 - 1) * half;
+        const px = x + spacingNoise[i] * 4;
+        const py = y + spacingNoise[(i + 271) % spacingNoise.length] * 4;
         cat(
-          x + spacingNoise[i] * 4,
-          y + spacingNoise[(i + 271) % spacingNoise.length] * 4,
+          px,
+          Math.min(tip, py + gapShift(px, py, gap, strength, i)),
           i % 5 === 0 ? DARK_RED : RED,
           3.48 + y * 0.0047,
           i * 0.71,
@@ -163,9 +175,10 @@ export function createFigures(ctx, ownerDocument) {
       for (let mark = 0; mark < 6; mark++) {
         const y = ((clock * 21 + file * 8 + mark * 17) % 102) - 12;
         if (y >= Math.min(rows * 8, tip - 7)) continue;
+        const x = 210 + track * laneHalfWidth(y) * 0.95;
         cat(
-          210 + track * laneHalfWidth(y) * 0.95,
-          y,
+          x,
+          Math.min(tip, y + gapShift(x, y, gap, strength, file + mark)),
           DARK_RED,
           3.55,
           file + mark,
@@ -174,13 +187,14 @@ export function createFigures(ctx, ownerDocument) {
     }
   }
 
-  function redArmy(state, nearGates, contact) {
+  function redArmy(state, nearGates, contact, gap) {
     const count = redFormationSize(state.redTotal);
     if (!count) return;
     const tip = state.front - 3;
     const yardEnd = Math.min(191, tip - 12);
     const reserve = Math.floor(count * 0.76 * clamp(count / 105, 0, 1));
-    if (!nearGates) drawYard(state, tip, reserve, contact.cutoffAt);
+    const strength = gapStrength(clock - gap?.at);
+    if (!nearGates) drawYard(state, tip, reserve, contact.cutoffAt, gap, strength);
 
     const lead = count - reserve;
     const trailing = tip - yardEnd > 26 ? Math.floor(lead * 0.35) : 0;
@@ -191,18 +205,20 @@ export function createFigures(ctx, ownerDocument) {
     const pushing = Math.max(0, contact.pressure);
     const depth = Math.min(
       Math.max(4, tip - yardEnd),
-      (rows - 1) * (9.3 - losing * 2.1),
+      (rows - 1) * (10.3 - losing * 2.6 - contact.hold * 0.65),
     );
     const passage = Math.max(0, tip - depth - yardEnd);
     for (let i = 0; i < trailing; i++) {
       const y =
         yardEnd +
         (((passage * i) / trailing + clock * 19) % Math.max(1, passage));
-      if (y >= 547 !== nearGates) continue;
       const half = Math.min(54, laneHalfWidth(y) * 0.82);
+      const x = 210 + (((i * 13) % 17) / 8 - 1) * half;
+      const displaced = Math.min(tip, y + gapShift(x, y, gap, strength, i));
+      if (displaced >= 547 !== nearGates) continue;
       cat(
-        210 + (((i * 13) % 17) / 8 - 1) * half,
-        y,
+        x,
+        displaced,
         i % 3 === 0 ? DARK_RED : RED,
         clamp(3.6 + y * 0.005, 3.6, 5.7),
         i * 0.77,
@@ -219,12 +235,14 @@ export function createFigures(ctx, ownerDocument) {
         (row / Math.max(1, rows - 1)) * depth +
         edge +
         spacingNoise[i] * 3;
-      if (y >= 547 !== nearGates) continue;
       const half =
         laneHalfWidth(y) * (0.8 + pushing * 0.1) * Math.min(1, atFront / 12);
+      const x = 210 + across * half + spacingNoise[i + 17] * 4;
+      const displaced = Math.min(tip + 2, y + gapShift(x, y, gap, strength, i));
+      if (displaced >= 547 !== nearGates) continue;
       cat(
-        210 + across * half + spacingNoise[i + 17] * 4,
-        y,
+        x,
+        displaced,
         i % 4 === 0 ? DARK_RED : RED,
         clamp(3.7 + y * 0.006, 3.6, 6.1),
         i * 0.74,
@@ -237,13 +255,17 @@ export function createFigures(ctx, ownerDocument) {
       return 0;
     const press = red ? contact.pressure : -contact.pressure;
     const stress = red ? contact.red : contact.blue;
-    const rhythm = Math.sin(clock * 16 + i * 1.47 + (red ? 0 : 2));
-    const seam = Math.sin(across * 7 + clock * 2) * 1.7;
-    const nudge = 1.4 + Math.max(0, press) * 2;
-    const recoil =
-      Math.max(0, rhythm) * (1.8 + stress * 3 + Math.max(0, -press) * 3.6);
-    const advance = (red ? 1 : -1) * (nudge - recoil);
-    return (seam + advance) * (1 - row * 0.3);
+    const rhythm = Math.sin(clock * 15 + i * 1.47 + (red ? 0 : 2));
+    const seam = Math.sin(across * 7 + clock * 2) * 1.6;
+    const attack = Math.max(0, rhythm) * (2.4 + Math.max(0, press) * 3.8);
+    const guard = Math.max(0, -rhythm) * (1.7 + Math.max(0, -press) * 4.7);
+    const reach = Math.abs(contact.clashX - 210 - across * 45) / 41;
+    const touch = 1 - clamp(reach, 0, 1);
+    const bump = Math.max(0, 1 - contact.clashAge / 0.16) ** 2;
+    const recoil = touch * bump * (1.2 + stress * 5 + Math.max(0, -press) * 4);
+    const surge = Math.max(0, 1 - (clock - contact.surgeAt) / 0.68);
+    const advance = (red ? 1 : -1) * (attack - guard - recoil + press * surge * 11);
+    return (seam + advance) * (1 - row * 0.32);
   }
 
   function blueWave(q, age, state, nearGates, triumph) {
@@ -261,12 +283,17 @@ export function createFigures(ctx, ownerDocument) {
       const spread = push * (2 - push);
       const sway =
         spacingNoise[(i + Math.floor(q.phase * 31)) % spacingNoise.length];
-      const y = marchY - triumph * 28 + sway * 2 * spread;
+      // Keep each lane aligned at the opening, then fan the large waves as
+      // independent ranks so several volleys read as a continuous column.
+      const rank = Math.floor(i / profile.cols);
+      const stride = Math.sin(run * 13 + i * 1.7);
+      const y = marchY - triumph * 28 + (sway * 3 + stride * 1.4) * spread;
       if (y >= 547 !== nearGates) continue;
       const route = clamp((y - 242) / 270, 0, 1);
       const offset = (q.slot || 0) * profile.laneOffset;
       const col = i % profile.cols;
-      const local = (col - (profile.cols - 1) / 2) * profile.spacing + sway * 7;
+      const local = (col - (profile.cols - 1) / 2) * profile.spacing + sway * 6
+        + (profile.cols > 2 ? (rank % 2 - 0.5) * profile.spacing * 0.64 : 0);
       const center =
         210 +
         (q.x - 210 + offset * spread) * (1 - spread + spread * route ** 1.38);
@@ -307,14 +334,16 @@ export function createFigures(ctx, ownerDocument) {
     const occupancy = 0.4 + 0.6 * Math.min(1, Math.sqrt(count / 140));
     const depth = Math.min(
       Math.max(18, 708 - front),
-      rows * (9.5 - losing * 2.6),
+      rows * (9.5 - losing * 2.6 - contact.hold * 0.95),
     );
     for (let i = 0; i < count; i++) {
       const row = Math.floor(i / cols);
       const col = i % cols;
       const across = ((col + 0.5) / cols) * 2 - 1;
       const edge = triumph ? 0 : nearContact(i, row, across, contact, false);
-      const y = front + 4 + (row * depth) / rows + spacingNoise[i] * 4 + edge;
+      const cadence = Math.sin(clock * 12 + col * 0.94 - row * 0.77);
+      const y = front + 4 + (row * depth) / rows + spacingNoise[i] * 4
+        + edge + cadence * Math.min(1.6, row * 0.45);
       if (y >= 547 !== nearGates) continue;
       const lane = laneHalfWidth(y);
       const half =
@@ -341,8 +370,13 @@ export function createFigures(ctx, ownerDocument) {
     for (const fall of falls) {
       const age = clamp((clock - fall.at) / 0.38, 0, 1);
       ctx.save();
-      ctx.translate(fall.x, fall.y + (fall.red ? -1 : 1) * age * 9);
-      ctx.rotate((fall.red ? 1 : -1) * age * 1.75);
+      const drift = fall.x < 210 ? -1 : 1;
+      const lift = 24 * age * (1 - age);
+      ctx.translate(
+        fall.x + drift * age * 8,
+        fall.y + (fall.red ? -1 : 1) * age * 13 - lift,
+      );
+      ctx.rotate(drift * age * 2.8);
       ctx.globalAlpha = (1 - age) * 0.76;
       cat(0, 0, fall.red ? DARK_RED : DARK_BLUE, 4.4, 0);
       ctx.restore();
@@ -359,8 +393,8 @@ export function createFigures(ctx, ownerDocument) {
     crew(x, y, pose) {
       cat(x, y, BLUE, 6, pose);
     },
-    scattered(x, y, pose) {
-      cat(x, y, RED, 4, pose);
+    scattered(x, y, size, pose) {
+      cat(x, y, AIR_RED, size, pose);
     },
     projectile(shot) {
       cat(shot.x, shot.y, PROJECTILE, 6.0, shot.x * 0.75);

@@ -139,7 +139,7 @@ test("automatic artillery waits for reload, applies a bounded impact once, and c
   assert.equal(state.support.shot, null);
   updateArtillery(state);
   assert.equal(state.support.impacts, 1);
-  assert.equal(state.support.readyAt - first.impactAt, config.reload);
+  assert.equal(state.support.readyAt, first.impactAt + config.reload);
   state.t = state.support.readyAt + 0.02;
   updateArtillery(state);
   assert.equal(state.support.shotsFired, 1);
@@ -213,6 +213,14 @@ for (const hz of [30, 60, 120]) {
     }
     const artillery = simulatePurrapult("artillery-first", hz);
     assert.ok(artillery.furthest < gates.furthest - 40);
+    const previous = {
+      ...LEVEL_TWO,
+      support: { ...LEVEL_TWO.support, reload: 3.3, damage: 2850 },
+    };
+    const before = simulatePurrapult("artillery-first", hz, previous);
+    assert.ok(artillery.impacts > before.impacts);
+    assert.ok(artillery.artilleryLoss < before.artilleryLoss * 1.12);
+    assert.ok(artillery.firstImpact - artillery.unlocked < before.firstImpact - before.unlocked);
     const inert = {
       ...LEVEL_TWO,
       support: { ...LEVEL_TWO.support, damage: 0 },

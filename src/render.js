@@ -1,5 +1,10 @@
 import { H, TAU, W, clamp } from "./config.js";
-import { drawArtilleryShot, drawCatapult } from "./artillery-render.js";
+import {
+  drawArtilleryShot,
+  drawCatapult,
+  drawImpactAir,
+  drawImpactGround,
+} from "./artillery-render.js";
 import { barrierIndex, barrierStatus } from "./barricades.js";
 import { createFigures } from "./figures.js";
 import { drawTerrain, laneHalfWidth, polygon } from "./terrain.js";
@@ -91,7 +96,10 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     const slot = barrierIndex(state, gate.barricadeId);
     const { progress, label: status } = barrierStatus(state, slot);
     const y = state.level.barricades[slot].hitY;
+    const flash = state.barricadeFlashes[slot];
     const width = (right - left - 12) / 7;
+    ctx.save();
+    if (flash > 0) ctx.translate(Math.sin(flash * 105) * flash * 20, -flash * 5);
     for (let i = 0; i < 7; i++) {
       const x = left + 6 + i * width;
       const damage = clamp(progress * 1.43 - ((i * 5) % 7) * 0.1, 0, 1);
@@ -121,12 +129,16 @@ export function createRenderer(state, canvas, motion = createMotion()) {
       ctx.fillRect(x + 3, top + 5, 1.2, Math.max(1, 17 - damage * 8));
       if (damage > 0.12) {
         ctx.strokeStyle = "#513726";
-        ctx.lineWidth = 1.3;
+        ctx.lineWidth = 1.3 + damage * 0.6;
         ctx.beginPath();
         ctx.moveTo(x + width - 3, top + 1);
         ctx.lineTo(x + 4, top + 8);
         ctx.lineTo(x + width - 6, top + 11);
         ctx.lineTo(x + 3, top + 11 + damage * 7);
+        if (damage > 0.45) {
+          ctx.moveTo(x + width - 6, top + 11);
+          ctx.lineTo(x + width - 1, top + 15);
+        }
         ctx.stroke();
       }
     }
@@ -154,13 +166,12 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     ctx.fillRect(left + 12, y + 17, (right - left - 24) * progress, 4);
     label(status, gate.x, y + 1, 12, "#fff0ca", "#4b3020");
     label("SHOOT TO BREAK", gate.x, y + 32, 8, "#fff0ca", "#4b3020");
-    const flash = state.barricadeFlashes[slot];
     if (flash > 0) {
-      ctx.globalAlpha = flash * 0.55;
+      ctx.globalAlpha = flash * 0.7;
       ctx.fillStyle = "#ffd89a";
       ctx.fillRect(left + 5, y - 10, right - left - 10, 20);
-      ctx.globalAlpha = 1;
     }
+    ctx.restore();
   }
 
   function drawGate(gate, index) {
@@ -221,6 +232,17 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     ]);
     const pulse = pulses[index];
     if (gate.open) {
+      if (gate.barricadeId) {
+        const slot = barrierIndex(state, gate.barricadeId);
+        const opened = state.barricadeFlashes[slot];
+        if (opened > 0) {
+          ctx.globalAlpha = opened * 1.18;
+          ctx.fillStyle = palette.light;
+          ctx.fillRect(left + 3, 509, width - 5, 16);
+          ctx.fillRect(left + 7, 535, 3, 24);
+          ctx.fillRect(right - 7, 535, 3, 24);
+        }
+      }
       ctx.globalAlpha = 0.4 + pulse * 0.6;
       ctx.fillStyle = palette.glow;
       ctx.fillRect(left + 5, 526, width - 9, 2);
@@ -310,7 +332,8 @@ export function createRenderer(state, canvas, motion = createMotion()) {
       ctx.save();
       ctx.translate(
         gate.x + x * (1 + age),
-        state.level.barricades[slot].hitY + age * (18 - (i % 3) * 14),
+        state.level.barricades[slot].hitY +
+          age * 23 - 4 * age * (1 - age) * (8 + i % 3 * 7),
       );
       ctx.rotate(age * (i - 2.8) * 0.82);
       ctx.globalAlpha = 1 - age;
@@ -397,7 +420,9 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     const celebration =
       state.victoryElapsed / state.level.combat.victoryDuration;
     const surge = 1 - (1 - celebration) ** 2;
-    figures.setClock(state.t + state.victoryElapsed);
+    const clock = state.t + state.victoryElapsed;
+    const impactAge = clock - motion.impact.at;
+    figures.setClock(clock);
     for (const gate of state.gates) {
       const duration = waveProfile(gate.mult).flare;
       pulses[gate.style] =
@@ -406,7 +431,8 @@ export function createRenderer(state, canvas, motion = createMotion()) {
           : 0;
       gateGround(gate, gate.style);
     }
-    figures.redArmy(state, false, motion.contact);
+    drawImpactGround(ctx, motion.impact, impactAge);
+    figures.redArmy(state, false, motion.contact, motion.impact);
     figures.blueArmy(state, false, surge, motion.contact, motion.tails);
     for (const gate of state.gates) drawGate(gate, gate.style);
     const emplacement = state.level.support;
@@ -422,7 +448,7 @@ export function createRenderer(state, canvas, motion = createMotion()) {
         );
       }
     }
-    figures.redArmy(state, true, motion.contact);
+    figures.redArmy(state, true, motion.contact, motion.impact);
     figures.blueArmy(state, true, surge, motion.contact, motion.tails);
     supplyFlags();
     if (state.mode === "playing" || (state.mode === "end" && !celebration)) {
@@ -440,8 +466,10 @@ export function createRenderer(state, canvas, motion = createMotion()) {
       ctx.globalAlpha = 1;
     }
     cannon();
-    if (emplacement && state.mode !== "end")
-      drawArtilleryShot(ctx, state, figures);
+    if (emplacement && state.mode !== "end") {
+      drawArtilleryShot(ctx, state);
+      drawImpactAir(ctx, figures, motion.impact, impactAge);
+    }
     if (celebration) drawVictory(surge);
   }
 

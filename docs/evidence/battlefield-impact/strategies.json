@@ -1,0 +1,224 @@
+[
+  {
+    "strategy": "passive",
+    "hz": 30,
+    "won": false,
+    "seconds": 47.27,
+    "furthest": 690.16,
+    "unlocked": null,
+    "firstImpact": null,
+    "gateTimes": [],
+    "shots": 0,
+    "impacts": 0,
+    "artilleryLoss": 0
+  },
+  {
+    "strategy": "passive",
+    "hz": 60,
+    "won": false,
+    "seconds": 47.38,
+    "furthest": 690.13,
+    "unlocked": null,
+    "firstImpact": null,
+    "gateTimes": [],
+    "shots": 0,
+    "impacts": 0,
+    "artilleryLoss": 0
+  },
+  {
+    "strategy": "passive",
+    "hz": 120,
+    "won": false,
+    "seconds": 47.44,
+    "furthest": 690.04,
+    "unlocked": null,
+    "firstImpact": null,
+    "gateTimes": [],
+    "shots": 0,
+    "impacts": 0,
+    "artilleryLoss": 0
+  },
+  {
+    "strategy": "artillery-rush",
+    "hz": 30,
+    "won": false,
+    "seconds": 16.83,
+    "furthest": 690.18,
+    "unlocked": 3.4,
+    "firstImpact": 6.8,
+    "gateTimes": [],
+    "shots": 4,
+    "impacts": 3,
+    "artilleryLoss": 3837.27
+  },
+  {
+    "strategy": "artillery-rush",
+    "hz": 60,
+    "won": false,
+    "seconds": 16.83,
+    "furthest": 690.18,
+    "unlocked": 3.38,
+    "firstImpact": 6.75,
+    "gateTimes": [],
+    "shots": 4,
+    "impacts": 4,
+    "artilleryLoss": 5426.58
+  },
+  {
+    "strategy": "artillery-rush",
+    "hz": 120,
+    "won": false,
+    "seconds": 16.82,
+    "furthest": 690.01,
+    "unlocked": 3.38,
+    "firstImpact": 6.73,
+    "gateTimes": [],
+    "shots": 4,
+    "impacts": 4,
+    "artilleryLoss": 5412.92
+  },
+  {
+    "strategy": "gates",
+    "hz": 30,
+    "won": true,
+    "seconds": 102.17,
+    "furthest": 609.29,
+    "unlocked": null,
+    "firstImpact": null,
+    "gateTimes": [
+      17.13,
+      56.6
+    ],
+    "shots": 0,
+    "impacts": 0,
+    "artilleryLoss": 0
+  },
+  {
+    "strategy": "gates",
+    "hz": 60,
+    "won": true,
+    "seconds": 102.83,
+    "furthest": 611.19,
+    "unlocked": null,
+    "firstImpact": null,
+    "gateTimes": [
+      17.12,
+      56.87
+    ],
+    "shots": 0,
+    "impacts": 0,
+    "artilleryLoss": 0
+  },
+  {
+    "strategy": "gates",
+    "hz": 120,
+    "won": true,
+    "seconds": 102.76,
+    "furthest": 609.98,
+    "unlocked": null,
+    "firstImpact": null,
+    "gateTimes": [
+      17.11,
+      56.87
+    ],
+    "shots": 0,
+    "impacts": 0,
+    "artilleryLoss": 0
+  },
+  {
+    "strategy": "artillery-first",
+    "hz": 30,
+    "won": true,
+    "seconds": 93.87,
+    "furthest": 484.11,
+    "unlocked": 12.07,
+    "firstImpact": 15.47,
+    "gateTimes": [
+      23.27,
+      63.03
+    ],
+    "shots": 24,
+    "impacts": 24,
+    "artilleryLoss": 52232.94
+  },
+  {
+    "strategy": "artillery-first",
+    "hz": 60,
+    "won": true,
+    "seconds": 93.02,
+    "furthest": 474.06,
+    "unlocked": 12.07,
+    "firstImpact": 15.42,
+    "gateTimes": [
+      22.98,
+      62.75
+    ],
+    "shots": 24,
+    "impacts": 24,
+    "artilleryLoss": 52122.59
+  },
+  {
+    "strategy": "artillery-first",
+    "hz": 120,
+    "won": true,
+    "seconds": 92.91,
+    "furthest": 472.04,
+    "unlocked": 12.07,
+    "firstImpact": 15.42,
+    "gateTimes": [
+      22.98,
+      62.74
+    ],
+    "shots": 24,
+    "impacts": 24,
+    "artilleryLoss": 52243.96
+  },
+  {
+    "strategy": "gates-first",
+    "hz": 30,
+    "won": true,
+    "seconds": 105.97,
+    "furthest": 624.51,
+    "unlocked": 30,
+    "firstImpact": 33.37,
+    "gateTimes": [
+      17.13,
+      64.43
+    ],
+    "shots": 21,
+    "impacts": 21,
+    "artilleryLoss": 46131.39
+  },
+  {
+    "strategy": "gates-first",
+    "hz": 60,
+    "won": true,
+    "seconds": 105.48,
+    "furthest": 613.42,
+    "unlocked": 29.98,
+    "firstImpact": 33.35,
+    "gateTimes": [
+      17.12,
+      64.72
+    ],
+    "shots": 22,
+    "impacts": 22,
+    "artilleryLoss": 46513.75
+  },
+  {
+    "strategy": "gates-first",
+    "hz": 120,
+    "won": true,
+    "seconds": 105.34,
+    "furthest": 611.5,
+    "unlocked": 29.98,
+    "firstImpact": 33.33,
+    "gateTimes": [
+      17.11,
+      64.71
+    ],
+    "shots": 22,
+    "impacts": 22,
+    "artilleryLoss": 46744.19
+  }
+]

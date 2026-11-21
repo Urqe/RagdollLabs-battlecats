@@ -1,6 +1,8 @@
 import { TAU, clamp } from "./config.js";
 import { polygon } from "./terrain.js";
 
+const CAT_FLIGHT = 0.77;
+
 function ellipse(ctx, x, y, rx, ry, color) {
   ctx.beginPath();
   ctx.fillStyle = color;
@@ -106,8 +108,11 @@ export function drawCatapult(ctx, state, figures) {
   if (!shot && load > 0.53) yarn(ctx, -23, -10, 8.5, -load * 0.4);
   ctx.restore();
 
-  figures.crew(x - 26, y - 18 - load * 4, load * 8);
-  figures.crew(x + 23, y - 17 + recoil * 3, 2 + load * 6);
+  const wakeAge = state.t - support.unlockedAt;
+  const wake =
+    support.open && wakeAge < 0.42 ? Math.sin((wakeAge / 0.42) * Math.PI) : 0;
+  figures.crew(x - 26, y - 18 - load * 4 - wake * 15, load * 8);
+  figures.crew(x + 23, y - 17 + recoil * 3 - wake * 10, 2 + load * 6);
   if (!support.open) return;
   ctx.fillStyle = "#312d35";
   ctx.fillRect(x - 24, y + 13, 48, 5);
@@ -115,48 +120,81 @@ export function drawCatapult(ctx, state, figures) {
   ctx.fillRect(x - 23, y + 14, 46 * (shot ? 1 : load), 3);
 }
 
-export function drawArtilleryShot(ctx, state, figures) {
+export function drawArtilleryShot(ctx, state) {
   const { support, level, t } = state;
-  if (support.shot) {
-    const { shot } = support;
-    const progress = clamp((t - shot.launchedAt) / level.support.flight, 0, 1);
-    const x =
-      level.support.x - 14 + (shot.x - (level.support.x - 14)) * progress;
-    const floor =
-      level.support.y - 30 + (shot.y - (level.support.y - 30)) * progress;
-    const lift = Math.sin(progress * Math.PI) * 132;
-    ellipse(ctx, x, floor + 4, 10 - lift * 0.042, 3.1, "#24233537");
-    yarn(ctx, x, floor - lift, 12 - progress * 2.2, progress * 10);
+  const shot = support.shot;
+  if (!shot) return;
+  const progress = clamp((t - shot.launchedAt) / level.support.flight, 0, 1);
+  const x = level.support.x - 14 + (shot.x - (level.support.x - 14)) * progress;
+  const floor =
+    level.support.y - 30 + (shot.y - (level.support.y - 30)) * progress;
+  const lift = Math.sin(progress * Math.PI) * 132;
+  ellipse(ctx, x, floor + 4, 10 - lift * 0.042, 3.1, "#24233537");
+  yarn(ctx, x, floor - lift, 13 - progress * 1.8, progress * 11);
+}
+
+export function drawImpactGround(ctx, hit, age) {
+  if (age < 0 || age >= 0.66) return;
+  const spread = age / 0.66;
+  const x = hit.x;
+  const y = hit.y;
+  const force = hit.force;
+  ctx.save();
+  ctx.globalAlpha = (1 - spread) * (0.36 + force * 0.34);
+  ellipse(ctx, x, y, 9 + spread * hit.radiusX, 5 + spread * hit.radiusY, "#4c3131");
+  ctx.strokeStyle = "#ffe3c2";
+  ctx.lineWidth = 2.2 - spread;
+  ctx.beginPath();
+  ctx.ellipse(
+    x, y, 8 + spread * (26 + force * 38), 4 + spread * (15 + force * 16),
+    0, 0, TAU,
+  );
+  ctx.stroke();
+  ctx.restore();
+}
+
+export function drawImpactAir(ctx, figures, hit, age) {
+  if (age < 0 || age >= CAT_FLIGHT + 0.1) return;
+  const ring = Math.min(1, age / 0.49);
+  if (ring < 1) {
+    ctx.save();
+    ctx.globalAlpha = (1 - ring) * 0.88;
+    for (let i = 0; i < 8; i++) {
+      const angle = i * TAU / 8;
+      const x = hit.x + Math.cos(angle) * (8 + ring * hit.radiusX);
+      const y = hit.y + Math.sin(angle) * (5 + ring * hit.radiusY)
+        - Math.sin(ring * Math.PI) * (6 + i % 3 * 3);
+      ellipse(
+        ctx, x, y, 2.3 + ring * 5, 1.6 + ring * 3,
+        i % 3 ? "#e5bf9d" : "#ffe7c8",
+      );
+    }
+    ctx.restore();
+  }
+  if (age < 0.16) {
+    ctx.save();
+    ctx.globalAlpha = 1 - age / 0.16;
+    yarn(ctx, hit.x, hit.y - age * 23, 11 + age * 28, age * 16);
+    ctx.restore();
   }
 
-  const hit = support.impact;
-  if (!hit) return;
-  const age =
-    state.mode === "victory" || state.mode === "end"
-      ? t + state.victoryElapsed - hit.at
-      : t - hit.at;
-  if (age >= 0.58) return;
-  const time = age / 0.58;
-  ctx.save();
-  ctx.strokeStyle = hit.loss > 0 ? "#ffcdd3" : "#e2c0ac";
-  ctx.globalAlpha = (1 - time) * 0.8;
-  ctx.lineWidth = 2.3;
-  ctx.beginPath();
-  ctx.ellipse(hit.x, hit.y, 7 + time * 41, 4 + time * 20, 0, 0, TAU);
-  ctx.stroke();
-  if (hit.loss > 0) {
-    for (let i = 0; i < 12; i++) {
-      const x = hit.x + Math.cos(i * 2.4) * (8 + time * (26 + (i % 4) * 4));
-      const y =
-        hit.y +
-        Math.sin(i * 2.4) * (4 + time * 17) -
-        Math.sin(time * Math.PI) * 12;
-      ctx.fillStyle = i % 2 === 0 ? "#ffd7d7" : "#df82a7";
-      ctx.fillRect(x, y, 3.5, 2);
-      if (i < Math.min(6, Math.ceil(hit.loss / 380)) && state.redTotal > 0) {
-        figures.scattered(x, y, i);
-      }
-    }
+  for (let i = 0; i < hit.airborne; i++) {
+    const progress = (age - (i % 4) * 0.019) / (CAT_FLIGHT - (i % 3) * 0.07);
+    if (progress < 0 || progress >= 1) continue;
+    const turn = i * 2.39996;
+    const travel = 9 + progress * (32 + (i % 5) * 8) * (0.5 + hit.force * 0.5);
+    const x = hit.x + Math.cos(turn) * travel;
+    const ground = hit.y + (0.21 + Math.sin(turn) * 0.49) * travel;
+    const lift = 4 * progress * (1 - progress) * (34 + (i % 4) * 10);
+    const alpha = Math.min(1, (1 - progress) * 3.7);
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.27;
+    ellipse(ctx, x, ground + 2, 4.4 - lift * 0.031, 1.8, "#302536");
+    ctx.translate(x, ground - lift);
+    ctx.rotate(progress * (i % 2 ? -1 : 1) * (4.8 + i % 4));
+    ctx.globalAlpha = alpha;
+    const size = clamp(5.4 + ground * 0.0044 + lift * 0.02, 5.2, 8.1);
+    figures.scattered(0, 0, size, i);
+    ctx.restore();
   }
-  ctx.restore();
 }

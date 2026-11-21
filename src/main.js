@@ -28,7 +28,10 @@ let barrierLabels = [];
 function onEffect(kind, time, value, front, redLoss, blueLoss) {
   motion.receive(kind, time, value, front, redLoss, blueLoss);
   if (kind === "arrival") return;
-  sound.play(kind === "multiply" ? `gate${value}` : kind);
+  if (kind === "multiply") sound.play(`gate${value}`);
+  else if (kind === "break")
+    sound.play(value === "catapult" ? "artilleryReady" : "gateUnlock");
+  else sound.play(kind);
 }
 
 function updateSoundButtons() {

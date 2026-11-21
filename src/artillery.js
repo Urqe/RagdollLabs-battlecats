@@ -34,7 +34,7 @@ export function updateArtillery(state, onEffect) {
     support.damage += loss;
     support.impacts++;
     support.impact = { x: shot.x, y: shot.y, at: t, loss };
-    if (loss > 0) onEffect?.("artilleryImpact", t);
+    if (loss > 0) onEffect?.("artilleryImpact", t, support.impact);
     return;
   }
   if (t < support.readyAt || state.redTotal <= 0) return;

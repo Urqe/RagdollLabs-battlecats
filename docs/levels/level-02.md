@@ -13,7 +13,7 @@ Level 1 asks when to stop reinforcing for a better gate. The Purrapult adds a se
 ## Mechanics
 
 - Keep the horizontal slide, three-cat auto-fire, gate multipliers, marching arrivals, direct wood hits, and escalating red pressure. Cannon shots at the catapult's barricade advance its unlock and produce no defenders.
-- The crew fires **automatically after unlocking**. A visible reload leads to a launch toward a dense eligible red concentration. The shot travels in a visible arc before applying a bounded splash to red strength in the simulation. Show recoil, a cluster breaking apart according to resolved losses, and the crew winding up the next shot. A completed reload waits for a red target. The art follows resolved impacts and the actual remaining horde.
+- The crew fires **automatically after unlocking**. A visible reload leads to a launch toward a dense eligible red concentration. After a 2.4-second reload, the shot travels for 0.94 seconds before resolving bounded splash damage. At a successful impact, cats tumble out of the formation and survivors march back through the opening while the crew winds up the next shot. A completed reload waits for a red target. The art follows resolved impacts and the actual remaining horde.
 - Artillery buys time and reduces pressure. The blue line still needs reinforcements to secure the supply route. Level 1’s supply cutoff and castle-breach rules also apply here. If the supply route is already secured, a final artillery casualty can end the battle.
 - **Ammunition alternative.** The cannon could periodically reload the crew by aiming at a supply target. That creates an ongoing choice and can curb an overpowered unlock, but adds another target state and asks the player to monitor reloads while switching among gates. Begin with automatic fire and test wood cost, reload cadence, splash, and exposure before testing an ammunition loop.
 
@@ -23,7 +23,7 @@ One crossing connects the red mustering yard to the broad blue approach. From le
 
 ## Balance hypotheses
 
-At 30, 60, and 120 Hz, passive defense and rushing the artillery alone lost. Gate-only, artillery-first, and gate-first with later artillery all won. The early-artillery policy held the red frontline farther from the castle than the gate-only policy. It lost in a comparison run with the same aim schedule and zero artillery damage. The [balance note](../purrapult-balance.md) records timings, parameters, and media.
+At 30, 60, and 120 Hz, passive defense and rushing the artillery alone lost. Gate-only, artillery-first, and gate-first with later artillery all won. The early-artillery policy held the red frontline farther from the castle than the gate-only policy. Compared with Milestone 7, its 60 Hz run gained five impacts with about 3% more total artillery damage. It lost in a comparison run with the same aim schedule and zero artillery damage. The [balance note](../purrapult-balance.md) records timings, parameters, and media.
 
 ## Implementation considerations
 
@@ -35,4 +35,4 @@ Can players tell where to aim to free the crew and why unlocking it matters? Whi
 
 ## Revision history
 
-Milestone 6 selected automatic fire for the first prototype. Milestone 7 implemented it, added free level selection, and established simulated balance and browser evidence. Human playtesting is next. [Playtest log](../playtest-log.md)
+Milestone 6 selected automatic fire for the first prototype. Milestone 7 implemented it, added free level selection, and established simulated balance and browser evidence. Milestone 8 shortened the reload, reduced the per-hit cap and added impact reactions driven by resolved losses. Human playtesting is next. [Playtest log](../playtest-log.md)
