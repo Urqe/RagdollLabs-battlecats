@@ -8,6 +8,8 @@ SiegeDolls is a mobile-first arcade strategy game about miniature cats taking si
 - Make failure understandable and recovery possible. Expose the cost of shooting at wood or spending time away from a threatened approach. Keep the game free of monetization, artificial delays, and progression grind.
 - Let simulation own arrivals, casualties, pressure, the frontline, and outcomes. The battlefield should explain what happened through troop movement, impact, and visible cause and effect.
 - Keep the miniature-cat humor in crews, names, animation, and scenery. Keep input and tactical cues easy to read.
+- Keep the existing balance-first cannon, multiplier, and frontline loop recognizable across levels. Distinct cat ranks and equipment should usually be visual storytelling, not a new unit-management system. If an elite formation has greater combat effectiveness, represent it transparently in the existing aggregate simulation rather than secretly contradicting the visuals.
+- Reserve distinctive themed warrior formations for a few special encounters, not every level. Match the troops to the setting and architecture: Meowrtan hoplites only belong in a convincing Greek-inspired battlefield, for example. Never assign a theme merely to fit a pun; a well-executed familiar cat army is better than costume changes every round.
 - Aim for short, replayable battles and smooth mobile Safari play. Reuse the lightweight Canvas renderer and bounded representative formations.
 
 ## Development status
@@ -30,6 +32,12 @@ Level 1 is the playable baseline. The five merged milestones established modular
 | 8 | [The Great Catastrophe](levels/level-08.md) | Proposed | Coordinated attacks across multiple fronts. Depends on a successful two-crossing playtest and readable attack warnings. |
 | 9 | [General Meowhem](levels/level-09.md) | Proposed | An armored commander supports nearby red cats. Builds on readable special targets and a clear support effect. |
 | 10 | [The Battle of Cattledonia](levels/level-10.md) | Proposed | Combine the strongest previously learned mechanics. Select the mix from earlier playtest evidence and the mobile performance budget. |
+
+## Special formations and visual themes (provisional)
+
+The recurring core can be humble kitten conscripts; selected battles may instead feature memorable elite formations, veteran knights, or culturally themed armies. The goal is variety in **scale, silhouette, formation, animation, and battlefield fantasy**, not a separate class system for each level. A few hundred disciplined Meowrtans holding against a vast Persian-inspired horde may be more exciting than yet another six-figure kitten flood—but only in a coherent Greek-inspired environment (terrain, architecture, equipment, enemy presentation). Treat this as a **candidate themed encounter**, not a commitment to a particular level number or a replacement for an already planned mechanic.
+
+Do not distribute new army archetypes evenly across Levels 1–10. Introduce them selectively after reviewing the level's setting, player experience, rendering cost, and whether they make the battle more satisfying. Reuse existing army visuals between special encounters so the exceptions feel special. Preserve the decision of when to reinforce versus when to invest in unlocking another option. If a visual change needs strength tuning, keep the rationale and count-versus-effectiveness distinction legible to the player and regression-test the same strategic outcomes.
 
 ## Milestone sequence
 
