@@ -26,7 +26,7 @@ button{appearance:none;border:0;color:#122035;background:linear-gradient(180deg,
 <div id="menu" class="overlay"><div class="panel">
 <div class="logo">🐱⚔️</div><div class="eyebrow">RAGDOLLLABS PRESENTS</div><h1>SiegeDolls</h1>
 <p class="subtitle">One cannon. Thousands of tiny cats.<br>Defend the castle before time runs out.</p>
-<div class="tip"><b>HOW TO PLAY</b><br>Drag your finger or move your mouse sideways to aim. Your cannon fires automatically.<br><br><b>🟡 ×20 RISKY:</b> Lots of cats, exposed to red artillery.<br><b>🔵 ×5 SAFE:</b> Fewer cats, but they get shields.<br><br>Stop 180 invaders before 50 seconds elapse. Don't let three reach your cannon!</div>
+<div class="tip"><b>HOW TO PLAY</b><br>Slide your finger left and right to move the cannon. Mouse movement works too. No tapping needed: the cannon fires automatically.<br><br><b>🟡 ×20 RISKY:</b> Lots of cats, exposed to red artillery.<br><b>🔵 ×5 SAFE:</b> Fewer cats, but they get shields.<br><br>Stop 180 invaders before 50 seconds elapse. Don't let three reach your cannon!</div>
 <button id="start">PLAY LEVEL 1</button><div class="small">No ads · No accounts · Just cats</div>
 </div></div>
 <div id="result" class="overlay" hidden><div class="panel"><div class="logo" id="result-icon">🏆</div><h2 id="result-title">Victory!</h2><p id="result-detail"></p><button id="again">PLAY AGAIN</button><div class="small">Level 1 · The Castle Approach</div></div></div>
@@ -116,12 +116,33 @@ for(const s of shots){ctx.fillStyle='#7cf0ff';ctx.beginPath();ctx.arc(s.x,s.y,5,
 for(const c of blue)cat(c.x,c.y,'#3995f8',6.5,c.shield>0,c.phase);
 for(const e of red)cat(e.x,e.y,'#db5955',6.5,false,e.phase);
 for(const b of bolts){ctx.fillStyle='#ff5d43';ctx.shadowColor='#ff3c2c';ctx.shadowBlur=12;ctx.beginPath();ctx.arc(b.x,b.y,7,0,7);ctx.fill();ctx.shadowBlur=0}
-for(const p of particles){ctx.globalAlpha=clamp(p.life*3,0,1);ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,4,4)}ctx.globalAlpha=1;drawCannon();ctx.restore();
+for(const p of particles){ctx.globalAlpha=clamp(p.life*3,0,1);ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,4,4)}ctx.globalAlpha=1;drawCannon();ctx.font="800 12px system-ui";ctx.fillStyle="#f5f8ff";ctx.textAlign="center";ctx.shadowColor="#142137";ctx.shadowBlur=5;ctx.fillText("◀  SLIDE TO MOVE  ▶",210,752);ctx.shadowBlur=0;ctx.restore();
 }
 function loop(t){if(state!=='playing')return;const dt=Math.min((t-last)/1000,.045);last=t;update(dt);draw();if(state==='playing')requestAnimationFrame(loop)}
-function onMove(clientX){const rect=canvas.getBoundingClientRect();cannonX=clamp((clientX-rect.left)/rect.width*W,57,363)}
-canvas.addEventListener('pointerdown',e=>{if(state==='playing'){canvas.setPointerCapture(e.pointerId);onMove(e.clientX)}});
-canvas.addEventListener('pointermove',e=>{if(state==='playing'&&(e.pointerType==='mouse'||e.buttons||e.pressure>0))onMove(e.clientX)});
+// Pointer control: on touch, drag relative to the finger's starting position.
+// Tapping does NOTHING; cannon fire is fully automatic and time-based.
+// Mouse movement aims directly, without requiring a click.
+let dragPointer=null,dragStartX=0,dragCannonStart=0;
+function screenToWorldDelta(dx){return dx/canvas.getBoundingClientRect().width*W}
+function mouseAim(clientX){const rect=canvas.getBoundingClientRect();cannonX=clamp((clientX-rect.left)/rect.width*W,57,363)}
+canvas.addEventListener('pointerdown',e=>{
+  if(state!=='playing'||e.pointerType==='mouse'||dragPointer!==null)return;
+  dragPointer=e.pointerId;
+  dragStartX=e.clientX;
+  dragCannonStart=cannonX;
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove',e=>{
+  if(state!=='playing')return;
+  if(e.pointerType==='mouse'){mouseAim(e.clientX);return}
+  if(e.pointerId===dragPointer){
+    cannonX=clamp(dragCannonStart+screenToWorldDelta(e.clientX-dragStartX),57,363);
+  }
+});
+function endDrag(e){if(e.pointerId===dragPointer)dragPointer=null}
+canvas.addEventListener('pointerup',endDrag);
+canvas.addEventListener('pointercancel',endDrag);
+canvas.addEventListener('lostpointercapture',endDrag);
 document.addEventListener('keydown',e=>{if(state!=='playing')return;if(e.key==='ArrowLeft'||e.key==='a')cannonX=clamp(cannonX-24,57,363);if(e.key==='ArrowRight'||e.key==='d')cannonX=clamp(cannonX+24,57,363)});
 $('start').addEventListener('click',reset);$('again').addEventListener('click',reset);
 function resize(){const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.floor(W*dpr);canvas.height=Math.floor(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);draw()}
