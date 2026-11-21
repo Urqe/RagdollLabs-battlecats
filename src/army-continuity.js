@@ -34,7 +34,7 @@ export function rowsAt(count) {
   return fieldRow(left) + (fieldRow(Math.ceil(slot)) - fieldRow(left)) * (slot - left);
 }
 
-export function stepArmyPresentation(army, population, dt) {
+export function stepArmyPresentation(army, population, dt, easeSmallArrivals = false) {
   const before = army.population;
   const { field, reserve } = armyScale(population, army.target);
   army.population = population;
@@ -53,9 +53,9 @@ export function stepArmyPresentation(army, population, dt) {
   army.compression = settle(army.compression, army.recoil, dt, 0.085);
   // Literal armies lose whole slots immediately. Elsewhere only living
   // capacity is clamped, and departed slots fall on a separate clock.
-  army.field = population <= LITERAL_ARMY || field <= oldField
+  army.field = (population <= LITERAL_ARMY && !easeSmallArrivals) || field <= oldField
     ? field
-    : settle(oldField, field, dt, 0.22);
+    : settle(oldField, field, dt, population <= LITERAL_ARMY ? 0.105 : 0.22);
   army.reserve = reserve <= oldReserve ? reserve : settle(oldReserve, reserve, dt, 0.38);
 
   const lostSlots = Math.max(0, oldReserve - army.reserve) +

@@ -59,6 +59,7 @@ async function battle(page, elapsed, context, policy, level, win) {
     if (state.support?.open) marks.catapult ??= elapsed();
     if (state.support?.impact?.loss > 0) marks.firstHit ??= elapsed();
     if (!state.redEntryOpen) marks.cutoff ??= elapsed();
+    if (state.mode === "victory") marks.victory ??= elapsed();
     if (state.mode === "end") {
       marks.result = elapsed();
       marks.battleSeconds = state.t;

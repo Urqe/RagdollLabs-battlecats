@@ -1,0 +1,52 @@
+{
+  "completeSessions": {
+    "a-level-1-victory": {
+      "start": 1.3178039069999996,
+      "gate99": 23.892044118999998,
+      "gate999": 77.207913686,
+      "flood": 77.732810808,
+      "cutoff": 127.19083374200001,
+      "victory": 132.51215779900002,
+      "result": 134.088095759,
+      "battleSeconds": 97.77913000000237,
+      "impacts": 0,
+      "end": 135.597869648
+    },
+    "c-level-2-victory": {
+      "start": 1.756823958,
+      "catapult": 19.774183161,
+      "firstHit": 24.265571217,
+      "gate99": 33.982055229,
+      "gate999": 88.400068631,
+      "flood": 88.859084856,
+      "cutoff": 129.455877951,
+      "victory": 130.2116617,
+      "result": 132.309146432,
+      "battleSeconds": 95.62944400000325,
+      "impacts": 24,
+      "end": 133.86684029800003
+    }
+  },
+  "editsRelativeToVideo": {
+    "a-small-handoff.mp4": {
+      "start": 0,
+      "duration": 13.5
+    },
+    "b-large-handoff.mp4": {
+      "start": 21.404240211999998,
+      "duration": 63.440766689
+    },
+    "c-level-1-victory.mp4": {
+      "start": 117.42435389200003,
+      "duration": 17.085711848999978
+    },
+    "d-level-2-victory.mp4": {
+      "start": 114.68483774200001,
+      "duration": 17.65517859800002
+    },
+    "before-small.mp4": {
+      "start": 0,
+      "duration": 13.5
+    }
+  }
+}

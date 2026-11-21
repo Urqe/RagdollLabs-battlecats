@@ -109,6 +109,8 @@ export function createMotion(onReversal = () => {}) {
       surgeAt: -Infinity,
 
       blueAnchor: 210,
+      blueAnchorTarget: 210,
+      supportFront: null,
       cutoffAt: null,
       entryRate: 0,
     });
@@ -124,10 +126,25 @@ export function createMotion(onReversal = () => {}) {
   ) {
     const dt = Math.max(0, time - clock);
     clock = time;
-    stepArmyPresentation(contact.blueArmy, blueStrength, dt);
-    if (battle) stepArmyPresentation(contact.redArmy, battle.redTotal, dt);
+    const oldField = contact.blueArmy.population === null ? 0 : contact.blueArmy.target.field;
+    const oldReserve = contact.blueArmy.population === null ? 0 : contact.blueArmy.target.reserve;
+    stepArmyPresentation(contact.blueArmy, blueStrength, dt, true);
+    allocateJoins(oldField, oldReserve);
+    if (battle) {
+      stepArmyPresentation(contact.redArmy, battle.redTotal, dt);
+      const follow = contact.supportFront ?? battle.front;
+      contact.supportFront = battle.front + clamp(
+        (follow - battle.front) * Math.exp(-dt / 0.19), -10, 10,
+      );
+      if (battle.mode === "victory") {
+        contact.foughtAt = -Infinity;
+        contact.red = contact.blue = 0;
+      }
+    }
     contact.blueAnchor +=
-      (210 - contact.blueAnchor) * (1 - Math.exp(-dt / 0.57));
+      (contact.blueAnchorTarget - contact.blueAnchor) * (1 - Math.exp(-dt / 0.16));
+    contact.blueAnchorTarget +=
+      (210 - contact.blueAnchorTarget) * (1 - Math.exp(-dt / 0.37));
     if (!redEntryOpen) contact.cutoffAt ??= time;
     else if (battle) contact.entryRate = battle.redEntryRate;
     if (battle) {
@@ -169,6 +186,26 @@ export function createMotion(onReversal = () => {}) {
     if (battle?.mode === "end") tails.length = falls.length = 0;
   }
 
+  function allocateJoins(field, reserve) {
+    let pending = 0;
+    for (const q of tails) pending += Number(!q.join);
+    if (!pending) return;
+    const target = contact.blueArmy.target;
+    for (const q of tails) {
+      if (q.join) continue;
+      const capacity = waveProfile(q.mult).count;
+      const fieldCount = Math.min(capacity, Math.ceil(Math.max(0, target.field - field) / pending));
+      const reserveCount = Math.min(capacity - fieldCount,
+        Math.ceil(Math.max(0, target.reserve - reserve) / pending));
+      q.join = { field, fieldCount, reserve, reserveCount };
+      if (fieldCount + reserveCount)
+        q.join.started = new Float64Array(fieldCount + reserveCount).fill(-1);
+      field += fieldCount;
+      reserve += reserveCount;
+      pending--;
+    }
+  }
+
   function showLoss(previous, current, front, red, time) {
     const lost = previous - current;
     const fraction = lost / previous;
@@ -192,11 +229,14 @@ export function createMotion(onReversal = () => {}) {
     if (kind === "arrival") {
       arrivals[indexOf(value.mult)] = time;
       if ((contact.blueArmy.population ?? 0) < 115)
-        contact.blueAnchor = value.x ?? 210;
+        contact.blueAnchorTarget = value.x ?? 210;
       const duration = waveDuration(waveProfile(value.mult));
       const age = value.marchTime;
       if (tails.length === MAX_TAILS) tails.shift();
-      tails.push({ ...value, born: time - age, until: time + duration + 0.24 });
+      tails.push({
+        ...value, born: time - age, at: time, until: time + duration + 0.53,
+        join: null, painted: 0,
+      });
     }
     if (kind === "clash") {
       contact.red = Math.min(1, redLoss / 35);
