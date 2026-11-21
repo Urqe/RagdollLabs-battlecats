@@ -1,0 +1,164 @@
+[
+  {
+    "hz": 30,
+    "strategy": "A",
+    "won": false,
+    "seconds": 112.93,
+    "furthest": 690.11,
+    "activation": null,
+    "pushback": 0,
+    "milestones": [],
+    "red": 28999.305555555555,
+    "blue": 12.999999999999996
+  },
+  {
+    "hz": 60,
+    "strategy": "A",
+    "won": false,
+    "seconds": 112.92,
+    "furthest": 690.02,
+    "activation": null,
+    "pushback": 0,
+    "milestones": [],
+    "red": 28999.5875,
+    "blue": 20.833333333333346
+  },
+  {
+    "hz": 120,
+    "strategy": "A",
+    "won": false,
+    "seconds": 112.9,
+    "furthest": 690.01,
+    "activation": null,
+    "pushback": 0,
+    "milestones": [],
+    "red": 28999.76111111111,
+    "blue": 26.708333333333304
+  },
+  {
+    "hz": 30,
+    "strategy": "B",
+    "won": true,
+    "seconds": 89.07,
+    "furthest": 417.45,
+    "activation": 40.67,
+    "pushback": 387.2,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 10.13
+      },
+      {
+        "gate": 999,
+        "time": 39.53
+      }
+    ],
+    "red": 0,
+    "blue": 477953.6666666666
+  },
+  {
+    "hz": 60,
+    "strategy": "B",
+    "won": true,
+    "seconds": 89.07,
+    "furthest": 417.41,
+    "activation": 40.65,
+    "pushback": 387.33,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 10.12
+      },
+      {
+        "gate": 999,
+        "time": 39.52
+      }
+    ],
+    "red": 0,
+    "blue": 477950.5833333335
+  },
+  {
+    "hz": 120,
+    "strategy": "B",
+    "won": true,
+    "seconds": 89.08,
+    "furthest": 417.46,
+    "activation": 40.65,
+    "pushback": 387.4,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 10.11
+      },
+      {
+        "gate": 999,
+        "time": 39.51
+      }
+    ],
+    "red": 0,
+    "blue": 477952.1249999997
+  },
+  {
+    "hz": 30,
+    "strategy": "C",
+    "won": true,
+    "seconds": 98.7,
+    "furthest": 387.77,
+    "activation": 55.63,
+    "pushback": 344.53,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 19.93
+      },
+      {
+        "gate": 999,
+        "time": 54.07
+      }
+    ],
+    "red": 0,
+    "blue": 428468.3333333332
+  },
+  {
+    "hz": 60,
+    "strategy": "C",
+    "won": true,
+    "seconds": 99.1,
+    "furthest": 388.8,
+    "activation": 55.9,
+    "pushback": 345.6,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 20.18
+      },
+      {
+        "gate": 999,
+        "time": 54.35
+      }
+    ],
+    "red": 0,
+    "blue": 428462.166666667
+  },
+  {
+    "hz": 120,
+    "strategy": "C",
+    "won": true,
+    "seconds": 99.1,
+    "furthest": 388.82,
+    "activation": 55.89,
+    "pushback": 345.67,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 20.18
+      },
+      {
+        "gate": 999,
+        "time": 54.34
+      }
+    ],
+    "red": 0,
+    "blue": 428465.66666666605
+  }
+]

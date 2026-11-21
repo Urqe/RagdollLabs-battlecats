@@ -1,4 +1,5 @@
-import { W, H, TAU, clamp, workNeeded } from "./config.js";
+import { W, H, TAU, clamp, LEVEL } from "./config.js";
+import { barrierStatus } from "./barricades.js";
 export function createRenderer(state, canvas) {
   const ctx = canvas.getContext("2d");
   function mapY(y) {
@@ -113,36 +114,57 @@ export function createRenderer(state, canvas) {
     ctx.roundRect(x, y, w, h, r);
     ctx.fill();
   }
+  // Cache bounded, tiny vector sprites rather than redraw thousands of paths
+  // per frame. Bobbing/formation movement stays continuous; size rounds to .1px.
+  const sprites = new Map();
+  function paintCat(target, color, size) {
+    target.fillStyle = "#20282b55";
+    target.beginPath();
+    target.ellipse(1, size * 0.7, size * 0.75, size * 0.25, 0, 0, TAU);
+    target.fill();
+    target.fillStyle = color;
+    target.beginPath();
+    target.moveTo(-size * 0.77, -size * 0.31);
+    target.lineTo(-size * 0.78, -size);
+    target.lineTo(-size * 0.2, -size * 0.68);
+    target.lineTo(size * 0.2, -size * 0.68);
+    target.lineTo(size * 0.78, -size);
+    target.lineTo(size * 0.77, -size * 0.31);
+    target.arc(0, 0, size * 0.78, -0.4, Math.PI + 0.4);
+    target.fill();
+    target.beginPath();
+    target.ellipse(0, size * 0.37, size * 0.73, size * 0.57, 0, 0, TAU);
+    target.fill();
+    target.fillStyle = "#172739";
+    target.beginPath();
+    target.arc(-size * 0.26, -size * 0.3, Math.max(0.55, size * 0.1), 0, TAU);
+    target.arc(size * 0.26, -size * 0.3, Math.max(0.55, size * 0.1), 0, TAU);
+    target.fill();
+  }
   function cat(x, y, color, size, phase = 0) {
     ctx.save();
     ctx.translate(x, y + Math.sin(state.t * 7 + phase) * 1.1);
-    ctx.fillStyle = "#20282b55";
-    ctx.beginPath();
-    ctx.ellipse(1, size * 0.7, size * 0.75, size * 0.25, 0, 0, TAU);
-    ctx.fill();
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(-size * 0.77, -size * 0.31);
-    ctx.lineTo(-size * 0.78, -size);
-    ctx.lineTo(-size * 0.2, -size * 0.68);
-    ctx.lineTo(size * 0.2, -size * 0.68);
-    ctx.lineTo(size * 0.78, -size);
-    ctx.lineTo(size * 0.77, -size * 0.31);
-    ctx.arc(0, 0, size * 0.78, -0.4, Math.PI + 0.4);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(0, size * 0.37, size * 0.73, size * 0.57, 0, 0, TAU);
-    ctx.fill();
-    ctx.fillStyle = "#172739";
-    ctx.beginPath();
-    ctx.arc(-size * 0.26, -size * 0.3, Math.max(0.55, size * 0.1), 0, TAU);
-    ctx.arc(size * 0.26, -size * 0.3, Math.max(0.55, size * 0.1), 0, TAU);
-    ctx.fill();
+    if (canvas.ownerDocument) {
+      const rounded = Math.round(size * 10) / 10,
+        key = color + rounded;
+      let sprite = sprites.get(key);
+      if (!sprite) {
+        sprite = canvas.ownerDocument.createElement("canvas");
+        sprite.width = 48;
+        sprite.height = 48;
+        const target = sprite.getContext("2d");
+        target.scale(2, 2);
+        target.translate(12, 12);
+        paintCat(target, color, rounded);
+        sprites.set(key, sprite);
+      }
+      ctx.drawImage(sprite, -12, -12, 24, 24);
+    } else paintCat(ctx, color, size);
     ctx.restore();
   }
   // Packed formation silhouettes: hundreds of visible cats, tens of thousands simulated logically.
   function army() {
-    const redStrength = clamp(state.redTotal / 22000, 0, 1);
+    const redStrength = clamp(state.redTotal / LEVEL.initialRed, 0, 1);
     // An enormous enemy reserve approaches slowly through the stone funnel.
     const rows = state.redTotal > 0 ? Math.ceil(12 + redStrength * 34) : 0,
       cols = 30;
@@ -221,7 +243,7 @@ export function createRenderer(state, canvas) {
   function drawBarricade(g, i) {
     const xx = g.x - g.width / 2,
       y = g.y - 28;
-    const progress = clamp(state.work[i] / workNeeded[i], 0, 1);
+    const { progress, label } = barrierStatus(state, i);
     round(xx, y, g.width, 30, 5, "#54412f");
     for (let k = 0; k < 5; k++) {
       const bx = xx + (k * g.width) / 5 + 2;
@@ -240,9 +262,9 @@ export function createRenderer(state, canvas) {
     ctx.lineWidth = 4;
     ctx.strokeStyle = "#273440";
     ctx.font = "900 15px system-ui";
-    ctx.strokeText(Math.round(progress * 100) + "%", g.x, y - 9);
+    ctx.strokeText(label, g.x, y - 9);
     ctx.fillStyle = "#fff";
-    ctx.fillText(Math.round(progress * 100) + "%", g.x, y - 9);
+    ctx.fillText(label, g.x, y - 9);
     ctx.font = "bold 10px system-ui";
     ctx.fillStyle = "#fff3cf";
     ctx.fillText("SHOOT TO BREAK", g.x, y + 52);
@@ -306,6 +328,13 @@ export function createRenderer(state, canvas) {
     ctx.clearRect(0, 0, W, H);
     ctx.save();
     landscape();
+    // The colored seam marks where arrived blue formations meet the horde.
+    ctx.strokeStyle = "#ffe8a4";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(165, state.front + 6);
+    ctx.lineTo(255, state.front + 6);
+    ctx.stroke();
     army();
     // Three gates, two barricades visible at once; one live gate initially.
     for (let i = 0; i < state.gates.length; i++) drawGate(state.gates[i], i);

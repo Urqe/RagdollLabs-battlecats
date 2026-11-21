@@ -1,0 +1,61 @@
+{
+  "source": "Passing Chromium native-touch Playwright playthrough; snapshots from browser trace",
+  "milestones": [
+    {
+      "event": "\u00d799 unlocked",
+      "t": 12.99400000000001,
+      "mode": "playing",
+      "gunX": 89.999997652494,
+      "front": 354.2212000000067,
+      "redTotal": 24476.844399999216,
+      "blueTotal": 0,
+      "work": [
+        108,
+        0
+      ],
+      "finalActivated": false
+    },
+    {
+      "event": "\u00d7999 unlocked",
+      "t": 42.993999999997044,
+      "mode": "playing",
+      "gunX": 329.00001643254205,
+      "front": 403.47400000001863,
+      "redTotal": 26629.872879998213,
+      "blueTotal": 0,
+      "work": [
+        108,
+        270
+      ],
+      "finalActivated": false
+    },
+    {
+      "event": "counterattack",
+      "t": 43.985999999996935,
+      "mode": "playing",
+      "gunX": 329.00001643254205,
+      "front": 403.0452000000194,
+      "redTotal": 25552.76132799817,
+      "blueTotal": 5911.119999999999,
+      "work": [
+        108,
+        270
+      ],
+      "finalActivated": true
+    },
+    {
+      "event": "victory",
+      "t": 90.62600000000363,
+      "mode": "end",
+      "gunX": 329.00001643254205,
+      "front": 29.9252000000496,
+      "redTotal": 0,
+      "blueTotal": 465969.11999999965,
+      "work": [
+        108,
+        270
+      ],
+      "finalActivated": true
+    }
+  ]
+}

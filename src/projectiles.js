@@ -1,10 +1,10 @@
-import { BARRICADE_HIT_Y, GATE_HIT_Y } from "./config.js";
+import { BARRICADE_HIT_Y, GATE_HIT_Y, LEVEL } from "./config.js";
 import { hitBarricade } from "./barricades.js";
 export function updateProjectiles(state, dt, spawnSquad, sprinkle, notify) {
   for (let j = state.shots.length - 1; j >= 0; j--) {
     const shot = state.shots[j],
       previousY = shot.y;
-    shot.y -= 315 * dt;
+    shot.y -= LEVEL.projectileSpeed * dt;
     const gateIndex = state.gates.findIndex(
       (g) => Math.abs(shot.x - g.x) <= g.width / 2,
     );
@@ -16,7 +16,9 @@ export function updateProjectiles(state, dt, spawnSquad, sprinkle, notify) {
     // Only a cannon projectile crossing a visible barrier damages it.
     // Neither allied soldiers nor a timer can alter barricade integrity.
     const hitY = gate.open ? GATE_HIT_Y : BARRICADE_HIT_Y;
-    if (!(previousY >= hitY && shot.y < hitY)) continue;
+    // A partial volley may open wood while its siblings are already between
+    // the gate and wood planes. Consume those at the newly opened gate too.
+    if (!(shot.y < hitY && (gate.open || previousY >= hitY))) continue;
     state.shots.splice(j, 1);
     if (gate.open) {
       spawnSquad(gate, shot.x);

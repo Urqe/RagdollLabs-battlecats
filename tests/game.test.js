@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { workNeeded } from "../src/config.js";
 import { createGame } from "../src/game.js";
 import { updateProjectiles, fire } from "../src/projectiles.js";
 import { createMultipliers } from "../src/multipliers.js";
@@ -60,8 +61,8 @@ test("barricades require direct crossing cannon hits; time, marching cats and mi
   assert.equal(s.gates[1].open, false);
 });
 for (const [index, needed] of [
-  [1, 54],
-  [2, 126],
+  [1, workNeeded[0]],
+  [2, workNeeded[1]],
 ])
   test(`gate ${index} opens on hit ${needed} with no soldiers from blocked shots`, () => {
     const { state: s } = fixture();
@@ -115,6 +116,7 @@ test("reinforcements move, render blue cats, then join combat at the front", () 
   );
   createRenderer(s, { getContext: () => ctx }).draw();
   assert.ok(bluePaints > 0);
+  s.squads[0].marchTime = 1;
   s.squads[0].y = s.front + 18;
   s.redTotal = 0;
   s.finalActivated = true;
@@ -140,6 +142,7 @@ test("victory requires final gate activation, enemy elimination and clearing the
   game.update(0.01);
   assert.equal(s.mode, "playing");
   s.front = 29;
+  s.blueTotal = 10;
   game.update(0.01);
   assert.equal(s.mode, "end");
   assert.deepEqual(results, [true]);

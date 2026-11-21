@@ -1,3 +1,4 @@
+import { LEVEL } from "./config.js";
 export function createState() {
   const mode = "menu",
     t = 0,
@@ -6,8 +7,8 @@ export function createState() {
     dragStart = 0,
     gunStart = 0,
     nextShot = 0,
-    front = 283,
-    redTotal = 22000,
+    front = LEVEL.initialFront,
+    redTotal = LEVEL.initialRed,
     blueTotal = 0,
     work = [0, 0],
     flash = 0,

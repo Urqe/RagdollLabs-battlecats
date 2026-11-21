@@ -37,7 +37,7 @@ Open http://127.0.0.1:4173. Edit the files and refresh the browser. GitHub Pages
 ## Tests
 
 ```sh
-npx playwright install --with-deps chromium
+npx playwright install --with-deps chromium webkit
 npm run test:all
 ```
 
@@ -59,3 +59,7 @@ npm run test:all
 - `src/render.js`: Canvas drawing, formation aggregation, and resizing.
 
 For AI-assisted changes, keep simulation code independent of DOM and animation timing. Add a regression test for gameplay changes, run `npm run test:all`, and review mobile behavior. Preserve the single level, original balance, three-cat automatic volleys, manually destroyed barricades, and travel time before combat. No runtime libraries, backend, monetization, or additional levels are needed.
+
+## Level 1 balance validation
+
+See [balancing decisions and tested outcomes](docs/level-1-balance.md) and run `npm run simulate` to reproduce the three strategies. The browser suite now includes native Chromium touch drags, complete victory and defeat playthroughs, restart, and a mobile WebKit startup smoke test. Playwright advances its clock through the real animation loop; it never grants damage or troops. `getSnapshot()` exported from `src/main.js` provides a detached, read-only copy for diagnostics. CI retains milestone JSON, counterattack/victory/defeat screenshots, and failure traces in the `playwright-results` artifact.
