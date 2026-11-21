@@ -142,4 +142,14 @@ The motion update uses three fixed-size arrays and a few scalar filters. Drawing
 
 Record the normal, HUD-hidden victories and the labeled rendering fixture with `node scripts/capture-army-continuity.js test-results/formation-dynamics http://127.0.0.1:4173 a- c- e-`. The fixture drives a known hold, arrival, retreat, regroup and counterattack sequence against both builds. It isolates draw behavior with prescribed line motion and troop counts. The normal videos use the game's regular touch controls and winning strategies.
 
+| Scene | Milestone 11 | Milestone 12 |
+| --- | --- | --- |
+| Level 1 · Reinforcements, reversals and victory | [Reinforcements](evidence/army-movement/b-large-handoff.mp4) · [Occupation](evidence/army-movement/c-level-1-victory.mp4) | [Complete HUD-hidden battle](evidence/formation-dynamics/level-1-victory.mp4) |
+| Level 2 · Artillery, final-gate reinforcements and victory | [Occupation](evidence/army-movement/d-level-2-victory.mp4) | [Complete HUD-hidden battle](evidence/formation-dynamics/level-2-victory.mp4) |
+| Rendering fixture · Hold, receive, recoil, regroup and push | [Same scripted motion on main](evidence/formation-dynamics/m11-formation-fixture.mp4) | [Formation dynamics](evidence/formation-dynamics/m12-formation-fixture.mp4) |
+
+The gameplay videos are continuous at 390 × 844. Capture wall time and simulation time are recorded separately because the shared runner can slow the game's presentation. [Capture timings](evidence/formation-dynamics/timing.json)
+
 Profile headless Chromium at 390 × 844 and device scale factor 2 with `node scripts/profile-army-scale.js`. The dense Level 2 case begins with the final gate active, waves present and a recent artillery impact. The fixed enormous army and step-down population cases isolate reserve batching and casualty retirement. Physical iPhone performance remains unmeasured.
+
+The dense comparison began at 48,954 red and 18,307 blue. Milestones 11 and 12 both measured 16.7 ms median and 16.8 ms p95 frame intervals. Median update and draw submission rose from 1.9 to 2.9 ms in that scene. Milestone 12 measured 1.9 ms in the enormous fixture and 1.5 ms during rapid decline. [Before and after timings](evidence/formation-dynamics/headless-profile.json)

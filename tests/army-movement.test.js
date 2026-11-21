@@ -260,6 +260,9 @@ test("artillery and casualties preserve continuous slot geometry and opposing si
   state.redTotal = 0;
   step(motion, state, state.t);
   assert.equal(motion.contact.foughtAt, -Infinity);
+  const occupation = probe.blue(state, motion);
+  motion.contact.formation.opening = -1;
+  assert.deepEqual(probe.blue(state, motion), occupation);
   motion.reset();
   state.level = LEVEL_ONE;
   state.mode = "playing";
