@@ -2,18 +2,15 @@ import { W, H, TAU, clamp, LEVEL } from "./config.js";
 import { barrierStatus } from "./barricades.js";
 export function createRenderer(state, canvas) {
   const ctx = canvas.getContext("2d");
-  function mapY(y) {
-    return y;
-  } // battlefield projection is applied in path geometry and perspective scaling
-  function landscape() {
+  const terrain = canvas.ownerDocument?.createElement("canvas");
+  if (terrain) terrain.width = 0;
+  function landscape(ctx) {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, "#a8b9ab");
     g.addColorStop(1, "#c8c7bd");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
     // Perspective stone roadway: narrows toward the enemy horizon.
-    const roadX = (y) => 52 - 36 * (1 - y / H),
-      rightX = (y) => W - roadX(y);
     ctx.beginPath();
     ctx.moveTo(85, 0);
     ctx.lineTo(335, 0);
@@ -142,11 +139,11 @@ export function createRenderer(state, canvas) {
     target.fill();
   }
   function cat(x, y, color, size, phase = 0) {
-    ctx.save();
-    ctx.translate(x, y + Math.sin(state.t * 7 + phase) * 1.1);
-    if (canvas.ownerDocument) {
-      const rounded = Math.round(size * 10) / 10,
-        key = color + rounded;
+    const stride = Math.sin(state.t * 9 + phase);
+    const bob = y + stride * 1.25;
+    if (terrain) {
+      const rounded = Math.round(size * 4) / 4;
+      const key = color + rounded;
       let sprite = sprites.get(key);
       if (!sprite) {
         sprite = canvas.ownerDocument.createElement("canvas");
@@ -158,85 +155,100 @@ export function createRenderer(state, canvas) {
         paintCat(target, color, rounded);
         sprites.set(key, sprite);
       }
-      ctx.drawImage(sprite, -12, -12, 24, 24);
-    } else paintCat(ctx, color, size);
-    ctx.restore();
+      ctx.drawImage(sprite, x - 12, bob - 12, 24, 24);
+    } else {
+      ctx.save();
+      ctx.translate(x, bob);
+      paintCat(ctx, color, size);
+      ctx.restore();
+    }
   }
-  // Packed formation silhouettes: hundreds of visible cats, tens of thousands simulated logically.
-  function army() {
-    const redStrength = clamp(state.redTotal / LEVEL.initialRed, 0, 1);
-    // An enormous enemy reserve approaches slowly through the stone funnel.
-    const rows = state.redTotal > 0 ? Math.ceil(12 + redStrength * 34) : 0,
-      cols = 30;
-    for (let r = 0; r < rows; r++) {
-      const y = state.front - r * 7;
-      if (y < -15 || y > 705) continue;
-      const half =
-        y < 260
-          ? clamp(29 + (260 - y) * 0.36, 30, 100)
-          : clamp(38 + (y - 260) * 0.29, 38, 148);
-      for (let c = 0; c < cols; c++) {
-        if ((r * 11 + c * 7) % 31 > Math.floor(31 * redStrength)) continue;
-        const x = 210 + ((c - 14.5) * half) / 14.5 + (r % 2 ? 2 : 0);
-        cat(
-          x,
-          y,
-          "#d8504d",
-          clamp(3.6 + y * 0.004, 3.7, 6.2),
-          r * 0.4 + c * 0.13,
-        );
+
+  function laneHalfWidth(y) {
+    return y < 258
+      ? clamp(24 + (258 - y) * 0.34, 24, 91)
+      : clamp(24 + (y - 263) * 0.4, 24, 152);
+  }
+
+  function redArmy() {
+    const count = Math.min(500, Math.ceil(Math.sqrt(state.redTotal) * 2));
+    const cols = Math.min(24, 9 + Math.floor(count / 28));
+    const rows = Math.ceil(count / cols);
+    const depth = Math.min(state.front + 8, rows * 11);
+    for (let i = 0; i < count; i++) {
+      const row = Math.floor(i / cols);
+      const col = i % cols;
+      const y = state.front - 4 - (row * depth) / rows;
+      const half = laneHalfWidth(y);
+      const x = 210 + (((col + 0.5) / cols) * 2 - 1) * half + (row % 2) * 1.4;
+      cat(
+        x,
+        y,
+        i % 4 === 0 ? "#bf393c" : "#df544b",
+        clamp(3.3 + y * 0.004, 3.5, 6.1),
+        i * 0.73,
+      );
+    }
+
+    // Files flow down the approach at a steady pace. Actual recruitment sets
+    // their density, and the lead ranks take over where they meet the reserve.
+    const entryDistance = Math.max(0, state.front - depth + 20);
+    const files = Math.min(Math.ceil(state.redEntryRate / 380), 7);
+    const spacing = 24 - Math.min(12, state.redEntryRate / 210);
+    const offset = (state.t * 30) % spacing;
+    for (let row = 0; row < 24; row++) {
+      const y = row * spacing + offset - spacing;
+      if (y >= entryDistance - 4 || count === 0) break;
+      if (y < -6) continue;
+      const width = Math.min(laneHalfWidth(y), 9 + Math.max(0, y) * 0.06);
+      for (let col = 0; col < files; col++) {
+        const x = 210 + (((col + 0.5) / files) * 2 - 1) * width;
+        cat(x, y, "#bf393c", clamp(3.3 + y * 0.004, 3.5, 5), row + col * 0.55);
       }
     }
-    // Blue cats actually march from the gate: each squad travels from y=540 to the frontline.
+  }
+
+  function blueArmy() {
     for (const q of state.squads) {
       const show = Math.min(
         q.count,
-        q.mult === 20 ? 60 : q.mult === 99 ? 90 : 75,
+        q.mult === 20 ? 6 : q.mult === 99 ? 19 : 46,
       );
-      const cols = Math.min(15, Math.ceil(Math.sqrt(show * 1.35)));
-      const rows = Math.ceil(show / cols),
-        spacing = clamp(7.5 + q.y * 0.004, 8, 10);
-      const cx = q.x + (210 - q.x) * clamp((555 - q.y) / 330, 0, 1);
+      const cols = Math.ceil(Math.sqrt(show * 0.85));
+      const spacing = q.mult === 999 ? 7.5 : 8.5;
+      const progress = clamp((LEVEL.spawnY - q.y) / 270, 0, 1);
+      const cx = q.x + (210 - q.x) * progress * 0.84;
+      const stagger = (q.x % 9) * 0.4 + Math.sin(q.phase) * 2;
       for (let i = 0; i < show; i++) {
-        const row = Math.floor(i / cols),
-          col = i % cols;
-        const xx = cx + (col - (cols - 1) / 2) * spacing;
-        const yy = q.y + row * spacing * 0.75;
+        const row = Math.floor(i / cols);
+        const col = i % cols;
+        const y = q.y + row * spacing * 0.68 + stagger;
         cat(
-          xx,
-          yy,
-          "#379aff",
-          clamp(4 + yy * 0.004, 4.5, 6.8),
-          q.phase + i * 0.25,
-        );
-      }
-      if (q.count > show) {
-        round(cx - 22, q.y + rows * spacing * 0.75 + 3, 44, 17, 5, "#183f72d9");
-        ctx.fillStyle = "#fff";
-        ctx.textAlign = "center";
-        ctx.font = "bold 11px system-ui";
-        ctx.fillText(
-          "×" + Math.round(q.count / show),
-          cx,
-          q.y + rows * spacing * 0.75 + 15,
+          cx + (col - (cols - 1) / 2) * spacing + (row % 2) * 3,
+          y,
+          i % 4 === 0 && q.mult === 999 ? "#83d9ff" : "#379aff",
+          clamp(3.9 + y * 0.004, 4.1, 6.1),
+          q.phase + i * 0.4,
         );
       }
     }
-    // All troops reaching the front become a persistent formation that fights the horde.
-    const count = Math.min(300, Math.floor(state.blueTotal / 28)),
-      colsBlue = 24;
+
+    const count = Math.min(300, Math.ceil(Math.sqrt(state.blueTotal) * 1.75));
+    const cols = Math.min(22, 7 + Math.floor(count / 13));
+    const rows = Math.ceil(count / cols);
+    const depth = Math.min(Math.max(24, 705 - state.front), rows * 11);
     for (let i = 0; i < count; i++) {
-      const row = Math.floor(i / colsBlue),
-        col = i % colsBlue,
-        y = state.front + 11 + row * 8;
-      if (y > 670) continue;
-      const half = clamp(35 + (y - 200) * 0.21, 42, 125);
+      const row = Math.floor(i / cols);
+      const col = i % cols;
+      const y = state.front + 8 + (row * depth) / rows;
+      const half = laneHalfWidth(y) * 0.88;
+      const x = 210 + (((col + 0.5) / cols) * 2 - 1) * half;
       cat(
-        210 + ((col - 11.5) * half) / 11.5,
+        x,
         y,
-        "#379aff",
-        clamp(4 + y * 0.005, 4.5, 7),
-        i * 0.37,
+        i % 5 === 0 ? "#1d72d3" : "#379aff",
+        clamp(3.8 + y * 0.004, 4.1, 6.2),
+        i * 0.53,
       );
     }
   }
@@ -247,24 +259,38 @@ export function createRenderer(state, canvas) {
     round(xx, y, g.width, 30, 5, "#54412f");
     for (let k = 0; k < 5; k++) {
       const bx = xx + (k * g.width) / 5 + 2;
-      round(bx, y + 2, g.width / 5 - 4, 25, 2, k % 2 ? "#a2784b" : "#c18d53");
-      if (progress > 0.1 && k % 3 === 0) {
+      const damage = clamp(progress * 1.45 - ((k * 3) % 5) * 0.11, 0, 1);
+      round(
+        bx,
+        y + 2 + damage * 6,
+        g.width / 5 - 4,
+        25 - damage * 7,
+        2,
+        k % 2 ? "#a2784b" : "#c18d53",
+      );
+      if (damage > 0.05) {
         ctx.strokeStyle = "#533b2c";
         ctx.beginPath();
         ctx.moveTo(bx + 2, y + 3);
-        ctx.lineTo(bx + 11 + progress * 5, y + 17);
+        ctx.lineTo(bx + 8 + damage * 6, y + 4 + damage * 19);
         ctx.stroke();
       }
     }
     round(xx + 5, y + 33, g.width - 10, 7, 2, "#1f3041");
     round(xx + 5, y + 33, (g.width - 10) * progress, 7, 2, "#ffd276");
     ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
     ctx.lineWidth = 4;
     ctx.strokeStyle = "#273440";
     ctx.font = "900 15px system-ui";
     ctx.strokeText(label, g.x, y - 9);
     ctx.fillStyle = "#fff";
     ctx.fillText(label, g.x, y - 9);
+    ctx.font = "900 16px system-ui";
+    ctx.strokeStyle = "#49362a";
+    ctx.strokeText(g.name, g.x, y + 21);
+    ctx.fillStyle = g.color;
+    ctx.fillText(g.name, g.x, y + 21);
     ctx.font = "bold 10px system-ui";
     ctx.fillStyle = "#fff3cf";
     ctx.fillText("SHOOT TO BREAK", g.x, y + 52);
@@ -327,17 +353,11 @@ export function createRenderer(state, canvas) {
   function draw() {
     ctx.clearRect(0, 0, W, H);
     ctx.save();
-    landscape();
-    // The colored seam marks where arrived blue formations meet the horde.
-    ctx.strokeStyle = "#ffe8a4";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(165, state.front + 6);
-    ctx.lineTo(255, state.front + 6);
-    ctx.stroke();
-    army();
-    // Three gates, two barricades visible at once; one live gate initially.
+    if (terrain?.width && terrain.height) ctx.drawImage(terrain, 0, 0, W, H);
+    else landscape(ctx);
     for (let i = 0; i < state.gates.length; i++) drawGate(state.gates[i], i);
+    redArmy();
+    blueArmy();
     for (const s of state.shots) {
       cat(s.x, s.y, "#8ad7ff", 7, state.t * 4 + s.x);
     }
@@ -369,6 +389,13 @@ export function createRenderer(state, canvas) {
       canvas.width = Math.floor(W * pixel);
       canvas.height = Math.floor(H * pixel);
       ctx.setTransform(pixel, 0, 0, pixel, 0, 0);
+      if (terrain) {
+        terrain.width = canvas.width;
+        terrain.height = canvas.height;
+        const background = terrain.getContext("2d");
+        background.setTransform(pixel, 0, 0, pixel, 0, 0);
+        landscape(background);
+      }
       draw();
     },
   };

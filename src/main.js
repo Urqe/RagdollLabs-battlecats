@@ -22,7 +22,7 @@ function end(won) {
     : "The horde broke through";
   el("resultText").textContent = won
     ? "Your cat army overwhelmed the invaders and cleared the battlefield. The Last Stand is won!"
-    : "The enemy reached your castle before you could turn the tide. Keep the ×20 gate firing, and switch to unlocked multipliers!";
+    : "The enemy reached your castle before you could turn the tide. Reinforce the frontline between volleys at the barricades.";
 }
 
 let frame = null,

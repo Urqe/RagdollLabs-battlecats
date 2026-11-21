@@ -1,35 +1,39 @@
-# Level 1 validation and balance
+# Level 1 combat and balance
 
-The three policies in `tests/helpers/strategies.js` only aim the cannon. The production simulation fires, collides, unlocks, marches, fights and ends the game. Simulations use fixed time steps and fixed cosmetic randomness. No strategy gets privileged damage, troops or outcome triggers.
+SiegeDolls uses one combat model from the first ×20 volley through the final advance. The cannon fires three cats every 0.28 seconds. Unobstructed volleys produce 60, 297, or 2,997 cats, depending on the gate. The left and right barricades take 90 and 231 direct hits, respectively. Damage persists across aim changes. Shots that hit wood yield no reinforcements.
 
-## Findings and decisions
+## Combat model
 
-The previous baseline lost with ×20 at ~70 seconds, and won with unlocking at ~43 seconds. Marching strength incorrectly influenced the front before arrival, and the final gate changed combat rates as soon as a cat spawned. ×20's old strength threshold was too high to meaningfully slow the horde.
+- **Reinforcements.** Blue formations march from their gates at 104 battlefield pixels per second and join the blue reserve when they reach the frontline. The enemy starts with 2,225 cats. Its entry rate increases from 150 cats per second by 34.1 cats per second for each elapsed second, up to 3,200 per second. The rate falls as blue takes the last 50 pixels of the approach, and seals off at the clearing line. Gate unlocks and arrivals leave the recruitment formula unchanged.
+- **Casualties.** Each arrived blue cat can remove 0.111 red cats per second, up to 4,400 red casualties per second across the narrow frontage. Red pressure inflicts blue casualties based on the horde's size and the number of blue cats exposed at the front, capped by the number of red cats in contact. Each side can lose at most the cats it has available in that update. Both rates use the same pre-casualty army counts.
+- **Frontline.** After taking losses, each side's surviving strength determines movement. Red strength uses 0.04 per cat, reflecting lower effectiveness per soldier. At equal strength the line holds. The relative strength difference scales movement continuously, up to 21.1 pixels per second toward the castle or 13.7 toward the entry. Red advances more slowly than blue marching formations.
+- **Outcomes.** The castle falls at y=690. Victory requires a surviving blue force to reach y=30 or farther and eliminate every remaining red cat. The first ×999 arrival announces reinforcements. Its contribution comes from the same pressure and casualty formulas as every other formation.
 
-All balance parameters live in `src/config.js` (`LEVEL`, `workNeeded`, shot interval and blue speed):
+Balance values are in [`src/config.js`](../src/config.js). The simulation tracks aggregate combat strength and individual marching formations. The renderer uses the same troop counts for representative ranks, the entry rate for red files, and casualty losses for contact effects. Every multiplier has a distinct marching footprint. Square-root scaling and sprite limits keep the late-game armies readable, and terrain and cat sprites are cached. The visual entry files represent recruits already counted in the red army.
 
-- Keep three projectiles every 0.28 seconds, giving 60 / 297 / 2,997 soldiers per full volley. Blue marching speed remains 104 pixels/second, versus a maximum red advance of 5.8.
-- Raise barricade durability from 54 / 126 to 108 / 270 direct projectile hits. Continuous aim takes about 10.1 / 25.3 seconds, including flight. Each blocked shot yields no soldiers. Gates have independent damage; only projectile collision calls the damage routine.
-- Arrived blue troops above 20 reduce red advance to 2.1 pixels/second. ×20's ~214 soldiers/second cannot replace the 235/second combat loss. It slows defeat but cannot turn the tide. Above 1,200 combat troops, ×99 supplies a small defensive push (-0.4 pixels/second) and a reserve for time spent breaking wood.
-- Marching troops contribute zero combat strength and cannot move the front. Every squad is drawn at the gate and marches for at least 0.25 seconds, even near a breached line.
-- Only arrival of a ×999 squad activates the counterattack. Enemy reinforcements stop, damage scales with combat troops (0.8 per cat/second, capped at 3,200), and surviving blue strength above 850 pushes at 8 pixels/second. No automatic extra retreat is applied after enemy elimination.
-- Victory requires both zero enemies and a blue-held frontline at or above y=30. The castle is breached at y=690. These are physical state conditions, with no victory clock.
-- Visible wood and HUD use one progress calculation and identical integer percentages. A colored seam marks the frontline. Bounded representative formations and cached cat sprites keep enormous logical armies inexpensive to draw; the simulation retains every soldier's count.
+## Deterministic results
 
-## Reproducible outcomes
+Run `npm run simulate` to reproduce [all 30, 60, and 120 Hz results](evidence/strategies.json). Each policy controls only cannon aim. Smaller frontline y values are closer to the enemy entry. Reversals are changes in the net direction of a roughly one-second sample with more than two pixels of movement.
 
-`npm run simulate` prints machine-readable results. [Committed results](evidence/strategies.json) include 30, 60 and 120 Hz runs. Representative 60 Hz outcomes:
+| Strategy | Outcome at 30 / 60 / 120 Hz | Duration range | ×99 / ×999 unlock at 60 Hz | Furthest red advance at 60 Hz |
+| --- | --- | --- | --- | --- |
+| A · Stay on ×20 | Defeat / Defeat / Defeat | 48.90–49.07 s | — / — | y=690.24 |
+| B · Open ×99 immediately, reinforce for four seconds, then stay on the final barricade | Defeat / Defeat / Defeat | 34.23–34.27 s | 8.43 / 34.18 s | y=690.08 |
+| C · Balanced, longer reinforcement bursts | Victory / Victory / Victory | 98.57–98.95 s | 17.12 / 56.87 s | y=560.13 |
+| D · Balanced, shorter reinforcement bursts | Victory / Victory / Victory | 101.33–101.65 s | 19.63 / 55.18 s | y=623.74 |
+| Open ×99 with C, then stay on ×99 | Defeat / Defeat / Defeat | 100.73–101.06 s | 17.12 / — | y=690.25 |
+| Aim at the final barricade from the start | Defeat / Defeat / Defeat | 16.82–16.83 s | — / — | y=690.18 |
 
-| Strategy | Policy | Result | Duration | Furthest enemy front | ×99 / ×999 opens |
-| --- | --- | --- | --- | --- | --- |
-| A: passive | Aim exclusively at ×20 | Defeat | 112.92 s | 690.02 | Never |
-| B: aggressive | Open ×99 immediately, reinforce for 4 seconds, spend all shots on ×999, then reinforce | Victory | 89.07 s | 417.41 | 10.12 / 39.52 s |
-| C: balanced | Alternate ×20 / wood every 2 seconds; once ×99 opens, replenish whenever combat reserve falls below 1,800, otherwise attack ×999 wood | Victory | 99.10 s | 388.80 | 20.18 / 54.35 s |
-
-Balanced play sacrifices speed for safety: it holds the enemy roughly 29 pixels farther from the castle. At all three update rates, an extreme 80-second delay before beginning unlocking causes aggressive play to lose while balanced play still wins. Those deliberately late recoveries take over 120 seconds and are robustness checks, not the normal duration target. Tests also cover ±20-pixel aim error and 0/5/10-second delays; both unlocking strategies win all nine cases, while passive defense always loses. These are bounded deterministic scenarios, not a claim about human win rates.
+At 60 Hz, ×20 drives the line back by more than 70 pixels from its starting position before stalling and retreating. Sustained ×99 fire pushes the line back to about y=105 before the growing horde reverses it. The two balanced schedules get their first ×999 troops to the front at 57.33 and 55.65 seconds. Both then drive the horde back by more than 500 pixels. Both tolerate the tested ±20-pixel aiming errors and small delays. The exact aim schedules are in [`tests/helpers/strategies.js`](../tests/helpers/strategies.js).
 
 ## Browser evidence
 
-The complete touch playthrough starts with two seconds of ×20, breaks ×99 using native touch drags, reinforces for four seconds, opens ×999, verifies pushback and completes victory. It checks detached snapshots and the actual HUD/results, captures counterattack/victory screenshots and milestone JSON, and restarts through the result button. A second playthrough keeps ×20 selected until defeat and verifies both barricades remain undamaged. Every browser test collects uncaught JavaScript and console errors.
+| Phase | Playwright capture |
+| --- | --- |
+| ×20 gains ground, then the horde grows | [Blue advance](evidence/phase-1-advance.png) · [Blue retreat](evidence/phase-1-retreat.png) |
+| ×99 arrives and reverses the line | [Reversal](evidence/phase-2-reversal.png) |
+| ×999 reaches the front and clears the approach | [Counterattack](evidence/phase-3-counterattack.png) · [Victory](evidence/victory.png) |
 
-Playwright's clock drives real requestAnimationFrame callbacks at normal simulation speed with accelerated wall time; no state setters or test-only gameplay shortcuts exist. Chromium runs both full playthroughs; mobile WebKit separately checks startup and reinforcements. This tests the Safari engine, not physical iPhone hardware. CI uploads screenshots and milestone JSON even on successful runs, plus traces on failure.
+Chromium playthroughs use native touch drags. Mobile-emulated WebKit runs the playthroughs with browser mouse input. Playwright advances the actual animation loop and reads detached snapshots. CI retains the screenshots, milestone JSON, and failure traces. [Chromium milestone data](evidence/browser-playthrough.json)
+
+The outcome timings describe controlled strategies. Playwright covers the browser engines and input paths above. Frame rates on physical phones and human win rates remain unmeasured.

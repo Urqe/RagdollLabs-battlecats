@@ -3,162 +3,814 @@
     "hz": 30,
     "strategy": "A",
     "won": false,
-    "seconds": 112.93,
-    "furthest": 690.11,
+    "seconds": 48.9,
+    "furthest": 690.3,
     "activation": null,
     "pushback": 0,
     "milestones": [],
-    "red": 28999.305555555555,
-    "blue": 12.999999999999996
+    "reversals": [
+      {
+        "time": 3,
+        "front": 368,
+        "red": 2808,
+        "blue": 219,
+        "toward": "entry"
+      },
+      {
+        "time": 25,
+        "front": 265.52,
+        "red": 15158,
+        "blue": 386,
+        "toward": "castle"
+      }
+    ],
+    "red": 48633,
+    "blue": 0
   },
   {
     "hz": 60,
     "strategy": "A",
     "won": false,
-    "seconds": 112.92,
-    "furthest": 690.02,
+    "seconds": 49.02,
+    "furthest": 690.24,
     "activation": null,
     "pushback": 0,
     "milestones": [],
-    "red": 28999.5875,
-    "blue": 20.833333333333346
+    "reversals": [
+      {
+        "time": 3,
+        "front": 368.22,
+        "red": 2808,
+        "blue": 220,
+        "toward": "entry"
+      },
+      {
+        "time": 25,
+        "front": 264.98,
+        "red": 15153,
+        "blue": 391,
+        "toward": "castle"
+      }
+    ],
+    "red": 48838,
+    "blue": 0
   },
   {
     "hz": 120,
     "strategy": "A",
     "won": false,
-    "seconds": 112.9,
+    "seconds": 49.07,
+    "furthest": 690.13,
+    "activation": null,
+    "pushback": 0,
+    "milestones": [],
+    "reversals": [
+      {
+        "time": 3,
+        "front": 368.26,
+        "red": 2807,
+        "blue": 220,
+        "toward": "entry"
+      },
+      {
+        "time": 25,
+        "front": 264.69,
+        "red": 15151,
+        "blue": 395,
+        "toward": "castle"
+      }
+    ],
+    "red": 48941,
+    "blue": 0
+  },
+  {
+    "hz": 30,
+    "strategy": "B",
+    "won": false,
+    "seconds": 34.23,
+    "furthest": 690.35,
+    "activation": null,
+    "pushback": 0,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 8.43,
+        "front": 512.94,
+        "red": 4708,
+        "blue": 0
+      },
+      {
+        "gate": 999,
+        "time": 34.2,
+        "front": 689.65,
+        "red": 25243,
+        "blue": 0
+      }
+    ],
+    "reversals": [
+      {
+        "time": 10,
+        "front": 514.68,
+        "red": 5350,
+        "blue": 1282,
+        "toward": "entry"
+      },
+      {
+        "time": 22,
+        "front": 435,
+        "red": 11720,
+        "blue": 112,
+        "toward": "castle"
+      }
+    ],
+    "red": 25287,
+    "blue": 0
+  },
+  {
+    "hz": 60,
+    "strategy": "B",
+    "won": false,
+    "seconds": 34.25,
+    "furthest": 690.08,
+    "activation": null,
+    "pushback": 0,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 8.43,
+        "front": 512.94,
+        "red": 4706,
+        "blue": 0
+      },
+      {
+        "gate": 999,
+        "time": 34.18,
+        "front": 688.68,
+        "red": 25213,
+        "blue": 0
+      }
+    ],
+    "reversals": [
+      {
+        "time": 10,
+        "front": 515.24,
+        "red": 5351,
+        "blue": 992,
+        "toward": "entry"
+      },
+      {
+        "time": 22,
+        "front": 434.72,
+        "red": 11716,
+        "blue": 118,
+        "toward": "castle"
+      }
+    ],
+    "red": 25301,
+    "blue": 0
+  },
+  {
+    "hz": 120,
+    "strategy": "B",
+    "won": false,
+    "seconds": 34.27,
+    "furthest": 690.04,
+    "activation": null,
+    "pushback": 0,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 8.43,
+        "front": 512.77,
+        "red": 4701,
+        "blue": 0
+      },
+      {
+        "gate": 999,
+        "time": 34.18,
+        "front": 688.28,
+        "red": 25209,
+        "blue": 0
+      }
+    ],
+    "reversals": [
+      {
+        "time": 10,
+        "front": 515.28,
+        "red": 5350,
+        "blue": 992,
+        "toward": "entry"
+      },
+      {
+        "time": 22,
+        "front": 434.45,
+        "red": 11714,
+        "blue": 120,
+        "toward": "castle"
+      }
+    ],
+    "red": 25319,
+    "blue": 0
+  },
+  {
+    "hz": 30,
+    "strategy": "C",
+    "won": true,
+    "seconds": 98.57,
+    "furthest": 559.76,
+    "activation": 57.03,
+    "pushback": 529.8,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 17.13,
+        "front": 359.71,
+        "red": 9234,
+        "blue": 24
+      },
+      {
+        "gate": 999,
+        "time": 56.6,
+        "front": 551.32,
+        "red": 59893,
+        "blue": 0
+      }
+    ],
+    "reversals": [
+      {
+        "time": 3,
+        "front": 368,
+        "red": 2808,
+        "blue": 219,
+        "toward": "entry"
+      },
+      {
+        "time": 14,
+        "front": 313.52,
+        "red": 7121,
+        "blue": 160,
+        "toward": "castle"
+      },
+      {
+        "time": 20,
+        "front": 384.47,
+        "red": 11352,
+        "blue": 1383,
+        "toward": "entry"
+      },
+      {
+        "time": 35,
+        "front": 286.82,
+        "red": 24054,
+        "blue": 789,
+        "toward": "castle"
+      },
+      {
+        "time": 58,
+        "front": 554.88,
+        "red": 62169,
+        "blue": 10201,
+        "toward": "entry"
+      }
+    ],
+    "red": 0,
+    "blue": 202132
+  },
+  {
+    "hz": 60,
+    "strategy": "C",
+    "won": true,
+    "seconds": 98.95,
+    "furthest": 560.13,
+    "activation": 57.33,
+    "pushback": 530.29,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 17.12,
+        "front": 358.82,
+        "red": 9218,
+        "blue": 27
+      },
+      {
+        "gate": 999,
+        "time": 56.87,
+        "front": 550.64,
+        "red": 60415,
+        "blue": 0
+      }
+    ],
+    "reversals": [
+      {
+        "time": 3,
+        "front": 368.22,
+        "red": 2808,
+        "blue": 220,
+        "toward": "entry"
+      },
+      {
+        "time": 14,
+        "front": 313.33,
+        "red": 7119,
+        "blue": 162,
+        "toward": "castle"
+      },
+      {
+        "time": 20,
+        "front": 384.24,
+        "red": 11350,
+        "blue": 1389,
+        "toward": "entry"
+      },
+      {
+        "time": 35,
+        "front": 286.17,
+        "red": 24051,
+        "blue": 801,
+        "toward": "castle"
+      },
+      {
+        "time": 37,
+        "front": 284,
+        "red": 26532,
+        "blue": 1225,
+        "toward": "entry"
+      },
+      {
+        "time": 39,
+        "front": 294.28,
+        "red": 29263,
+        "blue": 263,
+        "toward": "castle"
+      },
+      {
+        "time": 59,
+        "front": 548.91,
+        "red": 63281,
+        "blue": 14162,
+        "toward": "entry"
+      }
+    ],
+    "red": 0,
+    "blue": 197711
+  },
+  {
+    "hz": 120,
+    "strategy": "C",
+    "won": true,
+    "seconds": 98.83,
+    "furthest": 558.55,
+    "activation": 57.32,
+    "pushback": 528.55,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 17.11,
+        "front": 358.32,
+        "red": 9210,
+        "blue": 28
+      },
+      {
+        "gate": 999,
+        "time": 56.87,
+        "front": 549.06,
+        "red": 60411,
+        "blue": 0
+      }
+    ],
+    "reversals": [
+      {
+        "time": 3,
+        "front": 368.26,
+        "red": 2807,
+        "blue": 220,
+        "toward": "entry"
+      },
+      {
+        "time": 14,
+        "front": 313.2,
+        "red": 7117,
+        "blue": 164,
+        "toward": "castle"
+      },
+      {
+        "time": 20,
+        "front": 384.11,
+        "red": 11349,
+        "blue": 1392,
+        "toward": "entry"
+      },
+      {
+        "time": 35,
+        "front": 285.8,
+        "red": 24049,
+        "blue": 807,
+        "toward": "castle"
+      },
+      {
+        "time": 37,
+        "front": 283.63,
+        "red": 26531,
+        "blue": 1233,
+        "toward": "entry"
+      },
+      {
+        "time": 39,
+        "front": 293.66,
+        "red": 29260,
+        "blue": 269,
+        "toward": "castle"
+      },
+      {
+        "time": 59,
+        "front": 547.33,
+        "red": 63284,
+        "blue": 14172,
+        "toward": "entry"
+      }
+    ],
+    "red": 0,
+    "blue": 198062
+  },
+  {
+    "hz": 30,
+    "strategy": "D",
+    "won": true,
+    "seconds": 101.33,
+    "furthest": 619.56,
+    "activation": 55.63,
+    "pushback": 589.84,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 19.37,
+        "front": 364.33,
+        "red": 10832,
+        "blue": 75
+      },
+      {
+        "gate": 999,
+        "time": 55.2,
+        "front": 611.12,
+        "red": 58401,
+        "blue": 0
+      }
+    ],
+    "reversals": [
+      {
+        "time": 3,
+        "front": 368,
+        "red": 2808,
+        "blue": 219,
+        "toward": "entry"
+      },
+      {
+        "time": 16,
+        "front": 310.06,
+        "red": 8317,
+        "blue": 74,
+        "toward": "castle"
+      },
+      {
+        "time": 22,
+        "front": 388.21,
+        "red": 12983,
+        "blue": 1136,
+        "toward": "entry"
+      },
+      {
+        "time": 34,
+        "front": 327.99,
+        "red": 23875,
+        "blue": 1100,
+        "toward": "castle"
+      },
+      {
+        "time": 57,
+        "front": 610.96,
+        "red": 60922,
+        "blue": 12135,
+        "toward": "entry"
+      }
+    ],
+    "red": 0,
+    "blue": 259672
+  },
+  {
+    "hz": 60,
+    "strategy": "D",
+    "won": true,
+    "seconds": 101.65,
+    "furthest": 623.74,
+    "activation": 55.65,
+    "pushback": 593.91,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 19.63,
+        "front": 360.57,
+        "red": 11032,
+        "blue": 45
+      },
+      {
+        "gate": 999,
+        "time": 55.18,
+        "front": 614.25,
+        "red": 58433,
+        "blue": 0
+      }
+    ],
+    "reversals": [
+      {
+        "time": 3,
+        "front": 368.22,
+        "red": 2808,
+        "blue": 220,
+        "toward": "entry"
+      },
+      {
+        "time": 16,
+        "front": 309.33,
+        "red": 8313,
+        "blue": 136,
+        "toward": "castle"
+      },
+      {
+        "time": 23,
+        "front": 382.68,
+        "red": 13782,
+        "blue": 1456,
+        "toward": "entry"
+      },
+      {
+        "time": 34,
+        "front": 328.16,
+        "red": 23909,
+        "blue": 926,
+        "toward": "castle"
+      },
+      {
+        "time": 57,
+        "front": 615.32,
+        "red": 61020,
+        "blue": 12208,
+        "toward": "entry"
+      }
+    ],
+    "red": 0,
+    "blue": 262238
+  },
+  {
+    "hz": 120,
+    "strategy": "D",
+    "won": true,
+    "seconds": 101.54,
+    "furthest": 622.43,
+    "activation": 55.65,
+    "pushback": 592.43,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 19.62,
+        "front": 359.98,
+        "red": 11023,
+        "blue": 48
+      },
+      {
+        "gate": 999,
+        "time": 55.18,
+        "front": 612.76,
+        "red": 58430,
+        "blue": 0
+      }
+    ],
+    "reversals": [
+      {
+        "time": 3,
+        "front": 368.26,
+        "red": 2807,
+        "blue": 220,
+        "toward": "entry"
+      },
+      {
+        "time": 16,
+        "front": 309.07,
+        "red": 8312,
+        "blue": 138,
+        "toward": "castle"
+      },
+      {
+        "time": 23,
+        "front": 382.39,
+        "red": 13782,
+        "blue": 1461,
+        "toward": "entry"
+      },
+      {
+        "time": 34,
+        "front": 327.64,
+        "red": 23909,
+        "blue": 933,
+        "toward": "castle"
+      },
+      {
+        "time": 57,
+        "front": 614.01,
+        "red": 61022,
+        "blue": 12222,
+        "toward": "entry"
+      }
+    ],
+    "red": 0,
+    "blue": 262387
+  },
+  {
+    "hz": 30,
+    "strategy": "99",
+    "won": false,
+    "seconds": 100.73,
+    "furthest": 690.39,
+    "activation": null,
+    "pushback": 0,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 17.13,
+        "front": 359.71,
+        "red": 9234,
+        "blue": 24
+      }
+    ],
+    "reversals": [
+      {
+        "time": 3,
+        "front": 368,
+        "red": 2808,
+        "blue": 219,
+        "toward": "entry"
+      },
+      {
+        "time": 14,
+        "front": 313.52,
+        "red": 7121,
+        "blue": 160,
+        "toward": "castle"
+      },
+      {
+        "time": 20,
+        "front": 384.47,
+        "red": 11352,
+        "blue": 1383,
+        "toward": "entry"
+      },
+      {
+        "time": 65,
+        "front": 109.57,
+        "red": 66320,
+        "blue": 2049,
+        "toward": "castle"
+      }
+    ],
+    "red": 168229,
+    "blue": 222
+  },
+  {
+    "hz": 60,
+    "strategy": "99",
+    "won": false,
+    "seconds": 100.95,
+    "furthest": 690.25,
+    "activation": null,
+    "pushback": 0,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 17.12,
+        "front": 358.82,
+        "red": 9218,
+        "blue": 27
+      }
+    ],
+    "reversals": [
+      {
+        "time": 3,
+        "front": 368.22,
+        "red": 2808,
+        "blue": 220,
+        "toward": "entry"
+      },
+      {
+        "time": 14,
+        "front": 313.33,
+        "red": 7119,
+        "blue": 162,
+        "toward": "castle"
+      },
+      {
+        "time": 20,
+        "front": 384.24,
+        "red": 11350,
+        "blue": 1389,
+        "toward": "entry"
+      },
+      {
+        "time": 65,
+        "front": 108.16,
+        "red": 66320,
+        "blue": 2083,
+        "toward": "castle"
+      }
+    ],
+    "red": 168945,
+    "blue": 0
+  },
+  {
+    "hz": 120,
+    "strategy": "99",
+    "won": false,
+    "seconds": 101.06,
+    "furthest": 690.07,
+    "activation": null,
+    "pushback": 0,
+    "milestones": [
+      {
+        "gate": 99,
+        "time": 17.11,
+        "front": 358.32,
+        "red": 9210,
+        "blue": 28
+      }
+    ],
+    "reversals": [
+      {
+        "time": 3,
+        "front": 368.26,
+        "red": 2807,
+        "blue": 220,
+        "toward": "entry"
+      },
+      {
+        "time": 14,
+        "front": 313.2,
+        "red": 7117,
+        "blue": 164,
+        "toward": "castle"
+      },
+      {
+        "time": 20,
+        "front": 384.11,
+        "red": 11349,
+        "blue": 1392,
+        "toward": "entry"
+      },
+      {
+        "time": 65,
+        "front": 107.48,
+        "red": 66321,
+        "blue": 2102,
+        "toward": "castle"
+      }
+    ],
+    "red": 169303,
+    "blue": 166
+  },
+  {
+    "hz": 30,
+    "strategy": "Rush",
+    "won": false,
+    "seconds": 16.83,
+    "furthest": 690.18,
+    "activation": null,
+    "pushback": 0,
+    "milestones": [],
+    "reversals": [],
+    "red": 9591,
+    "blue": 0
+  },
+  {
+    "hz": 60,
+    "strategy": "Rush",
+    "won": false,
+    "seconds": 16.83,
+    "furthest": 690.18,
+    "activation": null,
+    "pushback": 0,
+    "milestones": [],
+    "reversals": [],
+    "red": 9587,
+    "blue": 0
+  },
+  {
+    "hz": 120,
+    "strategy": "Rush",
+    "won": false,
+    "seconds": 16.82,
     "furthest": 690.01,
     "activation": null,
     "pushback": 0,
     "milestones": [],
-    "red": 28999.76111111111,
-    "blue": 26.708333333333304
-  },
-  {
-    "hz": 30,
-    "strategy": "B",
-    "won": true,
-    "seconds": 89.07,
-    "furthest": 417.45,
-    "activation": 40.67,
-    "pushback": 387.2,
-    "milestones": [
-      {
-        "gate": 99,
-        "time": 10.13
-      },
-      {
-        "gate": 999,
-        "time": 39.53
-      }
-    ],
-    "red": 0,
-    "blue": 477953.6666666666
-  },
-  {
-    "hz": 60,
-    "strategy": "B",
-    "won": true,
-    "seconds": 89.07,
-    "furthest": 417.41,
-    "activation": 40.65,
-    "pushback": 387.33,
-    "milestones": [
-      {
-        "gate": 99,
-        "time": 10.12
-      },
-      {
-        "gate": 999,
-        "time": 39.52
-      }
-    ],
-    "red": 0,
-    "blue": 477950.5833333335
-  },
-  {
-    "hz": 120,
-    "strategy": "B",
-    "won": true,
-    "seconds": 89.08,
-    "furthest": 417.46,
-    "activation": 40.65,
-    "pushback": 387.4,
-    "milestones": [
-      {
-        "gate": 99,
-        "time": 10.11
-      },
-      {
-        "gate": 999,
-        "time": 39.51
-      }
-    ],
-    "red": 0,
-    "blue": 477952.1249999997
-  },
-  {
-    "hz": 30,
-    "strategy": "C",
-    "won": true,
-    "seconds": 98.7,
-    "furthest": 387.77,
-    "activation": 55.63,
-    "pushback": 344.53,
-    "milestones": [
-      {
-        "gate": 99,
-        "time": 19.93
-      },
-      {
-        "gate": 999,
-        "time": 54.07
-      }
-    ],
-    "red": 0,
-    "blue": 428468.3333333332
-  },
-  {
-    "hz": 60,
-    "strategy": "C",
-    "won": true,
-    "seconds": 99.1,
-    "furthest": 388.8,
-    "activation": 55.9,
-    "pushback": 345.6,
-    "milestones": [
-      {
-        "gate": 99,
-        "time": 20.18
-      },
-      {
-        "gate": 999,
-        "time": 54.35
-      }
-    ],
-    "red": 0,
-    "blue": 428462.166666667
-  },
-  {
-    "hz": 120,
-    "strategy": "C",
-    "won": true,
-    "seconds": 99.1,
-    "furthest": 388.82,
-    "activation": 55.89,
-    "pushback": 345.67,
-    "milestones": [
-      {
-        "gate": 99,
-        "time": 20.18
-      },
-      {
-        "gate": 999,
-        "time": 54.34
-      }
-    ],
-    "red": 0,
-    "blue": 428465.66666666605
+    "reversals": [],
+    "red": 9578,
+    "blue": 0
   }
 ]

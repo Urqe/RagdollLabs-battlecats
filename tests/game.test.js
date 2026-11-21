@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { workNeeded } from "../src/config.js";
+import { LEVEL, workNeeded } from "../src/config.js";
 import { createGame } from "../src/game.js";
 import { updateProjectiles, fire } from "../src/projectiles.js";
 import { createMultipliers } from "../src/multipliers.js";
@@ -117,37 +117,102 @@ test("reinforcements move, render blue cats, then join combat at the front", () 
   createRenderer(s, { getContext: () => ctx }).draw();
   assert.ok(bluePaints > 0);
   s.squads[0].marchTime = 1;
-  s.squads[0].y = s.front + 18;
   s.redTotal = 0;
-  s.finalActivated = true;
+  s.front = LEVEL.clearedFront;
+  s.squads[0].y = s.front + 18;
   updateArmy(s, 0.02, noop, noop);
   assert.equal(s.squads.length, 0);
   assert.equal(s.blueTotal, 20);
 });
-test("victory requires final gate activation, enemy elimination and clearing the front", () => {
-  const results = [],
-    game = createGame({ onEnd: (won) => results.push(won) });
+test("victory requires enemy elimination, cleared territory and surviving blue troops", () => {
+  const results = [];
+  const game = createGame({ onEnd: (won) => results.push(won) });
   game.reset();
   const s = game.state;
   s.redTotal = 0;
-  s.front = 29;
+  s.front = LEVEL.clearedFront - 1;
   game.update(0.01);
   assert.equal(s.mode, "playing");
-  s.finalActivated = true;
-  s.redTotal = 1;
-  s.front = 50;
+  s.redTotal = 100;
+  s.blueTotal = 1000;
   game.update(0.01);
   assert.equal(s.mode, "playing");
   s.redTotal = 0;
+  s.front = LEVEL.clearedFront + 10;
   game.update(0.01);
   assert.equal(s.mode, "playing");
-  s.front = 29;
-  s.blueTotal = 10;
+  s.redTotal = 0;
+  s.front = LEVEL.clearedFront - 1;
   game.update(0.01);
   assert.equal(s.mode, "end");
   assert.deepEqual(results, [true]);
   game.update(1);
   assert.deepEqual(results, [true]);
+});
+test("recruitment and combat do not depend on gate access or the ×999 arrival banner", () => {
+  const { state: s } = fixture(),
+    { state: control } = fixture();
+  s.gates[1].open = s.gates[2].open = s.finalActivated = true;
+  s.t = control.t = 40;
+  s.blueTotal = control.blueTotal = 2000;
+  updateArmy(s, 0.02, noop, noop);
+  updateArmy(control, 0.02, noop, noop);
+  for (const key of ["front", "redTotal", "blueTotal", "redEntryRate"]) {
+    assert.equal(s[key], control[key]);
+  }
+  assert.ok(s.redEntryRate > LEVEL.redReinforcements);
+  assert.ok(s.blueTotal < 2000);
+});
+test("a small red remnant can engage only a small part of the blue army", () => {
+  const { state: s } = fixture();
+  s.front = LEVEL.clearedFront;
+  s.redTotal = 1;
+  s.blueTotal = 10000;
+  updateArmy(s, 0.01, noop, noop);
+  assert.equal(s.redTotal, 0);
+  assert.ok(s.blueTotal < 10000 && s.blueTotal > 9999.99);
+});
+test("visible formations grow, shrink and disappear with actual troop counts", () => {
+  const { state: s } = fixture();
+  const paints = { red: 0, blue: 0, final: 0 };
+  const ctx = new Proxy(
+    {},
+    {
+      get: (_, key) =>
+        key === "createLinearGradient" ? () => ({ addColorStop: noop }) : noop,
+      set: (_, key, value) => {
+        if (key === "fillStyle" && value === "#df544b") paints.red++;
+        if (key === "fillStyle" && value === "#379aff") paints.blue++;
+        if (key === "fillStyle" && value === "#83d9ff") paints.final++;
+        return true;
+      },
+    },
+  );
+  const renderer = createRenderer(s, { getContext: () => ctx });
+  renderer.draw();
+  const early = paints.red;
+  s.redTotal *= 10;
+  s.blueTotal = 6000;
+  paints.red = 0;
+  renderer.draw();
+  assert.ok(paints.red > early);
+  const blue = paints.blue;
+  s.redTotal = s.blueTotal = 0;
+  paints.red = paints.blue = 0;
+  renderer.draw();
+  assert.equal(paints.red, 0);
+  assert.equal(paints.blue, 0);
+  let previous = 0;
+  const { spawnSquad } = createMultipliers(s, noop, noop);
+  for (const gate of s.gates) {
+    s.squads.length = 0;
+    paints.blue = paints.final = 0;
+    spawnSquad(gate, gate.x);
+    renderer.draw();
+    const count = paints.blue + paints.final;
+    assert.ok(count > previous && count < blue);
+    previous = count;
+  }
 });
 test("castle breach causes defeat and restart resumes play", () => {
   const results = [],

@@ -1,61 +1,83 @@
 {
-  "source": "Passing Chromium native-touch Playwright playthrough; snapshots from browser trace",
+  "browserName": "chromium",
   "milestones": [
     {
-      "event": "\u00d799 unlocked",
-      "t": 12.99400000000001,
-      "mode": "playing",
-      "gunX": 89.999997652494,
-      "front": 354.2212000000067,
-      "redTotal": 24476.844399999216,
-      "blueTotal": 0,
+      "event": "×99 unlocked",
+      "seconds": 17.992999999999792,
+      "front": 376.87277494694814,
+      "red": 9873.832042058106,
+      "blue": 0,
+      "redEntryRate": 763.5612999999929,
       "work": [
-        108,
+        90,
         0
       ],
-      "finalActivated": false
+      "marching": 891
     },
     {
-      "event": "\u00d7999 unlocked",
-      "t": 42.993999999997044,
-      "mode": "playing",
-      "gunX": 329.00001643254205,
-      "front": 403.47400000001863,
-      "redTotal": 26629.872879998213,
-      "blueTotal": 0,
+      "event": "×99 reverses the battle",
+      "seconds": 29.944999999998476,
+      "front": 298.3890637051866,
+      "red": 18338.254933980825,
+      "blue": 1662.3098055520609,
+      "redEntryRate": 1171.124499999948,
       "work": [
-        108,
-        270
+        90,
+        33
       ],
-      "finalActivated": false
+      "marching": 2079
     },
     {
-      "event": "counterattack",
-      "t": 43.985999999996935,
-      "mode": "playing",
-      "gunX": 329.00001643254205,
-      "front": 403.0452000000194,
-      "redTotal": 25552.76132799817,
-      "blueTotal": 5911.119999999999,
+      "event": "×999 unlocked",
+      "seconds": 57.44899999999545,
+      "front": 547.0461506372006,
+      "red": 61271.16246126542,
+      "blue": 0,
+      "redEntryRate": 2109.0108999998447,
       "work": [
-        108,
-        270
+        90,
+        231
       ],
-      "finalActivated": true
+      "marching": 0
+    },
+    {
+      "event": "×999 reaches the frontline",
+      "seconds": 58.44099999999534,
+      "front": 554.054589929563,
+      "red": 63107.23857540898,
+      "blue": 8120.662279524684,
+      "redEntryRate": 2142.8380999998412,
+      "work": [
+        90,
+        231
+      ],
+      "marching": 0
+    },
+    {
+      "event": "×999 counterattack",
+      "seconds": 75.44899999999855,
+      "front": 349.701009073937,
+      "red": 38540.782466361256,
+      "blue": 56221.62538262754,
+      "redEntryRate": 2722.810899999951,
+      "work": [
+        90,
+        231
+      ],
+      "marching": 17982
     },
     {
       "event": "victory",
-      "t": 90.62600000000363,
-      "mode": "end",
-      "gunX": 329.00001643254205,
-      "front": 29.9252000000496,
-      "redTotal": 0,
-      "blueTotal": 465969.11999999965,
+      "seconds": 99.43300000000656,
+      "front": 27.442268776019464,
+      "red": 0,
+      "blue": 191601.7915164865,
+      "redEntryRate": 0,
       "work": [
-        108,
-        270
+        90,
+        231
       ],
-      "finalActivated": true
+      "marching": 50949
     }
   ]
 }
