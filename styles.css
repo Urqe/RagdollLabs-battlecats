@@ -15,7 +15,7 @@ body {
     "Segoe UI",
     sans-serif;
   color: #fff;
-  touch-action: none;
+  touch-action: manipulation;
 }
 #app {
   height: 100dvh;
@@ -29,7 +29,7 @@ body {
 }
 #game {
   display: block;
-  width: min(100vw, 55.263dvh);
+  width: min(100vw, max(1px, calc((100dvh - 98px) * 0.55263)));
   height: auto;
   aspect-ratio: 420/760;
   max-height: 100dvh;
@@ -187,4 +187,86 @@ button:active {
 }
 .sound-toggle:active {
   box-shadow: none;
+}
+
+.barrier-hud {
+  display: contents;
+}
+.secondary {
+  color: #e0edf9;
+  background: #233a51;
+  border: 1px solid #ffffff3a;
+  box-shadow: none;
+  min-height: 42px;
+  font-size: 14px;
+}
+.secondary:active {
+  box-shadow: none;
+}
+.menu-action {
+  margin-top: 10px;
+}
+#battleNav {
+  position: absolute;
+  left: 50%;
+  bottom: max(5px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+}
+#battleLevels {
+  min-width: 99px;
+  min-height: 44px;
+}
+.level-panel {
+  text-align: left;
+  padding: 20px;
+  width: min(440px, 100%);
+}
+.level-panel h2 {
+  margin: 0 0 14px;
+  letter-spacing: -0.025em;
+}
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.level-choice {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 4px;
+  text-align: left;
+  min-height: 66px;
+  padding: 8px 10px;
+  border-radius: 11px;
+  color: #f5e4b2;
+  background: #233b52;
+  border: 1px solid #d9a86690;
+  box-shadow: none;
+}
+.level-choice:active {
+  box-shadow: none;
+}
+.level-choice:disabled {
+  color: #b8c8d8;
+  background: #17293c;
+  border-color: #ffffff19;
+  cursor: default;
+}
+.level-choice strong {
+  font-size: 13px;
+  line-height: 1.14;
+}
+.level-choice span {
+  color: #b7cee4;
+  font-size: 10px;
+  line-height: 1.1;
+}
+.level-choice .completed {
+  color: #abe3c1;
+}
+@media (max-height: 380px) and (orientation: landscape) {
+  .level-panel {
+    max-height: calc(100dvh - 24px);
+  }
 }

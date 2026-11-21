@@ -35,3 +35,13 @@ Use one short entry per session or build. Identify the exact commit, PR, or depl
 3. Update relevant level briefs, [roadmap statuses and priorities](roadmap.md), and [technical dependencies](level-architecture.md). Add a short revision note explaining why, with a link to the evidence or PR.
 
 One entry and a short documentation edit are enough for most reviews.
+
+## Milestone 7 automated baseline
+
+**Session.** Level 2 deterministic runs at 30, 60, and 120 Hz, with Chromium native touch and mobile-emulated WebKit playthroughs at 390 × 844. [Results and recordings](purrapult-balance.md)
+
+**Observations.** Both artillery sequences and the gate-only policy won. Passive defense and an unattended catapult lost. Turning off artillery damage made the early-artillery route lose on the same aim schedule. Browser coverage includes free Level 2 access, returning to the selector, replay, and saving a completion marker.
+
+**Player impressions.** First-attempt targeting clarity, fairness, and the appeal of the artillery payoff remain open.
+
+**Recommended changes.** In Milestone 8, watch whether players distinguish the catapult's aim lane and notice the difference between landing an impact and holding the line. Check responsiveness and sound on a physical iPhone. Use those findings when reconsidering the proposed archer level.

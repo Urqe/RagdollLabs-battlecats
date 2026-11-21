@@ -1,13 +1,6 @@
-import {
-  BARRICADE_HIT_Y,
-  GATE_HIT_Y,
-  H,
-  LEVEL,
-  TAU,
-  W,
-  clamp,
-} from "./config.js";
-import { barrierStatus } from "./barricades.js";
+import { H, TAU, W, clamp } from "./config.js";
+import { drawArtilleryShot, drawCatapult } from "./artillery-render.js";
+import { barrierIndex, barrierStatus } from "./barricades.js";
 import { createFigures } from "./figures.js";
 import { drawTerrain, laneHalfWidth, polygon } from "./terrain.js";
 import { createMotion, waveProfile } from "./motion.js";
@@ -73,7 +66,7 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     const pulse = pulses[index];
     if (!gate.open || pulse === 0) return;
     ctx.save();
-    const y = GATE_HIT_Y - 15;
+    const y = gate.hitY - 15;
     ctx.strokeStyle = palettes[index].glow;
     const rings = index === 0 ? 1 : index === 1 ? 2 : 3;
     for (let i = 0; i < rings; i++) {
@@ -95,8 +88,9 @@ export function createRenderer(state, canvas, motion = createMotion()) {
   }
 
   function drawBarricade(gate, index, left, right) {
-    const { progress, label: status } = barrierStatus(state, index - 1);
-    const y = BARRICADE_HIT_Y;
+    const slot = barrierIndex(state, gate.barricadeId);
+    const { progress, label: status } = barrierStatus(state, slot);
+    const y = state.level.barricades[slot].hitY;
     const width = (right - left - 12) / 7;
     for (let i = 0; i < 7; i++) {
       const x = left + 6 + i * width;
@@ -160,7 +154,7 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     ctx.fillRect(left + 12, y + 17, (right - left - 24) * progress, 4);
     label(status, gate.x, y + 1, 12, "#fff0ca", "#4b3020");
     label("SHOOT TO BREAK", gate.x, y + 32, 8, "#fff0ca", "#4b3020");
-    const flash = state.barricadeFlashes[index - 1];
+    const flash = state.barricadeFlashes[slot];
     if (flash > 0) {
       ctx.globalAlpha = flash * 0.55;
       ctx.fillStyle = "#ffd89a";
@@ -284,7 +278,7 @@ export function createRenderer(state, canvas, motion = createMotion()) {
   }
 
   function supplyFlags() {
-    const y = LEVEL.reinforcementCutoff;
+    const y = state.level.objective.reinforcementCutoff;
     const color = state.redEntryOpen ? "#a5323c" : "#327cbf";
     for (let side = -1; side <= 1; side += 2) {
       const x = 210 + side * 184;
@@ -305,16 +299,18 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     }
   }
 
-  function brokenWood(gate, index) {
-    const flash = state.barricadeFlashes[index - 1];
-    if (!gate.open || !flash) return;
+  function brokenWood(gate, open = gate.open) {
+    if (!gate.barricadeId || !open) return;
+    const slot = barrierIndex(state, gate.barricadeId);
+    const flash = state.barricadeFlashes[slot];
+    if (!flash) return;
     const age = 1 - flash / 0.48;
     for (let i = 0; i < 7; i++) {
       const x = (i - 3) * 11;
       ctx.save();
       ctx.translate(
         gate.x + x * (1 + age),
-        BARRICADE_HIT_Y + age * (18 - (i % 3) * 14),
+        state.level.barricades[slot].hitY + age * (18 - (i % 3) * 14),
       );
       ctx.rotate(age * (i - 2.8) * 0.82);
       ctx.globalAlpha = 1 - age;
@@ -397,28 +393,43 @@ export function createRenderer(state, canvas, motion = createMotion()) {
   function draw() {
     ctx.clearRect(0, 0, W, H);
     if (terrain?.width) ctx.drawImage(terrain, 0, 0, W, H);
-    else drawTerrain(ctx);
-    const celebration = state.victoryElapsed / LEVEL.victoryDuration;
+    else drawTerrain(ctx, state.level.objective.reinforcementCutoff);
+    const celebration =
+      state.victoryElapsed / state.level.combat.victoryDuration;
     const surge = 1 - (1 - celebration) ** 2;
     figures.setClock(state.t + state.victoryElapsed);
-    for (let i = 0; i < 3; i++) {
-      const duration = waveProfile(state.gates[i].mult).flare;
-      pulses[i] =
+    for (const gate of state.gates) {
+      const duration = waveProfile(gate.mult).flare;
+      pulses[gate.style] =
         state.mode === "playing"
-          ? clamp(1 - (state.t - motion.pulses[i]) / duration, 0, 1)
+          ? clamp(1 - (state.t - motion.pulses[gate.style]) / duration, 0, 1)
           : 0;
-      gateGround(state.gates[i], i);
+      gateGround(gate, gate.style);
     }
     figures.redArmy(state, false, motion.contact);
     figures.blueArmy(state, false, surge, motion.contact, motion.tails);
-    for (let i = 0; i < 3; i++) drawGate(state.gates[i], i);
+    for (const gate of state.gates) drawGate(gate, gate.style);
+    const emplacement = state.level.support;
+    if (emplacement) {
+      drawCatapult(ctx, state, figures);
+      label("PURRAPULT", emplacement.x, emplacement.y - 45, 10, "#ffe7ce");
+      if (!state.support.open) {
+        drawBarricade(
+          emplacement,
+          3,
+          emplacement.x - emplacement.width / 2,
+          emplacement.x + emplacement.width / 2,
+        );
+      }
+    }
     figures.redArmy(state, true, motion.contact);
     figures.blueArmy(state, true, surge, motion.contact, motion.tails);
     supplyFlags();
     if (state.mode === "playing" || (state.mode === "end" && !celebration)) {
       contactEffects();
       figures.fallen(motion.falls);
-      for (let i = 1; i < 3; i++) brokenWood(state.gates[i], i);
+      for (const gate of state.gates) brokenWood(gate);
+      if (emplacement) brokenWood(emplacement, state.support.open);
       for (const shot of state.shots) figures.projectile(shot);
       for (const b of state.burst) {
         const wood = b.color === "#d48b4b" || b.color === "#e9b779";
@@ -429,6 +440,8 @@ export function createRenderer(state, canvas, motion = createMotion()) {
       ctx.globalAlpha = 1;
     }
     cannon();
+    if (emplacement && state.mode !== "end")
+      drawArtilleryShot(ctx, state, figures);
     if (celebration) drawVictory(surge);
   }
 
@@ -444,7 +457,7 @@ export function createRenderer(state, canvas, motion = createMotion()) {
         terrain.height = canvas.height;
         const background = terrain.getContext("2d");
         background.setTransform(pixel, 0, 0, pixel, 0, 0);
-        drawTerrain(background);
+        drawTerrain(background, state.level.objective.reinforcementCutoff);
       }
       draw();
     },

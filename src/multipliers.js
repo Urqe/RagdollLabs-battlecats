@@ -1,10 +1,14 @@
-import { clamp, GATE_HIT_Y, LEVEL } from "./config.js";
+import { clamp } from "./config.js";
 
 export function createMultipliers(state, sprinkle, random = Math.random) {
-  function spawnSquad(g, fromX, entryY = GATE_HIT_Y, slot = 0) {
+  function spawnSquad(g, fromX, entryY = g.hitY, slot = 0) {
     state.squads.push({
-      x: clamp(fromX, 46, 374),
-      y: LEVEL.spawnY,
+      x: clamp(
+        fromX,
+        state.level.battlefield.minX + 1,
+        state.level.battlefield.maxX - 1,
+      ),
+      y: state.level.combat.spawnY,
       entryY,
       slot,
       count: g.mult,

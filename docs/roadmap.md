@@ -14,16 +14,16 @@ SiegeDolls is a mobile-first arcade strategy game about miniature cats taking si
 
 ## Development status
 
-Level 1 is the playable baseline. The five merged milestones established modular JavaScript and CI, deterministic aim strategies and browser playthroughs, escalating frontline pressure, a wider battlefield and short victory sequence, then combat motion and optional sound. [Level 1 design](levels/level-01.md) · [Balance, tests, and recordings](level-1-balance.md)
+Level 1 is the playable regression baseline. Level 2 adds yarn-ball artillery and can be selected immediately. Every implemented level stays available from the menu. The five merged milestones established modular JavaScript and CI, deterministic aim strategies and browser playthroughs, escalating frontline pressure, a wider battlefield and short victory sequence, then combat motion and optional sound. [Level 1 design](levels/level-01.md) · [Balance, tests, and recordings](level-1-balance.md)
 
-**Implemented** means playable. **Next** identifies the current implementation candidate. **Proposed** means a preliminary design. **Under review** flags a decision or missing evidence that needs attention. **Deferred** records an intentional postponement. Titles and mechanics for Levels 2–10 are provisional.
+**Implemented** means playable. **Next** identifies the current implementation candidate. **Proposed** means a preliminary design. **Under review** flags a decision or missing evidence that needs attention. **Deferred** records an intentional postponement. Titles and mechanics for Levels 3–10 are provisional.
 
 ## Levels 1–10
 
 | Level | Working title | Status | Mechanic and dependency |
 | --- | --- | --- | --- |
 | 1 | [The Last Stand](levels/level-01.md) | Implemented | Multipliers, direct-hit barricades, and escalating pressure provide the shared baseline. |
-| 2 | [The Purrapult](levels/level-02.md) | Next | Unlock a yarn-ball catapult. Requires a second level definition, reusable hit targets, and simulation-owned support impacts. |
+| 2 | [The Purrapult](levels/level-02.md) | Implemented | Unlock a yarn-ball catapult. Shared level definitions, direct-hit wood, and simulation-owned artillery are in place. |
 | 3 | [The Meowmen](levels/level-03.md) | Proposed | Unlock cat archers for steady ranged support. Depends on artillery findings and a reusable support lifecycle. |
 | 4 | [A Tale of Two Tails](levels/level-04.md) | Proposed | Split attention between two crossings. Needs readable lane-specific pressure, routing, and breach rules. |
 | 5 | [The Pawtorians](levels/level-05.md) | Proposed | Armored red cats make shot timing and support choice matter. Needs a readable mixed horde and distinct damage interactions. |
@@ -42,7 +42,7 @@ Do not distribute new army archetypes evenly across Levels 1–10. Introduce the
 ## Milestone sequence
 
 1. **Milestone 6 · Roadmap and architecture.** Establish this plan, level briefs, and a lightweight review process.
-2. **Milestone 7 · Level foundation and Level 2.** Extract the smallest shared configuration needed by The Purrapult, add a minimal selector, and implement the artillery prototype. Keep Level 1 behavior covered by its existing regression baseline. [Migration proposal](level-architecture.md)
+2. **Milestone 7 · Level foundation and Level 2.** Shared level definitions, free level selection, and The Purrapult are playable. The original Level 1 simulation remains the regression baseline. [Architecture](level-architecture.md) · [Level 2 evidence](purrapult-balance.md)
 3. **Milestone 8 · Level 2 playtesting and refinement.** Evaluate artillery clarity, balance, and enjoyment. Revisit the next level using observations.
 4. **Milestone 9 · Level 3 candidate.** Prototype ranged support if testing identifies a distinct tactical role for it. Use Level 2 lessons to define scope.
 

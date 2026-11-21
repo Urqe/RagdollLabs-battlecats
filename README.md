@@ -1,6 +1,6 @@
 # SiegeDolls 🐱⚔️
 
-**Level 1: The Last Stand** — a small, ad-free, one-finger cat siege game, playable in a mobile browser.
+SiegeDolls is a small, ad-free, one-finger cat siege game with two playable levels.
 
 **Play:** https://urqe.github.io/RagdollLabs-battlecats/
 
@@ -11,6 +11,10 @@
 - **Keyboard:** Arrow keys or A/D.
 - The cannon automatically shoots **three tiny cats per volley**.
 - Sound effects start muted. Use **Sound off** in the main menu or result screen to enable them.
+
+## Choose a level
+
+Open **Choose level** from the main menu to play **The Last Stand** or **The Purrapult** immediately. **Defend the Castle** launches your last selected level. Use **Levels** below the battlefield or **Choose level** on the result screen to switch. **Try Again** replays the current battle. Completion markers track wins and every implemented level is available from the start.
 
 ## Level 1
 
@@ -23,6 +27,10 @@ The red horde starts larger and recruits faster as the siege goes on. Switch bet
 Cats do not instantly teleport to the front. Each gate creates a visible **marching formation** that moves toward the enemy; their army count is delivered when the formation reaches combat. Large squads render representative soldiers with their total still accounted for in the battle simulation.
 
 **Victory** comes when your blue army cuts off the enemy supply route and eliminates the last invader. A short celebration shows blue taking the yard. **Defeat** comes when the red frontline reaches the castle.
+
+## Level 2
+
+Break the wood at the right-hand Purrapult emplacement while keeping your frontline reinforced. The crew automatically winds up and lobs yarn at the approaching horde. The catapult pushes back the pressure while volleys through the gates keep defenders at the line. [Level design and balance evidence](docs/purrapult-balance.md)
 
 ## Local development
 
@@ -51,7 +59,9 @@ npm run test:all
 - `index.html` / `styles.css`: page structure and mobile-first layout.
 - `src/main.js`: DOM, HUD, results, and one animation loop.
 - `src/state.js`: fresh per-game state and restart defaults.
-- `src/config.js`: original level geometry and tuning constants.
+- `src/levels.js` / `src/config.js`: level registry, battlefield definitions, and Level 1 regression constants.
+- `src/artillery.js` / `src/artillery-render.js`: simulation-owned catapult attacks and Canvas presentation.
+- `src/progress.js`: local level selection and completion markers.
 - `src/controls.js`: touch, mouse, and keyboard controls.
 - `src/projectiles.js`: three-cat volleys, flight, and swept gate collisions.
 - `src/barricades.js`: direct-hit damage and gate unlocking.
@@ -65,7 +75,7 @@ For AI-assisted changes, keep simulation code independent of DOM and animation t
 
 ## Level 1 balance validation
 
-See the [combat model, tested outcomes, and gameplay recordings](docs/level-1-balance.md). Run `npm run simulate` to reproduce the results at 30, 60, and 120 Hz. Chromium uses native touch drags in the playthrough tests. The browser diagnostics read a detached snapshot from `src/main.js`. CI retains the evidence in the `playwright-results` artifact.
+See the [combat model, tested outcomes, and gameplay recordings](docs/level-1-balance.md). Run `npm run simulate` for Level 1 or `node scripts/simulate-purrapult.js` for Level 2 at 30, 60, and 120 Hz. Chromium uses native touch drags in the playthrough tests. The browser diagnostics read a detached snapshot from `src/main.js`. CI retains the evidence in the `playwright-results` artifact.
 
 ## Roadmap and level design
 

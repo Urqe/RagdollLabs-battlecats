@@ -1,4 +1,5 @@
-import { BLUE_SPEED, LEVEL, clamp } from "./config.js";
+import { clamp } from "./config.js";
+import { LEVEL_ONE } from "./levels.js";
 
 const profiles = {
   20: {
@@ -43,9 +44,13 @@ export const waveDuration = (profile) =>
 
 // Positions start at the actual crossing and converge toward the simulation's
 // marching path. Later figures leave the gate on their own presentation clock.
-export function waveY(entryY, age) {
+export function waveY(entryY, age, level = LEVEL_ONE) {
   const blend = clamp(age / 0.29, 0, 1);
-  return entryY - BLUE_SPEED * age - (entryY - LEVEL.spawnY) * blend;
+  return (
+    entryY -
+    level.battlefield.marchSpeed * age -
+    (entryY - level.combat.spawnY) * blend
+  );
 }
 
 const FALL_LIFE = 0.38;
@@ -80,7 +85,13 @@ export function createMotion(onReversal = () => {}) {
     });
   }
 
-  function step(time, velocity, blueStrength = 0, redEntryOpen = true) {
+  function step(
+    time,
+    velocity,
+    blueStrength = 0,
+    redEntryOpen = true,
+    level = LEVEL_ONE,
+  ) {
     const dt = Math.max(0, time - clock);
     clock = time;
     const visible = contact.blueStrength ?? 0;
@@ -92,7 +103,8 @@ export function createMotion(onReversal = () => {}) {
       (210 - contact.blueAnchor) * (1 - Math.exp(-dt / 0.57));
     if (!redEntryOpen) contact.cutoffAt ??= time;
     const normalized =
-      velocity / (velocity > 0 ? LEVEL.redAdvance : LEVEL.blueAdvance);
+      velocity /
+      (velocity > 0 ? level.combat.redAdvance : level.combat.blueAdvance);
     contact.pressure +=
       (normalized - contact.pressure) * (1 - Math.exp(-dt / 0.24));
     const sign =
