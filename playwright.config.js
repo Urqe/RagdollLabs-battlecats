@@ -21,7 +21,6 @@ export default defineConfig({
     },
     {
       name: "webkit",
-      testMatch: "**/smoke.spec.js",
       use: { browserName: "webkit", isMobile: true },
     },
   ],

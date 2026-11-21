@@ -1,6 +1,6 @@
 import { BLUE_SPEED, LEVEL, clamp } from "./config.js";
+
 export function updateArmy(state, dt, sprinkle, end, notify = () => {}) {
-  // Only arrived formations influence combat or frontline movement.
   for (let j = state.squads.length - 1; j >= 0; j--) {
     const q = state.squads[j];
     q.y -= BLUE_SPEED * dt;
@@ -19,59 +19,77 @@ export function updateArmy(state, dt, sprinkle, end, notify = () => {}) {
       );
       if (q.mult === 999 && !state.finalActivated) {
         state.finalActivated = true;
-        notify("COUNTERATTACK! KEEP FIRING ×999!", 3);
+        notify("×999 REINFORCEMENTS ARRIVED!", 3);
       }
     }
   }
-  if (!state.finalActivated)
-    state.redTotal = Math.min(
-      LEVEL.maxRed,
-      state.redTotal + LEVEL.redReinforcements * dt,
+
+  // The horde recruits throughout the siege. As blue takes the approach, fewer
+  // reds can reach the line. Only clearing the entry closes it completely.
+  const access = clamp(
+    (state.front - LEVEL.clearedFront) / LEVEL.reinforcementApproach,
+    0,
+    1,
+  );
+  state.redEntryRate =
+    access *
+    Math.min(
+      LEVEL.maxRedReinforcements,
+      LEVEL.redReinforcements + LEVEL.redReinforcementGrowth * state.t,
     );
-  if (state.redTotal > 0 && state.blueTotal > 0) {
-    // Counterattack damage scales with soldiers actually fighting, never with
-    // the gate opening or the number still marching down the road.
-    const redRate = state.finalActivated
-      ? Math.min(
-          LEVEL.maxCounterattackDamage,
-          state.blueTotal * LEVEL.counterattackDamagePerCat,
-        )
-      : Math.min(LEVEL.redAttrition, state.blueTotal);
-    state.redTotal = Math.max(0, state.redTotal - redRate * dt);
-    state.blueTotal = Math.max(
-      0,
-      state.blueTotal -
-        (state.finalActivated
-          ? LEVEL.counterattackAttrition
-          : LEVEL.blueAttrition) *
-          dt,
+  state.redTotal += state.redEntryRate * dt;
+
+  const blue = state.blueTotal;
+  const red = state.redTotal;
+  // The narrow battlefield limits how many reds can be engaged at once.
+  const redLossRate = Math.min(LEVEL.maxRedLoss, blue * LEVEL.redLossPerBlue);
+  const redLost = Math.min(red, redLossRate * dt);
+  const blueInContact = Math.min(blue, red);
+  const blueLossRate =
+    red * LEVEL.blueLossPerRed + blueInContact * LEVEL.blueContactLoss;
+  const blueLost = Math.min(blue, blueLossRate * dt);
+  state.redTotal -= redLost;
+  state.blueTotal -= blueLost;
+
+  const bluePressure = state.blueTotal;
+  const redPressure = state.redTotal * LEVEL.redPressurePerCat;
+  const totalPressure = bluePressure + redPressure;
+  if (totalPressure > 0) {
+    const momentum = (redPressure - bluePressure) / totalPressure;
+    const speed = momentum > 0 ? LEVEL.redAdvance : LEVEL.blueAdvance;
+    state.front = clamp(
+      state.front + momentum * speed * dt,
+      LEVEL.minFront,
+      LEVEL.maxFront,
     );
   }
-  const power = state.blueTotal;
-  const velocity = state.finalActivated
-    ? power > LEVEL.counterattackThreshold
-      ? LEVEL.counterattackPush
-      : LEVEL.counterattackAdvance
-    : power > LEVEL.strongDefenseThreshold
-      ? LEVEL.strongDefenseAdvance
-      : power > LEVEL.defendedThreshold
-        ? LEVEL.defendedAdvance
-        : LEVEL.redAdvance;
-  state.front = clamp(
-    state.front + velocity * dt,
-    LEVEL.minFront,
-    LEVEL.maxFront,
-  );
-  // Clearing is physical advancement by the surviving army, not a timer or
-  // bonus retreat after the last enemy dies.
+
+  state.redRecentLoss += redLost;
+  state.blueRecentLoss += blueLost;
+  state.nextCombatEffect -= dt;
+  if (state.nextCombatEffect <= 0) {
+    const half = clamp(24 + Math.abs(state.front - 258) * 0.3, 24, 110);
+    const x = 210 + Math.sin(state.t * 13) * half * 0.7;
+    impact(sprinkle, state.redRecentLoss, x, state.front - 4, "#df544b");
+    impact(sprinkle, state.blueRecentLoss, 420 - x, state.front + 8, "#65baff");
+    state.redRecentLoss = 0;
+    state.blueRecentLoss = 0;
+    state.nextCombatEffect += LEVEL.combatEffectInterval;
+  }
+
   if (
-    state.finalActivated &&
     state.redTotal === 0 &&
     state.front <= LEVEL.clearedFront &&
     state.blueTotal > 0
   ) {
     end(true);
-    return;
+  } else if (state.front >= LEVEL.castleFront) {
+    end(false);
   }
-  if (state.front >= LEVEL.castleFront) end(false);
+}
+
+function impact(sprinkle, loss, x, y, color) {
+  if (loss > 0) {
+    sprinkle(x, y, color, Math.min(9, Math.ceil(Math.sqrt(loss) / 2)));
+  }
 }

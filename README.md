@@ -13,15 +13,15 @@
 
 ## Level 1
 
-The enemy horde is slower than your blue cats, but initially has an overwhelming numerical advantage. You must choose when to reinforce the front line and when to unlock the stronger multipliers:
+The red horde starts larger and recruits faster as the siege goes on. Switch between reinforcing the frontline and breaking barricades to unlock stronger multipliers:
 
-1. **Middle ×20:** Open from the start. Every incoming cat through the gate becomes 20. Three shots become a marching squad of **60 blue cats**. This can delay the invasion, but cannot sustainably defeat it.
-2. **Left ×99 barricade:** Aim your cannon directly at the wood barrier instead of producing reinforcements. Each hit damages it, and a progress indicator shows your work. Once broken, fire through the ×99 gate for a larger army.
+1. **Middle ×20:** Open from the start. Every incoming cat through the gate becomes 20. Three shots become a marching squad of **60 blue cats**. Use it to gain early ground before the horde grows.
+2. **Left ×99 barricade:** Aim your cannon directly at the wood barrier instead of producing reinforcements. Each hit damages it, and a progress indicator shows your work. Once broken, fire through the ×99 gate to reclaim ground before the horde surges again.
 3. **Right ×999 barricade:** Takes more hits to break. Again you must personally aim at the wood, temporarily sacrificing reinforcements. Once open, send three cats through the gate to produce a **2,997-cat** counterattack per volley.
 
 Cats do not instantly teleport to the front. Each gate creates a visible **marching formation** that moves toward the enemy; their army count is delivered when the formation reaches combat. Large squads render representative soldiers with their total still accounted for in the battle simulation.
 
-**Victory:** After firing through ×999, eliminate the red army and push the frontline beyond the top of the screen. **Defeat:** Allow the red horde to reach the castle. There is no arbitrary countdown.
+**Victory** comes when your blue army eliminates the horde and clears the far end of the battlefield. **Defeat** comes when the red frontline reaches the castle.
 
 ## Local development
 
@@ -43,7 +43,7 @@ npm run test:all
 
 `npm test` runs fast Node regression tests for startup/restart, scaled mouse and relative touch controls, automatic volleys, direct-hit barricades, all three multipliers, rendered marching formations, and victory/defeat. Tests create isolated state and advance simulated time without real timers.
 
-`npm run test:browser` runs the Playwright mobile viewport smoke test: start from the menu, click the start button, wait for reinforcements, and check for JavaScript and console errors. It starts its own local server. To use an installed Chromium, set `CHROMIUM_PATH=/path/to/chromium`. GitHub Actions runs both suites on pushes and pull requests and saves browser failure artifacts.
+`npm run test:browser` runs startup and full playthroughs on mobile-sized Chromium and WebKit viewports. It starts its own local server. To use an installed Chromium, set `CHROMIUM_PATH=/path/to/chromium`. GitHub Actions runs both suites on pushes and pull requests and saves browser evidence.
 
 ## Code map
 
@@ -58,8 +58,8 @@ npm run test:all
 - `src/army.js`: marching, combat, frontline movement, and outcomes.
 - `src/render.js`: Canvas drawing, formation aggregation, and resizing.
 
-For AI-assisted changes, keep simulation code independent of DOM and animation timing. Add a regression test for gameplay changes, run `npm run test:all`, and review mobile behavior. Preserve the single level, original balance, three-cat automatic volleys, manually destroyed barricades, and travel time before combat. No runtime libraries, backend, monetization, or additional levels are needed.
+For AI-assisted changes, keep simulation code independent of DOM and animation timing. Add a regression test for gameplay changes, run `npm run test:all`, and review mobile behavior. Preserve the single level, three-cat automatic volleys, manually destroyed barricades, and travel time before combat. No runtime libraries, backend, monetization, or additional levels are needed.
 
 ## Level 1 balance validation
 
-See [balancing decisions and tested outcomes](docs/level-1-balance.md) and run `npm run simulate` to reproduce the three strategies. The browser suite now includes native Chromium touch drags, complete victory and defeat playthroughs, restart, and a mobile WebKit startup smoke test. Playwright advances its clock through the real animation loop; it never grants damage or troops. `getSnapshot()` exported from `src/main.js` provides a detached, read-only copy for diagnostics. CI retains milestone JSON, counterattack/victory/defeat screenshots, and failure traces in the `playwright-results` artifact.
+See the [combat model, tested outcomes, and screenshots](docs/level-1-balance.md). Run `npm run simulate` to reproduce the results at 30, 60, and 120 Hz. Chromium uses native touch drags in the playthrough tests. The browser diagnostics read a detached snapshot from `src/main.js`. CI retains the evidence in the `playwright-results` artifact.
