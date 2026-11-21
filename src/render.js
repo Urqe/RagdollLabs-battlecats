@@ -432,8 +432,8 @@ export function createRenderer(state, canvas, motion = createMotion()) {
       gateGround(gate, gate.style);
     }
     drawImpactGround(ctx, motion.impact, impactAge);
-    figures.redArmy(state, false, motion.contact, motion.impact);
-    figures.blueArmy(state, false, surge, motion.contact, motion.tails);
+    figures.redArmy(state, motion.contact, motion.impact);
+    figures.blueArmy(state, surge, motion.contact, motion.tails);
     for (const gate of state.gates) drawGate(gate, gate.style);
     const emplacement = state.level.support;
     if (emplacement) {
@@ -448,8 +448,6 @@ export function createRenderer(state, canvas, motion = createMotion()) {
         );
       }
     }
-    figures.redArmy(state, true, motion.contact, motion.impact);
-    figures.blueArmy(state, true, surge, motion.contact, motion.tails);
     supplyFlags();
     if (state.mode === "playing" || (state.mode === "end" && !celebration)) {
       contactEffects();

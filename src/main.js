@@ -186,6 +186,7 @@ function loop(now) {
       state.blueTotal,
       state.redEntryOpen,
       state.level,
+      state,
     );
   }
   if (wasPlaying && state.mode === "victory") {
