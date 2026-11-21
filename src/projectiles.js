@@ -1,6 +1,13 @@
 import { BARRICADE_HIT_Y, GATE_HIT_Y, LEVEL } from "./config.js";
 import { hitBarricade } from "./barricades.js";
-export function updateProjectiles(state, dt, spawnSquad, sprinkle, notify) {
+export function updateProjectiles(
+  state,
+  dt,
+  spawnSquad,
+  sprinkle,
+  notify,
+  onEffect = null,
+) {
   for (let j = state.shots.length - 1; j >= 0; j--) {
     const shot = state.shots[j],
       previousY = shot.y;
@@ -25,6 +32,7 @@ export function updateProjectiles(state, dt, spawnSquad, sprinkle, notify) {
       continue;
     }
     hitBarricade(state, gateIndex, shot, sprinkle, notify);
+    onEffect?.(gate.open ? "break" : "wood", state.t);
   }
 }
 export function fire(state, sprinkle) {

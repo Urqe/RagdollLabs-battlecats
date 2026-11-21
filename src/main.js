@@ -1,12 +1,37 @@
 import { createGame } from "./game.js";
 import { createRenderer } from "./render.js";
+import { createMotion } from "./motion.js";
+import { createSound } from "./sound.js";
 import { bindControls } from "./controls.js";
 import { barrierStatus } from "./barricades.js";
 const el = (id) => document.getElementById(id),
   canvas = el("game");
-const game = createGame({ notify, onEnd: end }),
+const sound = createSound();
+const motion = createMotion(() => sound.play("reversal"));
+const game = createGame({ notify, onEnd: end, onEffect }),
   state = game.state;
-const renderer = createRenderer(state, canvas);
+const renderer = createRenderer(state, canvas, motion);
+const soundButtons = document.querySelectorAll("[data-sound]");
+
+function onEffect(kind, time, value, front, redLoss, blueLoss) {
+  motion.receive(kind, time, value, front, redLoss, blueLoss);
+  if (kind === "arrival") return;
+  sound.play(kind === "multiply" ? `gate${value}` : kind);
+}
+
+function updateSoundButtons() {
+  for (const button of soundButtons) {
+    button.setAttribute("aria-pressed", String(sound.enabled));
+    button.textContent = sound.enabled ? "Sound on" : "Sound off";
+  }
+}
+for (const button of soundButtons) {
+  button.addEventListener("click", () => {
+    void sound.setEnabled(!sound.enabled);
+    updateSoundButtons();
+  });
+}
+updateSoundButtons();
 function notify(s, seconds = 2) {
   state.bannerUntil = state.t + seconds;
   el("banner").textContent = s;
@@ -30,6 +55,8 @@ let frame = null,
   last = 0;
 function reset() {
   if (frame !== null) cancelAnimationFrame(frame);
+  void sound.unlock();
+  motion.reset();
   game.reset();
   el("menu").hidden = true;
   el("result").hidden = true;
@@ -55,7 +82,17 @@ function loop(now) {
   const dt = Math.min((now - last) / 1000, 0.045);
   last = now;
   const wasPlaying = state.mode === "playing";
+  const previousFront = state.front;
+  const previousTime = state.t;
   game.update(dt);
+  if (state.t > previousTime) {
+    motion.step(
+      state.t,
+      (state.front - previousFront) / (state.t - previousTime),
+      state.blueTotal,
+      state.redEntryOpen,
+    );
+  }
   if (wasPlaying && state.mode === "victory") el("banner").style.opacity = 0;
   if (state.mode === "playing" || state.mode === "victory") updateHud();
   renderer.draw();

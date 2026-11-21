@@ -12,7 +12,12 @@ export function createMultipliers(state, sprinkle, random = Math.random) {
       phase: random() * 6,
       marchTime: 0,
     });
-    sprinkle(fromX, entryY - 5, g.color, g.mult === 999 ? 7 : 3);
+    sprinkle(
+      fromX,
+      entryY - 5,
+      g.color,
+      g.mult === 999 ? 5 : g.mult === 99 ? 3 : 1,
+    );
   }
   return { spawnSquad };
 }
