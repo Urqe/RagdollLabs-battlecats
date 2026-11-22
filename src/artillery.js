@@ -1,4 +1,5 @@
 import { clamp } from "./config.js";
+import { updateArchers } from "./archers.js";
 
 export function activateArtillery(state) {
   state.support.unlockedAt = state.t;
@@ -9,6 +10,7 @@ export function updateArtillery(state, onEffect) {
   const { support, level, front, t } = state;
   if (state.mode !== "playing" || !support?.open) return;
   const config = level.support;
+  if (config.kind === "archers") return updateArchers(state, onEffect);
   const bandTop = Math.max(level.combat.minFront, front - config.bandDepth);
   const shot = support.shot;
   if (shot) {
