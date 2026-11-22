@@ -1,4 +1,14 @@
 import { clamp } from "./config.js";
+import { updateDanger } from "./danger.js";
+
+export function casualtyRates(blue, red, combat) {
+  const contact = Math.min(blue, red);
+  const engagedRed = Math.min(red, contact * combat.redEngagementRatio);
+  return {
+    red: Math.min(combat.maxRedLoss, blue * combat.redLossPerBlue),
+    blue: engagedRed * combat.blueLossPerRed + contact * combat.blueContactLoss,
+  };
+}
 
 export function updateArmy(
   state,
@@ -52,13 +62,10 @@ export function updateArmy(
 
   const blue = state.blueTotal;
   const red = state.redTotal;
-  // The narrow battlefield limits how many reds can be engaged at once.
-  const redLossRate = Math.min(combat.maxRedLoss, blue * combat.redLossPerBlue);
-  const redLost = Math.min(red, redLossRate * dt);
-  const blueInContact = Math.min(blue, red);
-  const blueLossRate =
-    red * combat.blueLossPerRed + blueInContact * combat.blueContactLoss;
-  const blueLost = Math.min(blue, blueLossRate * dt);
+  const rates = casualtyRates(blue, red, combat);
+  const redLost = Math.min(red, rates.red * dt);
+  const blueLost = Math.min(blue, rates.blue * dt);
+  const previousFront = state.front;
   state.redTotal -= redLost;
   state.blueTotal -= blueLost;
 
@@ -73,6 +80,23 @@ export function updateArmy(
       combat.minFront,
       combat.maxFront,
     );
+  }
+
+  if (
+    state.redEntryOpen &&
+    state.blueTotal > 0 &&
+    state.front <= objective.reinforcementCutoff
+  ) {
+    state.redEntryOpen = false;
+    state.redEntryRate = 0;
+  }
+  if (!state.redEntryOpen && state.redTotal === 0) {
+    end(true);
+    return;
+  }
+  if (state.front >= objective.castleFront) {
+    end(false);
+    return;
   }
 
   state.redRecentLoss += redLost;
@@ -98,19 +122,7 @@ export function updateArmy(
     state.nextCombatEffect += combat.combatEffectInterval;
   }
 
-  if (
-    state.redEntryOpen &&
-    state.blueTotal > 0 &&
-    state.front <= objective.reinforcementCutoff
-  ) {
-    state.redEntryOpen = false;
-    state.redEntryRate = 0;
-  }
-  if (!state.redEntryOpen && state.redTotal === 0) {
-    end(true);
-  } else if (state.front >= objective.castleFront) {
-    end(false);
-  }
+  if (dt > 0) updateDanger(state, dt, blueLost / dt, (state.front - previousFront) / dt);
 }
 
 function impact(sprinkle, loss, x, y, color) {

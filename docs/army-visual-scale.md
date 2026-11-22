@@ -153,3 +153,30 @@ The gameplay videos are continuous at 390 × 844. Capture wall time and simulati
 Profile headless Chromium at 390 × 844 and device scale factor 2 with `node scripts/profile-army-scale.js`. The dense Level 2 case begins with the final gate active, waves present and a recent artillery impact. The fixed enormous army and step-down population cases isolate reserve batching and casualty retirement. Physical iPhone performance remains unmeasured.
 
 The dense comparison began at 48,954 red and 18,307 blue. Milestones 11 and 12 both measured 16.7 ms median and 16.8 ms p95 frame intervals. Median update and draw submission rose from 1.9 to 2.9 ms in that scene. Milestone 12 measured 1.9 ms in the enormous fixture and 1.5 ms during rapid decline. [Before and after timings](evidence/formation-dynamics/headless-profile.json)
+
+## Milestone 13 local encounters and occupation
+
+A timed melee clash can authorize one bounded representative exchange per
+side when its accumulated loss reaches a whole casualty. The lane selects
+from five front-rank columns deterministically, with narrower selection in
+literal armies. An exchange lasts 0.46 s. The losing rank recoils up to
+14 logical units and the winner steps up to 8 before the opening closes.
+A larger casualty batch can contribute one falling representative after
+the lunge, using the existing bounded fall list. Literal formations still
+show integer depletion directly. A lunge by itself is a harmless exchange.
+
+Opposing ranks share a locally shifted contact seam with clearance between
+them. Existing compression and depth lag follow the recorded frontline.
+Artillery gaps can add nearby blue motion while that line is advancing.
+Local motion and recoil never write to the frontline or counts. The
+authoritative line can retreat during a local blue victory.
+
+At victory, the renderer switches from engaged poses to a faster run cycle,
+clears local combat presentation, and drops active red and contact visuals.
+The charge begins at the recorded front and leads with a high initial speed.
+Supporting ranks begin later and travel less. Red's entrance, surviving blue
+counts and the recorded final frontline do not move in the simulation
+during the 1.5 s celebration. Already launched blue ranks still follow the
+existing visual handoff as the result appears.
+
+[Portrait evidence and capture notes](playtest-log.md#milestone-13-validation)

@@ -1,7 +1,7 @@
 import { clamp } from "./config.js";
 import { LEVEL_ONE } from "./levels.js";
 import { impactShape } from "./formation.js";
-import { createFormationDynamics } from "./formation-dynamics.js";
+import { createFormationDynamics, EXCHANGE_DURATION } from "./formation-dynamics.js";
 import { LITERAL_ARMY } from "./army-visual.js";
 import {
   createArmyPresentation, resetArmyPresentation, stepArmyPresentation,
@@ -62,6 +62,7 @@ export function waveY(entryY, age, level = LEVEL_ONE) {
 const FALL_LIFE = 0.38;
 const MAX_FALLS = 12;
 const MAX_TAILS = 12;
+const EXCHANGE_LANES = [0, -1, 2, -2, 1];
 
 export function createMotion(onReversal = () => {}) {
   const tails = [];
@@ -75,17 +76,21 @@ export function createMotion(onReversal = () => {}) {
   let directionTime = 0;
   const dynamics = createFormationDynamics();
   const contact = {
+    exchanges: [ { red: true }, { red: false } ],
     redArmy: createArmyPresentation(),
     blueArmy: createArmyPresentation(),
   };
   const impact = {};
   let lastRed = null;
+  let exchangeIndex = 0;
   let lastBlue = null;
 
   function reset() {
     clock = direction = nextDirection = directionTime = 0;
     tails.length = falls.length = 0;
     lastRed = lastBlue = null;
+    exchangeIndex = 0;
+    for (const exchange of contact.exchanges) exchange.at = -Infinity;
     dynamics.reset();
     resetArmyPresentation(contact.redArmy);
     resetArmyPresentation(contact.blueArmy);
@@ -145,6 +150,7 @@ export function createMotion(onReversal = () => {}) {
       if (battle.mode === "victory") {
         contact.foughtAt = -Infinity;
         contact.red = contact.blue = 0;
+        for (const exchange of contact.exchanges) exchange.at = -Infinity;
       }
     }
     contact.blueAnchor +=
@@ -247,8 +253,20 @@ export function createMotion(onReversal = () => {}) {
       contact.blue = Math.min(1, blueLoss / 26);
       contact.foughtAt = time;
       contact.clashX = value;
-      if (redLoss >= 7) addFall(value, front, true, time);
-      if (blueLoss >= 7) addFall(420 - value, front, false, time);
+      for (const exchange of contact.exchanges) {
+        const loss = exchange.red ? redLoss : blueLoss;
+        if (loss < 1 || time - exchange.at < EXCHANGE_DURATION) continue;
+        const available = Math.min(contact.redArmy.target.field ?? 5, contact.blueArmy.target.field ?? 5);
+        const lane = EXCHANGE_LANES[exchangeIndex++ % EXCHANGE_LANES.length];
+        const half = Math.floor(Math.max(0, available - 1) / 2);
+        exchange.at = time;
+        exchange.x = 210 + clamp(lane, -half, half) * 12;
+        // Literal formations already show their actual integer depletion.
+        const army = exchange.red ? contact.redArmy : contact.blueArmy;
+        if ((army.population === null || army.population > LITERAL_ARMY) && loss >= 7) {
+          addFall(exchange.x, front, exchange.red, time + 0.12);
+        }
+      }
     }
   }
 

@@ -22,3 +22,22 @@ To make another level playable, provide a complete definition and mark its regis
 Both shipped levels currently use a single front and representative aggregate troops. Multiple fronts, independently modeled cohorts, or a different objective would need a concrete level brief and tests before extending these boundaries. Validate whether Level 2's support lifecycle should be shared with archer support during the next playtest review.
 
 Milestone 12 formation dynamics live in the presentation path. [Motion](../src/motion.js) samples the authoritative line and consumes existing arrival and clash events. [Formation dynamics](../src/formation-dynamics.js) resolves the depth anchors, packing and local pressure, and [figures](../src/figures.js) uses them in the shared slot layout. Both level starts seed the anchors from the starting line, and restart or level selection clears the motion state. The renderer uses the displaced receiving band for the existing handoff and releases the combat deformation into the existing victory advance. [Model and rendering evidence](army-visual-scale.md#milestone-12--formation-dynamics-and-battlefield-momentum)
+
+## Aggregate combat extension points
+
+Casualty rates, territorial pressure, and the temporary contact presentation
+are separate calculations. Future elite troops can extend the aggregate
+inputs along four independent dimensions.
+
+| Property | Possible extension |
+| --- | --- |
+| Attack effectiveness | Weight the contribution of each unit class to the attacks available within the engagement budget. |
+| Defensive resilience | Apportion incoming losses across the engaged classes by exposure and resilience. |
+| Push strength | Weight how much each formation contributes to the pressure difference that moves the frontline. |
+| Formation stability | Tune resistance to displacement, retreat compression, and how quickly the supporting ranks close gaps. |
+
+A future implementation can aggregate by class at the line with the same
+simulation and event flow. Keep unit quantity relevant to engagement
+capacity and endurance, even with higher quality per cat. Gates should
+remain the source of reinforcements. No class attributes are needed in
+the two current levels.

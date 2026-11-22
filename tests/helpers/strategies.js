@@ -132,3 +132,22 @@ function sample(s) {
     blue: Math.floor(s.blueTotal),
   };
 }
+
+// Both branches follow the barricade-first policy until the same alert.
+// The emergency volley uses only the already-open ×99 gate.
+export function createRescueAim(respond, reaction = 0.55) {
+  const timing = {};
+  let strongAt;
+  function aim(state) {
+    if (state.gates[2].open) return 329;
+    if (state.gates[1].open) strongAt ??= state.t;
+    const target = strongAt === undefined || state.t - strongAt < 3.5 ? 90 : 329;
+    if (target === 329 && state.danger?.level === "pressure") timing.warning ??= state.t;
+    if (respond && timing.warning !== undefined && state.t >= timing.warning + reaction - 1e-8) {
+      timing.switchAt ??= state.t;
+      if (state.t < timing.switchAt + 4) return 90;
+    }
+    return target;
+  }
+  return { aim, timing };
+}

@@ -1,0 +1,64 @@
+{
+  "browser": "webkit",
+  "version": "27.2",
+  "gatesAndArtillery": {
+    "counts": {
+      "red": 46893,
+      "blue": 17688
+    },
+    "frames": 157,
+    "frameMs": {
+      "median": 30,
+      "p95": 52
+    },
+    "drawAndStepMs": {
+      "median": 1,
+      "p95": 5
+    }
+  },
+  "victory": {
+    "counts": {
+      "red": 0,
+      "blue": 159192
+    },
+    "frames": 45,
+    "frameMs": {
+      "median": 28,
+      "p95": 47
+    },
+    "drawAndStepMs": {
+      "median": 2,
+      "p95": 4
+    }
+  },
+  "enormousFixture": {
+    "counts": {
+      "red": 500000,
+      "blue": 200000
+    },
+    "frames": 195,
+    "frameMs": {
+      "median": 27,
+      "p95": 49
+    },
+    "drawAndStepMs": {
+      "median": 1,
+      "p95": 2
+    }
+  },
+  "rapidDecline": {
+    "counts": {
+      "red": 500000,
+      "blue": 200000
+    },
+    "frames": 188,
+    "frameMs": {
+      "median": 27,
+      "p95": 53
+    },
+    "drawAndStepMs": {
+      "median": 1,
+      "p95": 2
+    }
+  }
+}

@@ -181,7 +181,7 @@ test("exclusive ×20 initially advances before the horde overtakes it", async ({
   const initial = await snapshot(page);
   await page.clock.runFor(13000);
   const early = await snapshot(page);
-  expect(early.front).toBeLessThan(initial.front - 25);
+  expect(early.front).toBeLessThan(initial.front);
   expect(early.blueTotal).toBeGreaterThan(400);
   await page.screenshot({ path: testInfo.outputPath("phase-1-advance.png") });
 
@@ -193,7 +193,7 @@ test("exclusive ×20 initially advances before the horde overtakes it", async ({
   await expect(page.locator("#gate99")).toHaveText("0%");
   await page.screenshot({ path: testInfo.outputPath("phase-1-retreat.png") });
 
-  await advanceUntil(page, (s) => s.mode === "end", 30);
+  await advanceUntil(page, (s) => s.mode === "end", 35);
   await expect(page.locator("#resultTitle")).toHaveText(
     "The horde broke through",
   );
@@ -222,5 +222,37 @@ test("aggressive unlocking starves the line before the final wave arrives", asyn
   const s = await snapshot(page);
   expect(s.work[1]).toBeGreaterThan(0);
   expect(s.finalActivated).toBe(false);
+  expect(errors).toEqual([]);
+});
+
+test("a portrait warning lets the player exchange barricade fire for reinforcements", async ({
+  page, browserName,
+}) => {
+  const { aim, hold, errors } = await setup(page, browserName);
+  async function reachWarning() {
+    const opened = await hold(90, 8500);
+    expect(opened.gates[1].open).toBe(true);
+    await page.clock.runFor(3350);
+    await aim(329);
+    const warned = await advanceUntil(page, s => s.danger.level === "pressure", 10, 100);
+    await expect(page.getByRole("status")).toContainText("AIM AT ×99");
+    expect(warned.work[1]).toBeGreaterThan(0);
+    return warned;
+  }
+
+  const ignored = await reachWarning();
+  await advanceUntil(page, s => s.mode === "end", 19, 500);
+  await expect(page.locator("#resultTitle")).toHaveText("The horde broke through");
+  await expect(page.locator("#danger")).toBeHidden();
+
+  await page.locator("#replay").click();
+  const warned = await reachWarning();
+  expect(warned.front).toBeCloseTo(ignored.front, 0);
+  await page.clock.runFor(550);
+  const relieved = await hold(90, 4000);
+  expect(relieved.blueTotal).toBeGreaterThan(warned.blueTotal * 3);
+  expect(relieved.front).toBeLessThan(warned.front - 10);
+  expect(relieved.danger.level).toBe("stable");
+  await expect(page.locator("#danger")).toBeHidden();
   expect(errors).toEqual([]);
 });

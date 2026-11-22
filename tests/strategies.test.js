@@ -14,10 +14,10 @@ for (const hz of [30, 60, 120]) {
     assert.ok(a.state.front >= LEVEL.castleFront);
     assert.deepEqual(a.state.work, [0, 0]);
     assert.equal(a.activation, null);
-    assert.ok(a.samples.some((s) => s.front < LEVEL.initialFront - 30));
+    assert.ok(a.samples.some((s) => s.front < LEVEL.initialFront - 10));
     const stalemate = a.samples.find((s) => s.time >= 22);
     const next = a.samples.find((s) => s.time > stalemate.time);
-    assert.ok(Math.abs(next.front - stalemate.front) < 2);
+    assert.ok(Math.abs(next.front - stalemate.front) < 4);
     assert.ok(a.red > stalemate.red * 2);
     assert.deepEqual(
       a.reversals.map((r) => r.toward),

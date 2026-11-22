@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import { chromium } from "@playwright/test";
-import { createAim } from "../tests/helpers/strategies.js";
+import { createAim, createRescueAim } from "../tests/helpers/strategies.js";
 import { purrapultAim } from "../tests/helpers/purrapult.js";
 
 const output = resolve(process.argv[2] ?? "test-results/army-continuity");
@@ -38,6 +38,11 @@ async function record(name, action) {
 }
 
 async function battle(page, elapsed, context, policy, level, win) {
+  const paired = policy === "rescue" || policy === "ignore";
+  if (paired) {
+    await page.clock.install();
+    await page.clock.pauseAt(new Date(Date.now() + 1000));
+  }
   if (level === 2) {
     await page.locator("#chooseLevel").click();
     await page.locator('[data-level="purrapult"]').click();
@@ -49,10 +54,18 @@ async function battle(page, elapsed, context, policy, level, win) {
     page.evaluate(async () => (await import("/src/main.js")).getSnapshot());
   const client = await context.newCDPSession(page);
   const box = await page.locator("#game").boundingBox();
-  const aim = level === 2 ? purrapultAim("artillery-first") : createAim(policy);
+  const rescue = paired ? createRescueAim(policy === "rescue") : null;
+  const aim = rescue?.aim ?? (level === 2 ? purrapultAim("artillery-first") : createAim(policy));
   let target = (await snapshot()).gunX;
   while (elapsed() < 360) {
     const state = await snapshot();
+    if (state.t >= 2) marks.contact ??= elapsed();
+    if (state.t >= 14) marks.earlyEnd ??= elapsed();
+    if (rescue?.timing.warning !== undefined) marks.warning ??= elapsed();
+    if (rescue?.timing.switchAt !== undefined) {
+      marks.redirect ??= elapsed();
+      if (state.danger.velocity < 0) marks.reversal ??= elapsed();
+    }
     if (state.gates[1].open) marks.gate99 ??= elapsed();
     if (state.gates[2].open) marks.gate999 ??= elapsed();
     if (state.finalActivated) marks.flood ??= elapsed();
@@ -78,7 +91,9 @@ async function battle(page, elapsed, context, policy, level, win) {
           type: "touchMove", touchPoints: [{ x: x + (next - state.gunX) * box.width / 420, y }],
         });
         await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+        const initialRedirect = paired && state.t === 0;
         target = next;
+        if (initialRedirect) await page.clock.resume();
       }
     }
     await pause(25);
@@ -181,10 +196,18 @@ async function formationFixture(page, elapsed) {
 }
 
 function encode({ name, file, marks }) {
-  const start = Math.max(0, marks.start - 0.23);
+  const range = {
+    "m13-a-local-combat": [marks.contact, marks.earlyEnd],
+    "m13-b-pushback": [marks.redirect - 0.3, marks.reversal + 4],
+    "m13-c-rescue": [marks.warning - 2, marks.reversal + 5],
+    "m13-d-ignored": [marks.warning - 2, marks.end],
+    "m13-e-level-1": [marks.victory - 2.5, marks.end],
+    "m13-f-level-2": [marks.victory - 2.5, marks.end],
+  }[name] ?? [marks.start, marks.end];
+  const start = Math.max(0, range[0] - 0.23);
   const result = spawnSync("ffmpeg", [
     "-hide_banner", "-loglevel", "error", "-y", "-ss", String(start), "-i", file,
-    "-t", String(marks.end - start), "-an", "-r", "25", "-c:v", "libx264",
+    "-t", String(range[1] - start), "-an", "-r", "25", "-c:v", "libx264",
     "-preset", "fast", "-crf", "25", "-threads", "2",
     "-pix_fmt", "yuv420p", "-movflags", "+faststart", resolve(output, `${name}.mp4`),
   ], { stdio: "inherit" });
@@ -197,15 +220,21 @@ const scenarios = [
   ["c-level-2-victory", (page, time, ctx) => battle(page, time, ctx, null, 2, true)],
   ["d-population-decline", fixture],
   ["e-formation-fixture", formationFixture],
+  ["m13-a-local-combat", (page, time, ctx) => battle(page, time, ctx, "C", 1, true)],
+  ["m13-c-rescue", (page, time, ctx) => battle(page, time, ctx, "rescue", 1, true)],
+  ["m13-d-ignored", (page, time, ctx) => battle(page, time, ctx, "ignore", 1, false)],
+  ["m13-f-level-2", (page, time, ctx) => battle(page, time, ctx, null, 2, true)],
 ];
 try {
   const selected = requested.length
     ? scenarios.filter(([name]) => requested.some((prefix) => name.startsWith(prefix)))
-    : scenarios;
+    : scenarios.filter(([name]) => !name.startsWith("m13-"));
   const captures = [];
   for (const [name, action] of selected) {
     const capture = await record(name, action);
     encode(capture);
+    const companion = { "m13-a-local-combat": "m13-e-level-1", "m13-c-rescue": "m13-b-pushback" }[name];
+    if (companion) encode({ ...capture, name: companion });
     captures.push(capture);
   }
   const marks = Object.fromEntries(captures.map(({ name, marks }) => [name, marks]));

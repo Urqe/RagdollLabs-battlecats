@@ -67,3 +67,64 @@ The clips were reviewed as ordered frames from the encoded videos, including sho
 Chromium uses native touch drags. Mobile-emulated WebKit plays through the same scenarios with browser mouse input. Both use a 390 × 844 viewport. Playwright advances the actual animation loop and reads detached snapshots. CI retains screenshots, milestone JSON, and failure traces. [Chromium milestone data](evidence/browser-playthrough.json)
 
 The strategy timings describe controlled runs. Physical iPhone frame rates and human win rates remain unmeasured.
+
+## Milestone 13 engagement and reaction timing
+
+Previously, melee removed up to `min(4400, blue × 0.111)` red cats per
+second and `red × 0.013 + min(blue, red) × 0.163` blue cats per second.
+Red still loses cats at the same rate. With `contact = min(blue, red)`,
+blue now loses `min(red, 8 × contact) × 0.013 + contact × 0.163`
+per second. Both losses are limited by the available population.
+
+The engagement ratio is an aggregate budget for the fighting rank and the
+ranks rotating into contact. It is calibrated in simulation units. At
+1,000 blue versus 50,000 red, the initial blue loss drops from 813 to
+267 per second and the constant-rate projection increases from 1.23 to 3.75 s.
+Doubling the reserve beyond the cap cannot increase direct melee damage.
+Reserves still keep the red army in the fight and contribute to territorial
+pressure. The red pressure coefficient rises from 0.04 to 0.075 to retain
+the late threat from the horde. With the cap alone, ×99-only could reach the
+entrance early enough to win. Red and blue advance speeds, gate geometry,
+reinforcement growth, and the castle and entrance objectives are unchanged.
+
+### Warning and response
+
+The forecast smooths authoritative blue losses and frontline speed over a
+0.42 s time constant and evaluates every 0.2 s. It estimates blue endurance
+at the recent loss rate, adds only squads projected to reach the line before
+a gap, and limits that projection by time to castle breach. The threat
+requires red pressure or retreat. The estimate treats loss and movement as
+constant and therefore measures urgency rather than an exact defeat time.
+
+The forecast budgets 0.55 s for noticing and redirecting, up to 0.28 s for
+cooldown, the selected gate's flight distance, and a 104 units/s march to
+17 units behind the moving front with a minimum march of 0.25 s. Pressure
+starts at the greater of 5 s or forecast rescue time plus 3 s. Critical
+starts at the greater of 1.65 s or forecast rescue time plus 0.65 s.
+The release margins are 1 s for pressure and 0.8 s for critical. Alerts
+show for 1.55 s. A severity cannot announce again for 6 s, and any alert
+suppresses a lower-priority pressure announcement for at least 3 s.
+
+At 60 Hz, both branches of the matched barricade policy open ×99, fire through
+it for 3.5 s, then target the ×999 barricade. Pressure appears at 18.57 s
+with about 644 blue, 9,241 red and a front at 464.4. The projection is
+3.32 s. The simulation budgets 1.46 s for the rescue. After a modeled
+0.55 s reaction and aim, the cannon fires at 19.15 s, the projectile crosses
+the gate and spawns a squad at 19.28 s, and the squad joins at 19.73 s.
+The line reverses by 20.33 s, and the rescue wins at 74.50 s. Ignoring the
+same warning loses at 33.08 s. Waiting 4.5 s before switching still wins in
+all three tested update rates. The notice and aim budget was modeled, with
+touch redirection also exercised in the portrait recordings.
+
+With a stationary front at 100, geometry alone adds 3.99 s of march to
+0.137 s of projectile flight. The modeled total is 4.68–4.96 s including
+0.55 s to react and up to 0.28 s of cooldown. At a front beyond 489,
+march time is limited by the 0.25 s minimum. The same total can be about
+0.94–1.22 s there. A moving front changes these values. The forecast can
+warn earlier when the front is distant. A warning does not change damage,
+frontline movement, targeting, or the loss condition.
+
+The 60 Hz crossover is summarized in the [playtest log](playtest-log.md).
+Run `node scripts/simulate-combat.js` for one-second snapshots of all
+strategies at 30, 60, and 120 Hz, including cannon aim, incoming squads,
+loss rates, and movement. [Strategy results](evidence/combat-readability/strategy-results.json)

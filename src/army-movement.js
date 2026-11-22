@@ -29,10 +29,10 @@ export function mergeProgress(elapsed) {
 // All displacements start at the recorded line. The lead reaches the
 // entrance first, while depth delays and reduces the supporting advance.
 export function victoryAdvance(front, elapsed, duration, depth = 0) {
-  const delay = 0.26 * depth;
-  const time = clamp((elapsed / duration - delay) / (0.88 - delay), 0, 1);
-  const progress = 0.27 * time + 0.73 * smoothStep(time);
-  return Math.max(0, front - 21) * (1 - depth * 0.24) * progress;
+  const delay = 0.18 * depth;
+  const time = clamp((elapsed / duration - delay) / (0.70 + depth * 0.15), 0, 1);
+  const progress = 1 - (1 - time) ** 2.3;
+  return Math.max(0, front - 10) * (1 - depth * 0.25) * progress;
 }
 
 export function victoryWaveVisibility(elapsed, duration) {

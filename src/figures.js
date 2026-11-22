@@ -1,7 +1,7 @@
 import { TAU, clamp } from "./config.js";
 import { laneHalfWidth, polygon } from "./terrain.js";
 import { waveProfile, waveRelease, waveY } from "./motion.js";
-import { breakthroughOffset, formationLag } from "./formation-dynamics.js";
+import { breakthroughOffset, exchangeOffset, exchangeSeam, formationLag } from "./formation-dynamics.js";
 import { gapShift, gapStrength } from "./formation.js";
 import {
   mergeProgress, receivingY, smoothStep, victoryAdvance, victoryWaveVisibility,
@@ -154,7 +154,7 @@ export function createFigures(ctx, ownerDocument) {
   let clock = 0;
   function cat(x, y, tint, size, phase, flatten = 0, stride = 1) {
     const detail = !flatten && size >= 4.25;
-    const pose = detail ? Math.floor(clock * 13 + phase) & 3 : 4;
+    const pose = detail ? Math.floor(clock * (stride > 1.5 ? 26 : 13) + phase) & 3 : 4;
     const bob = detail ? Math.sin(clock * 18 + phase * 1.6) * 0.58 * stride : 0;
     const span = size * 3.2;
     const height = span * (1 - flatten * 0.44);
@@ -285,6 +285,17 @@ export function createFigures(ctx, ownerDocument) {
     if (count) ctx.globalAlpha = 1;
   }
 
+  function contactSeam(front, x, contact, gap, strength) {
+    let shift = 0;
+    for (const exchange of contact.exchanges) shift += exchangeSeam(exchange, clock, x);
+    if (strength) {
+      const advance = Math.max(0, contact.formation?.drive ?? 0);
+      const lane = Math.max(0, 1 - Math.abs(x - gap.x) / gap.radiusX);
+      shift -= 7 * strength * advance * lane;
+    }
+    return front + clamp(shift, -Math.min(8, Math.max(0, front - 18)), 8);
+  }
+
   function army(state, scale, red, front, contact, gap) {
     const total = red ? state.redTotal : state.blueTotal;
     const opposing = red ? state.blueTotal : state.redTotal;
@@ -302,8 +313,11 @@ export function createFigures(ctx, ownerDocument) {
     const tip = front + side * 6;
     const end = red ? 3 : 702;
     const reach = Math.abs(end - tip);
+    const marching = !red && state.mode === "victory";
     const pressure = red ? contact.pressure : -contact.pressure;
-    const balance = encounterBalance(total, opposing);
+    const redPressure = (red ? total : opposing) * state.level.combat.redPressurePerCat;
+    const balance = red ? encounterBalance(redPressure, opposing)
+      : encounterBalance(total, redPressure);
     const formation = contact.formation;
     const release = 1 - smoothStep(state.victoryElapsed / 0.58);
     const packed = (formation?.compression ?? 0) * release;
@@ -311,7 +325,7 @@ export function createFigures(ctx, ownerDocument) {
       (reach * 0.59) / Math.max(1, rows),
       8.9 - packed * (red ? 0.65 : 2.15) - compression * 0.76,
     );
-    const gapAmount = red ? gapStrength(clock - gap?.at) : 0;
+    const gapAmount = gapStrength(clock - gap?.at);
     const sinceCutoff = clock - (contact.cutoffAt ?? clock);
     const entry = red
       ? entryRepresentation(reserve, state.redEntryRate || contact.entryRate || 0, sinceCutoff)
@@ -328,7 +342,7 @@ export function createFigures(ctx, ownerDocument) {
       updateReceiver(target, state);
     }
     drawReserve(state, rear, end, reserve - entry, reserveExtent - entry,
-      red, gap, gapAmount, fallPose, formation, release);
+      red, gap, red ? gapAmount : 0, fallPose, formation, release);
     if (entry) drawEntry(entry, tip, contact.cutoffAt, gap, gapAmount);
 
     const engaged = total > 0 && opposing > 0 && state.mode === "playing";
@@ -337,7 +351,7 @@ export function createFigures(ctx, ownerDocument) {
     const stress = red ? contact.red : contact.blue;
     const leadingY = front - (red ? 0 : advance(state, 0));
     const drive = formation?.drive ?? 0;
-    const gait = state.victoryElapsed ? 1.4
+    const gait = marching ? 2.1
       : engaged ? 0.48 + Math.abs(drive) * 0.82 : 0.82;
     let opacity = 1;
     let lastRow = -1;
@@ -366,16 +380,26 @@ export function createFigures(ctx, ownerDocument) {
         ? encounterOffset(clock, i, row, red, balance, pressure,
           local * shock * stress * 2.7 - flush * pressure * 1.3 + recoil * 5) * 0.72
         : 0;
-      const marching = !red && state.mode === "victory";
       const cadence = (row || marching) && !fallen
         ? Math.sin(clock * (marching ? 17 : 11) + rank * 0.6 - row * 0.59)
           * Math.min(marching ? 1.7 : gait, step * 0.24) : 0;
       const opening = engaged && !fallen
         ? breakthroughOffset(clock, x, row, formation?.opening ?? 0, red) : 0;
-      const y = baseline + opening - side * bump + cadence + spacingNoise[i] * Math.min(1.2, step * 0.2);
+      let displacement = 0;
+      const seam = engaged ? contactSeam(leadingY, x, contact, gap, gapAmount) : leadingY;
+      if (engaged && row < 4) {
+        for (const exchange of contact.exchanges)
+          displacement += exchangeOffset(exchange, clock, x, row, red);
+        if (!red && gapAmount && drive > 0) {
+          const lane = Math.max(0, 1 - Math.abs(x - gap.x) / gap.radiusX);
+          displacement -= 9 * drive * gapAmount * lane * (1 - row / 4);
+        }
+      }
+      const y = baseline + opening + displacement - side * bump + cadence
+        + spacingNoise[i] * Math.min(1.2, step * 0.2);
       const displaced = fallen ? y + side * fallPose * (3 + recoil * 7)
-        : y + gapShift(x, y, gap, gapAmount, i);
-      const within = boundCatY(displaced, leadingY, red);
+        : y + gapShift(x, y, gap, red ? gapAmount : 0, i);
+      const within = boundCatY(displaced, seam, red, engaged ? 6.8 : 1.9);
       const size = clamp(4.35 + within * 0.0027, 4.35, 6.12);
       let alpha = fallen ? retirementOpacity(field, fieldExtent, i, fallPose) : coverage;
       if (!red && coverage && fieldJoins[i]) {
@@ -392,7 +416,7 @@ export function createFigures(ctx, ownerDocument) {
   }
 
   function redArmy(state, contact, gap) {
-    army(state, redScale, true, state.front, contact, gap);
+    if (state.mode !== "victory") army(state, redScale, true, state.front, contact, gap);
   }
 
   function updateReceiver(target, state) {
@@ -498,7 +522,7 @@ export function createFigures(ctx, ownerDocument) {
     if (alpha !== 1) ctx.globalAlpha = 1;
   }
 
-  function blueArmy(state, _surge, contact, tails) {
+  function blueArmy(state, _surge, contact, tails, gap) {
     waveTails = state.mode === "end" ? [] : tails;
     waveVisibility = victoryWaveVisibility(state.victoryElapsed, state.level.combat.victoryDuration);
     fieldJoins.fill(0);
@@ -514,7 +538,7 @@ export function createFigures(ctx, ownerDocument) {
         reserveJoins[join.reserve + j] = owner | (join.fieldCount + j);
     }
     if (!state.blueTotal) updateReceiver(state.front + 13 - advance(state, 0), state);
-    army(state, blueScale, false, state.front, contact);
+    army(state, blueScale, false, state.front, contact, gap);
     if (state.mode === "end") return;
 
     // Already launched ranks continue advancing during the celebration.
@@ -524,6 +548,7 @@ export function createFigures(ctx, ownerDocument) {
 
   function fallen(falls) {
     for (const fall of falls) {
+      if (fall.at > clock) continue;
       const age = clamp((clock - fall.at) / 0.38, 0, 1);
       ctx.save();
       const drift = fall.x < 210 ? -1 : 1;

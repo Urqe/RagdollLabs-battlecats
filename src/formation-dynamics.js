@@ -99,3 +99,24 @@ export function breakthroughOffset(time, x, row, momentum, red) {
   const depth = (1 - row / 6) ** 2;
   return -momentum * envelope * profile * depth * (losing ? 15 : 7);
 }
+
+// A representative casualty opens a lane for one exchange. The shared seam
+// bends for both teams, so winning a lane never moves the logical front.
+export const EXCHANGE_DURATION = 0.46;
+
+export function exchangeOffset(exchange, time, x, row, red) {
+  const age = (time - exchange.at) / EXCHANGE_DURATION;
+  if (age < 0 || age >= 1 || row >= 4) return 0;
+  const lane = Math.max(0, 1 - Math.abs(x - exchange.x) / 18);
+  if (!lane) return 0;
+  const depth = (1 - row / 4) ** 2;
+  const lost = red === exchange.red;
+  const move = lost
+    ? Math.sin(Math.PI * clamp((age - 0.18) / 0.82, 0, 1)) * 14
+    : Math.sin(Math.PI * age) * (4 + 4 * clamp((age - 0.12) / 0.25, 0, 1));
+  return (exchange.red ? -1 : 1) * move * lane * depth;
+}
+
+export function exchangeSeam(exchange, time, x) {
+  return exchangeOffset(exchange, time, x, 0, !exchange.red) * 0.72;
+}

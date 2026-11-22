@@ -1,3 +1,4 @@
+import { createDanger } from "./danger.js";
 import { LEVEL_ONE } from "./levels.js";
 export function createState(level = LEVEL_ONE) {
   const { battlefield, combat } = level;
@@ -47,6 +48,7 @@ export function createState(level = LEVEL_ONE) {
     redEntryRate: 0,
     redEntryOpen: true,
     victoryElapsed: 0,
+    danger: createDanger(),
     redRecentLoss: 0,
     blueRecentLoss: 0,
     nextCombatEffect: combat.combatEffectInterval,
