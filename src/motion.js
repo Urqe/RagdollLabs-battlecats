@@ -230,9 +230,8 @@ export function createMotion(onReversal = () => {}) {
       return;
     }
     if (hit.points) return;
-    hit.points = hit.loss > 0
-      ? arrowSpread(hit, battle.front, battle.redTotal + hit.loss)
-      : launch?.points ?? arrowSpread(hit, battle.front, 0);
+    hit.points = launch?.launchedAt === hit.launchedAt ? launch.points
+      : arrowSpread(hit, battle.front, hit.loss > 0 ? battle.redTotal + hit.loss : 0);
     reactToArrows(airborne, hit, battle.redTotal);
   }
 

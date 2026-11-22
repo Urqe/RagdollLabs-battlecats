@@ -73,6 +73,38 @@ test("a bounded spread selects reproducible occupied lanes and ranks", () => {
   assert.equal(positions.length, 0);
 });
 
+test("arrows land at their launch destinations when the frontline moves", () => {
+  for (const { advance, loss } of [{ advance: 18, loss: 48 }, { advance: 150, loss: 0 }]) {
+    const { state, motion, tick } = fixture();
+    tick(0.6);
+    const { launch } = motion.archers;
+    const destinations = structuredClone(launch.points);
+    state.front += advance;
+    const red = state.redTotal;
+    const expected = structuredClone(state);
+    expected.t = launch.impactAt;
+    updateArtillery(expected);
+
+    tick(launch.impactAt);
+    const { impact } = motion.archers;
+    assert.deepEqual(state, expected);
+    assert.equal(impact.loss, loss);
+    assert.equal(state.redTotal, red - loss);
+    assert.deepEqual(launch.points, destinations);
+    assert.deepEqual(impact.points, destinations);
+    for (const [i, { x, y }] of impact.points.entries()) {
+      const tip = arrowPosition(launch, impact.at, i);
+      assert.deepEqual([tip.x, tip.y], [x, y]);
+    }
+
+    const cats = motion.airborne.active;
+    assert.equal(cats.length, loss ? 4 : 0);
+    assert.equal(cats.filter(cat => cat.defeated).length, loss ? 1 : 0);
+    for (const cat of cats)
+      assert.ok(destinations.some(({ x, y }) => cat.x === x && cat.y === y));
+  }
+});
+
 test("misses retain their impact without adding casualties, and a later hit uses its own event", () => {
   const { state, motion, tick } = fixture();
   tick(0.6);
