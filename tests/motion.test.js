@@ -85,6 +85,8 @@ for (const hz of [30, 60, 120]) {
 test("contact, casualties, reversals and reset are driven by the live battle", () => {
   const directions = [];
   const motion = createMotion((direction) => directions.push(direction));
+  motion.contact.redArmy.population = 200;
+  motion.contact.blueArmy.population = 200;
   for (let frame = 1; frame <= 70; frame++) {
     const time = frame / 20;
     motion.receive("clash", time, 220, 300, 50, 30);
@@ -93,12 +95,12 @@ test("contact, casualties, reversals and reset are driven by the live battle", (
   assert.deepEqual(directions, [-1]);
   assert.ok(motion.contact.surgeAt > 1.85);
   assert.ok(motion.contact.pressure < 0);
-  assert.ok(motion.falls.length > 0 && motion.falls.length <= 12);
+  assert.ok(motion.airborne.active.some(cat => cat.defeated));
   motion.receive("multiply", 3.5, 999);
   motion.receive("arrival", 3.5, { mult: 999, marchTime: 0.25 });
   motion.reset();
   assert.deepEqual(motion.tails, []);
-  assert.deepEqual(motion.falls, []);
+  assert.deepEqual(motion.airborne.active, []);
   assert.equal(motion.pulses[2], -Infinity);
   assert.equal(motion.arrivals[2], -Infinity);
   assert.equal(motion.contact.pressure, 0);

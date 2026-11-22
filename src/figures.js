@@ -296,7 +296,7 @@ export function createFigures(ctx, ownerDocument) {
     return front + clamp(shift, -Math.min(8, Math.max(0, front - 18)), 8);
   }
 
-  function army(state, scale, red, front, contact, gap) {
+  function army(state, scale, red, front, contact, gap, flights) {
     const total = red ? state.redTotal : state.blueTotal;
     const opposing = red ? state.blueTotal : state.redTotal;
     const presentation = red ? contact.redArmy : contact.blueArmy;
@@ -406,6 +406,16 @@ export function createFigures(ctx, ownerDocument) {
         alpha = joinSlot(state, fieldJoins[i], x, within, size, alpha);
         opacity = ctx.globalAlpha;
       }
+      const flight = flights?.[i];
+      if (flight && coverage && alpha > 0 && clock >= flight.at) {
+        // Substitute the living slot with its animated pose for this draw.
+        flight.x = x;
+        flight.y = within;
+        flight.size = size;
+        flight.coverage = alpha;
+        flight.visible = true;
+        continue;
+      }
       if (alpha > 0) {
         if (alpha !== opacity) ctx.globalAlpha = opacity = alpha;
         cat(x, within, (red ? RED : BLUE) + Number(fallen || i % 5 === 4),
@@ -415,8 +425,8 @@ export function createFigures(ctx, ownerDocument) {
     if (opacity !== 1) ctx.globalAlpha = 1;
   }
 
-  function redArmy(state, contact, gap) {
-    if (state.mode !== "victory") army(state, redScale, true, state.front, contact, gap);
+  function redArmy(state, contact, gap, flights) {
+    if (state.mode !== "victory") army(state, redScale, true, state.front, contact, gap, flights);
   }
 
   function updateReceiver(target, state) {
@@ -522,7 +532,7 @@ export function createFigures(ctx, ownerDocument) {
     if (alpha !== 1) ctx.globalAlpha = 1;
   }
 
-  function blueArmy(state, _surge, contact, tails, gap) {
+  function blueArmy(state, _surge, contact, tails, gap, flights) {
     waveTails = state.mode === "end" ? [] : tails;
     waveVisibility = victoryWaveVisibility(state.victoryElapsed, state.level.combat.victoryDuration);
     fieldJoins.fill(0);
@@ -538,12 +548,32 @@ export function createFigures(ctx, ownerDocument) {
         reserveJoins[join.reserve + j] = owner | (join.fieldCount + j);
     }
     if (!state.blueTotal) updateReceiver(state.front + 13 - advance(state, 0), state);
-    army(state, blueScale, false, state.front, contact, gap);
+    army(state, blueScale, false, state.front, contact, gap, flights);
     if (state.mode === "end") return;
 
     // Already launched ranks continue advancing during the celebration.
     for (const q of state.squads) blueWave(q, (q.marchTime || 0) + state.victoryElapsed, state);
     for (const q of tails) blueWave(q, clock - q.born, state);
+  }
+
+  function airborne(cats) {
+    for (const flight of cats) {
+      if (!flight.visible) continue;
+      const baseSize = flight.size ?? clamp(4.35 + flight.y * 0.0027, 4.35, 6.12);
+      const size = baseSize * (1 + clamp(flight.rise / 28, 0, 1) * 0.28);
+      const x = flight.x + flight.dx;
+      const y = flight.y + flight.dy;
+      ctx.save();
+      ctx.globalAlpha = flight.alpha * (flight.coverage ?? 1);
+      if (flight.rise > 6) ellipse(ctx, x, y + flight.rise + 3, 3.5, 1.4, "#20262c55");
+      ctx.translate(x, y);
+      ctx.rotate(flight.angle);
+      const team = flight.red ? RED : BLUE;
+      const tint = flight.defeated ? team + 1
+        : flight.rise > 4 ? (flight.red ? AIR_RED : BRIGHT_BLUE) : team;
+      cat(0, 0, tint, size, (flight.slot ?? 0) * 0.71, flight.squash);
+      ctx.restore();
+    }
   }
 
   function fallen(falls) {
@@ -571,6 +601,7 @@ export function createFigures(ctx, ownerDocument) {
     redArmy,
     blueArmy,
     fallen,
+    airborne,
     crew(x, y, pose) {
       cat(x, y, BLUE, 6, pose);
     },

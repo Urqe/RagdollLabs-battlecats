@@ -78,7 +78,7 @@ test("local lane openings are event-backed, temporary, and independent of the fr
   motion.receive("clash", 1, 210, front, 0, 8);
   assert.equal(red.at, -Infinity);
   assert.equal(blue.at, 1);
-  assert.ok(motion.falls.every(fall => !fall.red));
+  assert.deepEqual(motion.airborne.active.filter(cat => cat.defeated).map(cat => cat.red), [false]);
   motion.receive("clash", 1.5, 210, front, 8, 0);
   const time = 1.75;
   const redRecoil = exchangeOffset(red, time, red.x, 0, true);

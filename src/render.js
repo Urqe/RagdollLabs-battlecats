@@ -434,8 +434,10 @@ export function createRenderer(state, canvas, motion = createMotion()) {
       gateGround(gate, gate.style);
     }
     if (state.mode === "playing") drawImpactGround(ctx, motion.impact, impactAge);
-    figures.redArmy(state, motion.contact, motion.impact);
-    figures.blueArmy(state, surge, motion.contact, motion.tails, motion.impact);
+    const flights = state.mode === "playing" ? motion.airborne : null;
+    figures.redArmy(state, motion.contact, motion.impact, flights?.slots[1]);
+    figures.blueArmy(state, surge, motion.contact, motion.tails, motion.impact, flights?.slots[0]);
+    if (flights) figures.airborne(flights.active);
     for (const gate of state.gates) drawGate(gate, gate.style);
     const emplacement = state.level.support;
     const archerSupport = emplacement?.kind === "archers";
