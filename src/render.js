@@ -442,8 +442,10 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     if (flights) {
       drawImpactBurst(ctx, motion.impact, impactAge);
       figures.airborne(flights.active);
-      if (archerSupport)
+      if (archerSupport) {
+        for (const hit of motion.archers.aftermath) drawArcherVolley(ctx, clock, null, hit);
         drawArcherVolley(ctx, clock, motion.archers.launch, motion.archers.impact);
+      }
     }
     for (const gate of state.gates) drawGate(gate, gate.style);
     if (emplacement) {

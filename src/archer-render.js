@@ -187,6 +187,7 @@ function arrow(ctx, x, y, angle, length) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(angle);
+  if (length > 20) stroke(ctx, "#fff0bd80", 1.1, [-length - 13, 0, -length + 1, 0]);
   stroke(ctx, "#342936", 3.4, [-length, 0, -1, 0]);
   stroke(ctx, "#ffdea0", 1.6, [-length, 0, -1, 0]);
   polygon(ctx, "#fff2ce", [1, 0, -5, -2.6, -5, 2.6]);

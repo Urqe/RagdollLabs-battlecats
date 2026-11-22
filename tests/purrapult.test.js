@@ -100,7 +100,7 @@ test("catapult wood responds to direct crossings and remembers damage after a mi
   assert.deepEqual(state.work, [0, 0, 1]);
   unlock(game);
   assert.ok(state.support.open);
-  assert.equal(state.support.readyAt, state.level.support.reload);
+  assert.equal(state.support.readyAt, state.level.support.openingDelay);
   assert.equal(state.squads.length, 0);
   assert.equal(state.support.shotsFired, 0);
   state.shots.push({ x, y: y + 1 });
@@ -114,15 +114,15 @@ test("catapult wood responds to direct crossings and remembers damage after a mi
   assert.equal(state.work[slot], state.level.barricades[slot].hits);
 });
 
-test("automatic artillery waits for reload, applies a bounded impact once, and can miss a moving front", () => {
+test("automatic artillery launches on the opening deadline, applies a bounded impact once, and can miss a moving front", () => {
   const game = fixture();
   unlock(game);
   const { state } = game;
   const config = state.level.support;
-  state.t = config.reload - 0.01;
+  state.t = config.openingDelay - 0.01;
   updateArtillery(state);
   assert.equal(state.support.shot, null);
-  state.t = config.reload;
+  state.t = config.openingDelay;
   updateArtillery(state);
   const first = state.support.shot;
   assert.ok(first);
@@ -135,6 +135,7 @@ test("automatic artillery waits for reload, applies a bounded impact once, and c
   state.t = first.impactAt;
   updateArtillery(state);
   assert.equal(state.support.damage, 20);
+  assert.equal(state.support.impact.opening, true);
   assert.equal(state.redTotal, 0);
   assert.equal(state.support.shot, null);
   updateArtillery(state);
@@ -150,6 +151,7 @@ test("automatic artillery waits for reload, applies a bounded impact once, and c
   updateArtillery(state);
   assert.equal(state.redTotal, 6000);
   assert.equal(state.support.impact.loss, 0);
+  assert.equal(state.support.impact.opening, false);
 });
 
 test("the final artillery casualty can win, and an in-flight ball is discarded at defeat or reset", () => {
@@ -213,14 +215,8 @@ for (const hz of [30, 60, 120]) {
     }
     const artillery = simulatePurrapult("artillery-first", hz);
     assert.ok(artillery.furthest < gates.furthest - 40);
-    const previous = {
-      ...LEVEL_TWO,
-      support: { ...LEVEL_TWO.support, reload: 3.3, damage: 2850 },
-    };
-    const before = simulatePurrapult("artillery-first", hz, previous);
-    assert.ok(artillery.impacts > before.impacts);
-    assert.ok(artillery.artilleryLoss < before.artilleryLoss * 1.12);
-    assert.ok(artillery.firstImpact - artillery.unlocked < before.firstImpact - before.unlocked);
+    assert.ok(artillery.firstImpact - artillery.unlocked < 1.2);
+    assert.ok(artillery.artilleryLoss > 60000);
     const inert = {
       ...LEVEL_TWO,
       support: { ...LEVEL_TWO.support, damage: 0 },

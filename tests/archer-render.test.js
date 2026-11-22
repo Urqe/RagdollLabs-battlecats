@@ -155,7 +155,7 @@ test("victory, defeat and reset discard presentation data", () => {
       state.mode = mode;
       tick(0.82);
     }
-    assert.deepEqual(motion.archers, { launch: null, impact: null });
+    assert.deepEqual(motion.archers, { launch: null, impact: null, aftermath: [] });
     assert.equal(motion.airborne.active.length, 0);
   }
 });

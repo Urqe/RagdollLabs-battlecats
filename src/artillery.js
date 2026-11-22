@@ -3,7 +3,8 @@ import { updateArchers } from "./archers.js";
 
 export function activateArtillery(state) {
   state.support.unlockedAt = state.t;
-  state.support.readyAt = state.t + state.level.support.reload;
+  const { openingDelay, reload } = state.level.support;
+  state.support.readyAt = state.t + (openingDelay ?? reload);
 }
 
 export function updateArtillery(state, onEffect) {
@@ -35,7 +36,7 @@ export function updateArtillery(state, onEffect) {
     state.redTotal -= loss;
     support.damage += loss;
     support.impacts++;
-    support.impact = { x: shot.x, y: shot.y, at: t, loss };
+    support.impact = { x: shot.x, y: shot.y, at: t, loss, opening: support.impacts === 1 };
     if (loss > 0) onEffect?.("artilleryImpact", t, support.impact);
     return;
   }
