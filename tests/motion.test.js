@@ -1,3 +1,4 @@
+import { MAX_AIRBORNE_CATS } from "../src/airborne-cats.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createGame } from "../src/game.js";
@@ -13,7 +14,7 @@ import { createFigures } from "../src/figures.js";
 import { armyScale, FIELD_LIMIT, RESERVE_LIMIT } from "../src/army-visual.js";
 import { updateArtillery } from "../src/artillery.js";
 import { LEVEL_ONE, LEVEL_TWO } from "../src/levels.js";
-import { AIRBORNE_LIMIT, IMPACT_LIFE, gapShift, gapStrength } from "../src/formation.js";
+import { IMPACT_LIFE, gapShift, gapStrength } from "../src/formation.js";
 
 test("gate releases are ordered, bounded and start on the projectile crossing", () => {
   const quick = waveProfile(20);
@@ -151,6 +152,7 @@ test("only resolved losses launch bounded casualties at the simulation's impact 
   state.support.open = true;
   state.support.readyAt = 0;
   state.redTotal = 21000;
+  motion.step(0, 0, state.blueTotal, state.redEntryOpen, state.level, state);
   updateArtillery(state, motion.receive);
   const { x, y, impactAt } = state.support.shot;
   state.t = impactAt;
@@ -161,7 +163,9 @@ test("only resolved losses launch bounded casualties at the simulation's impact 
   assert.equal(state.redTotal, 21000 - hit.loss);
   assert.equal(motion.impact.loss, hit.loss);
   assert.deepEqual([motion.impact.x, motion.impact.y, motion.impact.at], [x, y, impactAt]);
-  assert.ok(motion.impact.airborne >= 8 && motion.impact.airborne <= AIRBORNE_LIMIT);
+  assert.equal(motion.airborne.active.length, MAX_AIRBORNE_CATS);
+  assert.ok(motion.airborne.active.some(cat => cat.defeated));
+  assert.ok(motion.airborne.active.some(cat => !cat.defeated && cat.slot !== undefined));
 
   // The battle can move far enough during flight to leave the window empty.
   state.t = state.support.readyAt;
@@ -174,9 +178,62 @@ test("only resolved losses launch bounded casualties at the simulation's impact 
 
   motion.reset();
   game.reset(LEVEL_ONE);
-  assert.equal(motion.impact.airborne, 0);
+  assert.deepEqual(motion.airborne.active, []);
   assert.equal(gapStrength(game.state.t - motion.impact.at), 0);
   assert.equal(motion.contact.surgeAt, -Infinity);
+});
+
+test("Purrapult scales radial launches, reclaims the shared budget and clears between strikes", () => {
+  const motion = createMotion();
+  const { state } = createGame({ level: LEVEL_TWO });
+  Object.assign(state, { redTotal: 21000, blueTotal: 1500 });
+  const step = (time) => motion.step(time, 0, state.blueTotal, true, state.level, state);
+  const hit = (at, loss) => motion.receive("artilleryImpact", at,
+    { x: 210, y: state.front - 32, at, loss });
+  step(0);
+  hit(0, 0);
+  assert.deepEqual(motion.airborne.active, []);
+  assert.equal(motion.impact.at, -Infinity);
+  hit(0, 0.8);
+  assert.ok(motion.airborne.active.length > 0);
+  assert.ok(motion.airborne.active.every(cat => !cat.defeated && cat.slot !== undefined));
+  step(2);
+
+  hit(2, 25);
+  const small = [...motion.airborne.active];
+  assert.ok(small.length >= 2 && small.length < MAX_AIRBORNE_CATS);
+  step(4);
+  assert.deepEqual(motion.airborne.active, []);
+
+  const { airborne } = motion;
+  for (let slot = 0; slot < MAX_AIRBORNE_CATS; slot++) {
+    airborne.launch({ at: 4, x: 210, y: 300, vx: 0, vy: 0, lift: 90, spin: 8, slot });
+  }
+  hit(4, 2250);
+  const large = [...airborne.active];
+  assert.equal(large.length, MAX_AIRBORNE_CATS);
+  assert.ok(large.every(cat => cat.red && cat.priority));
+  assert.ok(airborne.slots[0].every(cat => cat === undefined));
+  assert.ok(large.some(cat => cat.vx < -70) && large.some(cat => cat.vx > 70));
+  assert.ok(large.some(cat => cat.vy < -20) && large.some(cat => cat.vy > 20));
+  assert.ok(new Set(large.map(cat => cat.y)).size > 4);
+  assert.ok(Math.max(...large.map(cat => cat.lift)) > Math.max(...small.map(cat => cat.lift)) + 65);
+  assert.ok(large.some(cat => cat.defeated) && large.some(cat => !cat.defeated && cat.rebound > 0));
+
+  step(6);
+  assert.deepEqual(airborne.active, []);
+  hit(7.4, 2250);
+  assert.equal(airborne.active.length, MAX_AIRBORNE_CATS);
+  for (const mode of ["victory", "end", "menu"]) {
+    state.mode = mode;
+    step(8);
+    assert.deepEqual(airborne.active, []);
+    assert.equal(motion.impact.at, -Infinity);
+    hit(8, 2250);
+  }
+  motion.reset();
+  assert.deepEqual(airborne.active, []);
+  assert.equal(motion.impact.at, -Infinity);
 });
 
 test("surviving red ranks open and refill a local pocket at each refresh rate", () => {

@@ -17,20 +17,25 @@ export function createAirborneCats(limit = MAX_AIRBORNE_CATS) {
   }
 
   function launch({ at, x, y, vx, vy, lift, spin, red = false, slot, defeated = false,
-    height = 0, bounce = 0, intensity = 1 }) {
+    height = 0, bounce = 0, intensity = 1, priority = false }) {
     const team = slots[Number(red)];
-    if (slot !== undefined && team[slot]) return false;
-    if (active.length >= limit) {
-      // Reserve room for major impacts by replacing a weaker casualty effect.
-      // Let living representatives finish their return to formation.
-      const i = active.findIndex(cat => cat.defeated && cat.intensity < intensity);
+    const occupant = slot === undefined ? null : team[slot];
+    if (occupant && (!priority || occupant.priority)) return false;
+    if (occupant || active.length >= limit) {
+      // A major impact can reclaim a slot from routine combat. Prefer
+      // retiring a casualty before returning a living cat to its rank.
+      let i = occupant ? active.indexOf(occupant) : active.findIndex(
+        cat => !cat.priority && cat.defeated && cat.intensity < intensity,
+      );
+      if (i === -1 && priority) i = active.findIndex(cat => !cat.priority);
       if (i === -1) return false;
+      release(active[i]);
       active.splice(i, 1);
     }
     const flight = Math.min(MAX_FLIGHT, flightTime(height, lift));
     const rebound = Math.min(MAX_FLIGHT - flight, 2 * Math.max(0, GRAVITY * flight - lift) * bounce / GRAVITY);
     const cat = { at, x, y, vx, vy, lift, spin, red, slot, defeated, height,
-      flight, rebound, intensity, visible: slot === undefined };
+      flight, rebound, intensity, priority, visible: slot === undefined };
     if (slot !== undefined) team[slot] = cat;
     active.push(cat);
     return true;

@@ -3,7 +3,7 @@ import { H, TAU, W, clamp } from "./config.js";
 import {
   drawArtilleryShot,
   drawCatapult,
-  drawImpactAir,
+  drawImpactBurst,
   drawImpactGround,
 } from "./artillery-render.js";
 import { drawArcherCrew, drawArcherVolley } from "./archer-render.js";
@@ -437,7 +437,10 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     const flights = state.mode === "playing" ? motion.airborne : null;
     figures.redArmy(state, motion.contact, motion.impact, flights?.slots[1]);
     figures.blueArmy(state, surge, motion.contact, motion.tails, motion.impact, flights?.slots[0]);
-    if (flights) figures.airborne(flights.active);
+    if (flights) {
+      drawImpactBurst(ctx, motion.impact, impactAge);
+      figures.airborne(flights.active);
+    }
     for (const gate of state.gates) drawGate(gate, gate.style);
     const emplacement = state.level.support;
     const archerSupport = emplacement?.kind === "archers";
@@ -479,7 +482,6 @@ export function createRenderer(state, canvas, motion = createMotion()) {
         drawArcherVolley(ctx, clock, motion.archers.launch, motion.archers.impact);
       } else {
         drawArtilleryShot(ctx, state);
-        drawImpactAir(ctx, figures, motion.impact, impactAge);
       }
     }
     if (celebration > 0.54) {
