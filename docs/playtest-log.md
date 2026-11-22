@@ -161,3 +161,27 @@ The isolated charge curve comparison holds the final front fixed at 85.
 At 0.2 s the lead advances 5.5 units before and 28.9 after. At 0.5 s the
 lead has traveled 58.1 units and the deepest ranks 20.7 on the new curve.
 [Capture timing](evidence/combat-readability/capture-timing.json)
+
+### Browser verification and performance
+
+All 76 Node tests passed. All eight Chromium and eight mobile-emulated WebKit
+Playwright tests passed, including the paired warning test and both results.
+
+Headless profiles used a 390 × 844 viewport at 2× device pixel ratio on the
+Linux workspace. The artillery scene begins with 46,893 red and 17,688 blue
+cats during ×999 reinforcements and an artillery impact. The victory scene
+begins with 159,192 blue cats. The 500,000-red and 200,000-blue scene and the
+rapid decline are controlled renderer fixtures.
+
+| Scene | Chromium frame interval, median / p95 | WebKit frame interval, median / p95 |
+| --- | --- | --- |
+| Reinforcements and artillery | 16.7 / 16.8 ms | 30 / 52 ms |
+| Victory charge | 16.7 / 16.8 ms | 28 / 47 ms |
+| Large-army fixture | 16.7 / 16.7 ms | 27 / 49 ms |
+| Rapid-decline fixture | 16.7 / 16.8 ms | 27 / 53 ms |
+
+Median simulation and draw submission were 1.1–2.3 ms in Chromium and
+1–2 ms in WebKit. Submission time excludes browser compositing and other
+frame costs. WebKit had more variation in frame intervals. These are
+headless Linux measurements. Physical iPhone performance and human reaction
+time remain unmeasured. [Chromium profile](evidence/combat-readability/headless-chromium.json) · [WebKit profile](evidence/combat-readability/headless-webkit.json)
