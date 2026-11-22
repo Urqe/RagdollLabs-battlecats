@@ -442,6 +442,7 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     if (emplacement) {
       if (archerSupport) {
         drawArcherCrew(ctx, state, figures, motion.archers.launch, clock);
+        label("MEOWMEN", emplacement.x, emplacement.y - 46, 11, "#d9f5ff");
       } else {
         drawCatapult(ctx, state, figures);
         label("PURRAPULT", emplacement.x, emplacement.y - 45, 10, "#ffe7ce");

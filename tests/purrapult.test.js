@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { updateArtillery } from "../src/artillery.js";
 import { barrierIndex } from "../src/barricades.js";
 import { createGame } from "../src/game.js";
-import { LEVELS, LEVEL_ONE, LEVEL_TWO, playableLevel } from "../src/levels.js";
+import { LEVELS, LEVEL_ONE, LEVEL_TWO, LEVEL_THREE, playableLevel } from "../src/levels.js";
 import { readProgress, saveProgress } from "../src/progress.js";
 import { updateProjectiles } from "../src/projectiles.js";
 import { simulatePurrapult } from "./helpers/purrapult.js";
@@ -30,17 +30,17 @@ function unlock(game) {
   );
 }
 
-test("two playable levels are available while eight registry entries are disabled", () => {
+test("three playable levels are available while seven registry entries are disabled", () => {
   assert.equal(LEVELS.length, 10);
   assert.equal(new Set(LEVELS.map(({ id }) => id)).size, 10);
   assert.deepEqual(
     LEVELS.filter(({ id }) => playableLevel(id)),
-    [LEVEL_ONE, LEVEL_TWO],
+    [LEVEL_ONE, LEVEL_TWO, LEVEL_THREE],
   );
   for (const level of LEVELS.filter(({ status }) => status !== "implemented")) {
     assert.equal(playableLevel(level.id), undefined);
   }
-  for (const level of [LEVEL_ONE, LEVEL_TWO]) {
+  for (const level of [LEVEL_ONE, LEVEL_TWO, LEVEL_THREE]) {
     const targets = [...level.gates, ...(level.support ? [level.support] : [])];
     const ids = targets.flatMap(({ barricadeId }) =>
       barricadeId ? [barricadeId] : [],
@@ -65,14 +65,14 @@ test("settings keep valid completion records and handle bad or unavailable stora
   assert.deepEqual(readProgress(browser), defaults);
   saveProgress(
     {
-      selected: LEVELS[2].id,
-      completed: [LEVEL_TWO.id, LEVEL_TWO.id, "missing"],
+      selected: LEVELS[3].id,
+      completed: [LEVEL_TWO.id, LEVEL_TWO.id, LEVEL_THREE.id, "missing"],
     },
     browser,
   );
   assert.deepEqual(readProgress(browser), {
     selected: LEVEL_ONE.id,
-    completed: [LEVEL_TWO.id],
+    completed: [LEVEL_TWO.id, LEVEL_THREE.id],
   });
   saveProgress({ selected: LEVEL_TWO.id, completed: [] }, browser);
   assert.deepEqual(readProgress(browser), {

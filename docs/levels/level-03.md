@@ -1,69 +1,59 @@
 # Level 3 · The Meowmen
 
-[Roadmap](../roadmap.md)
+**Status** · Implemented. Hold the single crossing, push back to the red supply
+entrance, and clear the remaining horde before it breaches the castle.
 
-## Identity
+The ×20 gate starts open just right of center. The ×99 barricade is immediately
+left of it, the ×999 barricade is on the right, and the Meowmen occupy a wooden
+parapet on the far left. Their separate barricade takes 30 cannon hits, compared
+with 72 for ×99 and 225 for ×999. The shots spent breaking wood could be
+reinforcing the frontline instead.
 
-**Status** · Proposed. Unlock cat archers to deliver steady ranged support over a contested crossing.
+## Volley support
 
-## Player experience
+The crew fires automatically after its barricade breaks. Six arrows fly from the
+parapet toward a point in the occupied red formation. The existing simulation
+resolves up to 360 casualties per hit, with a 0.28-second flight and 0.52-second
+reload. If the formation leaves the aim point, the volley misses. Targets must
+be within 460 vertical units, so the crew stops firing as the blue army pushes
+the horde off the far end of the crossing.
 
-Choose when to trade frontline volleys for a crew that pays off over a longer fight. Compared with the catapult's occasional splash, the visual reward is synchronized volleys and small repeated gaps ahead of the line. A tiny archer standing on a crate can sell the scale joke.
+The Meowmen deal up to 450 casualties per second while targets stay in range.
+Level 2’s Purrapult delivers up to 2,250 casualties in a single splash with a
+3.34-second cycle. On Level 3, a growing reinforcement stream gives early volleys
+time to thin red ranks, then outpaces the crew on its own. Use ×99 to rebuild
+between attempts on ×999. The same advancing-front and supply-cutoff rules
+decide the battle.
 
-## Mechanics
+## Deterministic balance checks
 
-Reuse auto-fire, wood, gates, and marching. Aim at the crew's barricade, then let the crew fire toward eligible red ranks. Use the established advances, supply cutoff, and castle breach rules as the starting objective. Test a steady horde that rewards sustained defense.
+The policies in `tests/helpers/meowmen.js` use the regular cannon and observe
+battle state. The table reports battle seconds to defeat or the start of the
+victory march. The casualty column is the number directly attributed to arrows
+at 60 Hz.
 
-## Battlefield
+| Cannon policy | Outcome | 30 Hz | 60 Hz | 120 Hz | Archer casualties at 60 Hz |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Stay on ×20 | Defeat | 50.9 | 51.0 | 51.0 | 0 |
+| Gates only, alternating defense and barricade shots | Victory | 113.0 | 111.9 | 111.9 | 0 |
+| Archers first, then push for ×99 | Victory | 86.1 | 82.0 | 82.0 | 33,480 |
+| Both locked gates first, then archers | Victory | 113.0 | 112.2 | 112.1 | 19,080 |
+| Reinforce with ×99, unlock archers, then alternate ×99 and ×999 | Victory | 96.1 | 95.3 | 95.3 | 32,040 |
+| Rush the ×999 barricade | Defeat | 16.8 | 16.8 | 16.8 | 0 |
+| Unlock archers and leave the cannon there | Defeat | 16.8 | 16.8 | 16.8 | 6,120 |
+| Balanced schedule with arrow damage set to zero | Victory | 107.9 | 107.1 | 107.0 | 0 |
 
-One crossing and one far red entry. Keep the starter gate central and stronger gates reachable as before. Put archers on a side parapet with a distinct wooden target and keep arrow silhouettes clear of the cannon stream.
+At six seconds the archer-first opening lets the horde reach y≈462, versus
+y≈364 with the balanced opening. It still recovers when it follows up with
+reinforcements, and leaving the cannon at the crew loses. Unlocking after a
+short ×99 reserve saves nearly 12 seconds against the same cannon inputs with
+zero arrow damage. At 60 Hz it holds the horde to y≈607 rather than y≈643
+(the castle is at y=690). Waiting until ×999 is already supplying the front
+leaves little time for the investment to pay off. The balanced win is close to
+the 92-second artillery-assisted Level 2 benchmark.
 
-## Balance hypotheses
+Run `node --test tests/meowmen.test.js tests/archers.test.js` for the strategy
+and volley checks, and `npm run test:browser -- meowmen.spec.js archers.spec.js`
+for the portrait playthrough and volley visuals.
 
-Alternate defense with an archer unlock when the line can absorb the cost. Rushing the crew or staying on the starter gate should be weak. Target a battle of similar length to Level 2. Simulate cadence, target range, and steady damage. Check for enemies being pinned before the line engages.
-
-## Implementation considerations
-
-Reuse Level 2's support lifecycle if it proves useful. Render small volley groups and cap arrow effects. Test range, shot resolution, normal objectives, and reset on mobile.
-
-## Open questions
-
-Does steady ranged support change the aim decision enough to deserve its own level? Would it work better as an alternative within a later combined level?
-
-## Revision history
-
-Initial Milestone 6 brief. Revisit after the [Purrapult playtests](../playtest-log.md).
-
-## Milestone 14A simulation foundation
-
-`ARCHER_SUPPORT` in `src/levels.js` is a provisional preset, not a playable
-level. A controlled level can supply it as `support`, with a matching barricade;
-existing projectile hits unlock it through the normal support lifecycle.
-`kind: "archers"` selects aggregate arrow resolution instead of Purrapult splash.
-
-Initial assumptions: six arrows × eight damage = 48 casualties per successful
-volley, 0.2 seconds of flight, then 0.6 seconds of reload (60 damage/second).
-The first launch waits one reload after unlock. Arrow count is clamped to 1–12.
-Use positive finite reload/flight values and an integer arrow count in level data.
-The preset's maximum damage rate is below even the starting red reinforcement
-rate (150/second); it cannot overcome continuing reinforcements by itself.
-These are conservative hypotheses for later playtesting, not final balance.
-
-Aim is fixed at launch, 24 units behind the front, within the real army's
-100-unit occupied band. Launch requires positive red population and a target
-within 520 vertical units of the crew (x/y define the future launch origin).
-At impact the aim must still be inside the current occupied band and range;
-otherwise the whole volley misses. There is no splash coverage calculation,
-individual target identity, or per-arrow physics. Damage is capped at remaining
-red population, and only the ordinary army simulation moves the frontline.
-No-target time does not bank volleys. Timing uses scheduled deadlines to avoid
-frame-rate drift during normal 30/60/120 Hz updates; large time jumps are not a
-combat replay facility. One volley can be in flight at a time.
-
-The existing `onEffect(type, time, payload)` callback emits `archerLaunch` with
-`x`, `y`, `originX`, `originY`, `arrows`, `launchedAt`, and `impactAt`. A renderer
-can interpolate a bounded volley using those timestamps without a per-frame
-flight event. `archerImpact` repeats those fields and adds `at` and actual `loss`,
-including zero-loss misses. Payloads are snapshots. Reset/level switch replaces
-support state; victory/defeat discards flight without a later impact event.
-Rendering and archer-specific sound remain for the next milestone.
+[Roadmap](../roadmap.md) · [Purrapult balance](../purrapult-balance.md)

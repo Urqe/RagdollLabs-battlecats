@@ -60,7 +60,7 @@ const leftWood = barricade("left-gate", 90, "×99 OPEN — AIM LEFT!");
 const rightWood = barricade("right-gate", 231, "×999 OPEN — AIM RIGHT!");
 const supportWood = barricade("artillery", 36, "PURRAPULT CREW READY!");
 
-// Provisional simulation preset; no playable Level 3 definition yet.
+// Baseline volley configuration for the archer support system.
 export const ARCHER_SUPPORT = Object.freeze({
   kind: "archers",
   id: "archers",
@@ -125,8 +125,36 @@ export const LEVEL_TWO = Object.freeze({
   }),
 });
 
+const archerWood = barricade("archers", 30, "MEOWMEN ARCHERS READY!");
+const meowmenStrongWood = barricade("left-gate", 72, "×99 OPEN — AIM LEFT!");
+const meowmenFinalWood = barricade("right-gate", 225, "×999 OPEN — AIM RIGHT!");
+
+export const LEVEL_THREE = Object.freeze({
+  id: "meowmen",
+  number: 3,
+  title: "The Meowmen",
+  status: "implemented",
+  battlefield: Object.freeze({ ...battlefield, startX: 234 }),
+  objective,
+  combat: Object.freeze({ ...combat, redReinforcementGrowth: 55 }),
+  gates: Object.freeze([
+    gate("starter", 234, 76, 20, "#399be9", 0),
+    gate("strong", 144, 74, 99, "#ffb740", 1, meowmenStrongWood.id),
+    gate("final", 340, 84, 999, "#ffd561", 2, meowmenFinalWood.id),
+  ]),
+  barricades: Object.freeze([meowmenStrongWood, meowmenFinalWood, archerWood]),
+  support: Object.freeze({
+    ...ARCHER_SUPPORT,
+    x: 54,
+    width: 72,
+    damagePerArrow: 60,
+    reload: 0.52,
+    flight: 0.28,
+    range: 460,
+  }),
+});
+
 const candidates = [
-  ["meowmen", "The Meowmen"],
   ["two-tails", "A Tale of Two Tails"],
   ["pawtorians", "The Pawtorians"],
   ["clawlossus", "The Clawlossus"],
@@ -139,8 +167,9 @@ const candidates = [
 export const LEVELS = Object.freeze([
   LEVEL_ONE,
   LEVEL_TWO,
+  LEVEL_THREE,
   ...candidates.map(([id, title], index) =>
-    Object.freeze({ id, title, number: index + 3, status: "proposed" }),
+    Object.freeze({ id, title, number: index + 4, status: "proposed" }),
   ),
 ]);
 

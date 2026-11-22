@@ -32,7 +32,7 @@ export function drawArcherCrew(ctx, state, figures, launch, clock) {
     : { draw: 0, release: 0 };
   const aim = launch && active
     ? Math.atan2(launch.y - y, launch.x - x)
-    : -2.2;
+    : Math.atan2(-220, state.level.battlefield.width / 2 - x);
 
   ctx.save();
   ctx.translate(x, y + 12);
