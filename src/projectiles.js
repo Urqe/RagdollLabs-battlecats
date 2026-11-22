@@ -63,7 +63,7 @@ export function updateProjectiles(
       );
       if (surface === support && surface.open) activateArtillery(state);
       if (surface.open) {
-        const target = surface === support ? "catapult" : surface.mult;
+        const target = surface === support ? emplacement.id : surface.mult;
         onEffect?.("break", state.t, target);
       } else {
         onEffect?.("wood", state.t);

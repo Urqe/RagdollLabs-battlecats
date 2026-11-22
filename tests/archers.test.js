@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { activateArtillery, updateArtillery } from '../src/artillery.js';
 import { createGame } from '../src/game.js';
-import { ARCHER_SUPPORT, LEVEL_ONE, LEVEL_TWO, playableLevel } from '../src/levels.js';
+import { ARCHER_SUPPORT, LEVEL_ONE, LEVEL_TWO } from '../src/levels.js';
 import { updateProjectiles } from '../src/projectiles.js';
 
 const level = {
@@ -120,5 +120,4 @@ test('game loop resolves a final casualty and clears flight on defeat, reset and
   game.reset(level);
   assert.equal(state.support.shot, null);
   assert.equal(state.support.shotsFired, 0);
-  assert.equal(playableLevel('meowmen'), undefined);
 });

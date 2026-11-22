@@ -66,7 +66,7 @@ function end(won) {
   el("resultText").textContent = won
     ? `Your cat army overwhelmed the invaders and cleared the battlefield. ${level.title} is won!`
     : "The enemy reached your castle before you could turn the tide. Reinforce the frontline between volleys at the barricades.";
-  el("resultLevel").textContent = `SiegeDolls · Level ${level.number}`;
+  el("resultLevel").textContent = `Level ${level.number} · ${level.title}`;
 }
 
 function stopFrame() {
@@ -119,7 +119,11 @@ function start(level = playableLevel(progress.selected)) {
 function showMenu() {
   const level = playableLevel(progress.selected);
   el("menuLevel").textContent = `Level ${level.number} · ${level.title}`;
-  el("artilleryTip").hidden = !level.support;
+  const supportTip = el("artilleryTip");
+  supportTip.hidden = !level.support;
+  supportTip.textContent = level.support?.kind === "archers"
+    ? "Break the Meowmen barricade on the far left to unlock automatic arrow volleys."
+    : "Break the Purrapult barricade to add automatic yarn artillery.";
   el("levels").hidden = true;
   el("menu").hidden = false;
 }
