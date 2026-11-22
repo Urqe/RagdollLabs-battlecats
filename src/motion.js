@@ -1,8 +1,9 @@
+import { createAirborneCats } from "./airborne-cats.js";
 import { clamp } from "./config.js";
 import { LEVEL_ONE } from "./levels.js";
 import { impactShape } from "./formation.js";
 import { createFormationDynamics, EXCHANGE_DURATION } from "./formation-dynamics.js";
-import { LITERAL_ARMY } from "./army-visual.js";
+import { fieldColumn, LITERAL_ARMY } from "./army-visual.js";
 import {
   createArmyPresentation, resetArmyPresentation, stepArmyPresentation,
 } from "./army-continuity.js";
@@ -66,6 +67,11 @@ const EXCHANGE_LANES = [0, -1, 2, -2, 1];
 
 export function createMotion(onReversal = () => {}) {
   const tails = [];
+  const airborne = createAirborneCats();
+  const nextCasualty = [0, 0];
+  let nextKnockback;
+  let hitIndex;
+  let seed;
   const falls = [];
   const pulses = new Float64Array(3);
   const arrivals = new Float64Array(3);
@@ -89,6 +95,10 @@ export function createMotion(onReversal = () => {}) {
   function reset() {
     clock = direction = nextDirection = directionTime = 0;
     tails.length = falls.length = 0;
+    airborne.reset();
+    nextCasualty.fill(0);
+    nextKnockback = hitIndex = 0;
+    seed = 1729;
     lastRed = lastBlue = null;
     archers.launch = archers.impact = null;
     exchangeIndex = 0;
@@ -135,6 +145,8 @@ export function createMotion(onReversal = () => {}) {
   ) {
     const dt = Math.max(0, time - clock);
     clock = time;
+    if (battle && battle.mode !== "playing") airborne.reset();
+    else airborne.step(time);
     const oldField = contact.blueArmy.population === null ? 0 : contact.blueArmy.target.field;
     const oldReserve = contact.blueArmy.population === null ? 0 : contact.blueArmy.target.reserve;
     stepArmyPresentation(contact.blueArmy, blueStrength, dt, true);
@@ -236,6 +248,62 @@ export function createMotion(onReversal = () => {}) {
     falls.push({ x, y: front + (red ? -7 : 9), red, at: time });
   }
 
+  function random() {
+    seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
+    return seed / 2 ** 32;
+  }
+
+  function meleeReactions(at, x, front, redLoss, blueLoss) {
+    for (const exchange of contact.exchanges) {
+      const { red } = exchange;
+      const loss = red ? redLoss : blueLoss;
+      const army = red ? contact.redArmy : contact.blueArmy;
+      const side = red ? -1 : 1;
+      // Literal formations already animate the disappearance of each lost slot.
+      if (loss >= 1 && army.population > LITERAL_ARMY && at >= nextCasualty[Number(red)]) {
+        const force = clamp(loss / 20, 0, 1);
+        airborne.launch({
+          at, red, defeated: true, intensity: 3,
+          x: 210 + clamp((red ? x : 420 - x) - 210, -26, 26) + (random() - 0.5) * 18,
+          y: front + side * (8 + random() * 10),
+          vx: (random() - 0.5) * (72 + force * 40), vy: side * (19 + force * 15),
+          lift: 142 + force * 42, spin: (random() < 0.5 ? -1 : 1) * 10,
+          bounce: 0.24,
+        });
+        nextCasualty[Number(red)] = at + 1.15 + random() * 0.45;
+      }
+    }
+    if (at < nextKnockback || redLoss + blueLoss <= 0) return;
+    const red = hitIndex % 2 === 0;
+    const army = red ? contact.redArmy : contact.blueArmy;
+    const count = Math.min(12, Math.ceil(army.target.field ?? 0));
+    if (!count) return;
+    const dramatic = hitIndex % 17 === 4;
+    const sideways = (random() - 0.5) * 2;
+    const side = red ? -1 : 1;
+    const localX = 210 + clamp((red ? x : 420 - x) - 210, -24, 24);
+    let slot;
+    let distance = Infinity;
+    for (let i = 0; i < count; i++) {
+      if (airborne.slots[Number(red)][i]) continue;
+      const offset = Math.abs(210 + fieldColumn(i) * 12 - localX) + random() * 10;
+      if (offset >= distance) continue;
+      distance = offset;
+      slot = i;
+    }
+    if (slot === undefined) return;
+    airborne.launch({
+      at, red, x: localX, y: front + side * 8, slot,
+      intensity: dramatic ? 4 : 1,
+      vx: sideways * (dramatic ? 72 : 38), vy: side * (dramatic ? 38 : 23),
+      lift: dramatic ? 224 : 86 + random() * 49,
+      spin: (sideways < 0 ? -1 : 1) * (dramatic ? 14 : 7 + random() * 3),
+      bounce: dramatic || random() < 0.36 ? 0.26 : 0,
+    });
+    hitIndex++;
+    nextKnockback = at + 0.20 + random() * 0.11;
+  }
+
   function receive(kind, time, value, front, redLoss, blueLoss) {
     if (kind === "archerLaunch") archers.launch = value;
     if (kind === "archerImpact") archers.impact = value;
@@ -254,6 +322,7 @@ export function createMotion(onReversal = () => {}) {
       });
     }
     if (kind === "clash") {
+      meleeReactions(time, value, front, redLoss, blueLoss);
       contact.red = Math.min(1, redLoss / 35);
       contact.blue = Math.min(1, blueLoss / 26);
       contact.foughtAt = time;
@@ -266,15 +335,10 @@ export function createMotion(onReversal = () => {}) {
         const half = Math.floor(Math.max(0, available - 1) / 2);
         exchange.at = time;
         exchange.x = 210 + clamp(lane, -half, half) * 12;
-        // Literal formations already show their actual integer depletion.
-        const army = exchange.red ? contact.redArmy : contact.blueArmy;
-        if ((army.population === null || army.population > LITERAL_ARMY) && loss >= 7) {
-          addFall(exchange.x, front, exchange.red, time + 0.12);
-        }
       }
     }
   }
 
   reset();
-  return { contact, impact, archers, tails, falls, pulses, arrivals, receive, reset, step };
+  return { contact, airborne, impact, archers, tails, falls, pulses, arrivals, receive, reset, step };
 }
