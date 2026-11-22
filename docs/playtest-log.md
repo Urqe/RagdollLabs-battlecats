@@ -72,3 +72,13 @@ One entry and a short documentation edit are enough for most reviews.
 **Observations.** The old wave tail and new field rows drew independently. The old celebration moved the flag while the blue formation stayed on the frozen front. Bounded handoffs now connect representative sprites to local slots. The lead enters the cleared approach on the existing victory clock and the reserves follow. [Before and after gameplay](army-visual-scale.md#portrait-gameplay-evidence)
 
 **Player impressions.** No human feedback on the revised movement or physical-device timing was collected.
+
+## Milestone 12 · Formation dynamics
+
+The review starts from merged Milestone 11 at `685f84b`. The HUD-hidden Level 1 and Level 2 winning strategies exercise reinforcement growth, reversals, ×999 arrivals, artillery in Level 2 and the occupation surge. A labeled rendering fixture repeats the same hold, receipt, retreat and counterattack sequence on both builds so the movement can be compared without changes in player timing.
+
+The Level 1 and Level 2 simulation output files match Milestone 11 byte for byte at 30, 60 and 120 Hz. The added render checks exercise slot continuity through an artillery hit and a reversal, live-line bounds, pressure release, local openings, reset and wave ownership. The new motion field also matches exactly at common time samples for the same observed battle. [Model, reproduction and limits](army-visual-scale.md#milestone-12--formation-dynamics-and-battlefield-momentum)
+
+In the rendering fixture the packing value rose from 0.18 to 0.56 in the half-second after the ×99 arrival. The first 60 Hz frame of retreat moved the contact line by 0.27 world pixels while the depth anchors held their positions. At 0.20 seconds the rear anchor had yielded 0.19 pixels against the line's 3.47. The counterattack produced the same depth order in the opposite direction. In the normal Level 1 route, red pressure can still leave blue with zero resident troops before the final wave. That collapse comes from the existing battle balance and is visible in both builds.
+
+The Level 1 video shows the victory panel. Level 2 shows elimination, the full advance and the occupation flag after 25 Purrapult impacts. The capture harness observed the result panel, and the video ends on the battlefield. Consecutive fixture frames show the front moving first at the reversal and a small local opening widening near the center during the counterattack. In the baseline fixture the front moves with the receiving formation following a single support delay. [Recordings and timing](army-visual-scale.md#formation-dynamics-evidence)

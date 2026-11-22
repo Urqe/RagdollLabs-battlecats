@@ -1,0 +1,53 @@
+{
+  "baseline": {
+    "commit": "685f84b6cfcd958d6bc0492406ac47a2aab27b1b",
+    "e-formation-fixture": {
+      "start": 1.9012131480000007,
+      "end": 27.482004425000003,
+      "fixtureSeconds": {
+        "arrival": 2.566666666666667,
+        "retreat": 4,
+        "regroup": 5.8,
+        "counterattack": 6.8
+      }
+    }
+  },
+  "milestone12": {
+    "a-level-1-victory": {
+      "start": 0.9755377319999998,
+      "gate99": 19.570590837,
+      "gate999": 61.521022873999996,
+      "flood": 62.01479190999999,
+      "cutoff": 108.19705986700001,
+      "victory": 111.21074942400001,
+      "result": 112.902593005,
+      "battleSeconds": 97.32830000000271,
+      "impacts": 0,
+      "end": 114.41879469800001
+    },
+    "c-level-2-victory": {
+      "start": 1.3646425120000203,
+      "catapult": 17.453842376000015,
+      "firstHit": 21.287629558999992,
+      "gate99": 30.251246324000007,
+      "gate999": 86.01442782100001,
+      "flood": 86.70595964300001,
+      "cutoff": 130.16379112700002,
+      "victory": 130.16381211800004,
+      "result": 131.917894296,
+      "battleSeconds": 100.49150000000319,
+      "impacts": 25,
+      "end": 133.46637076400003
+    },
+    "e-formation-fixture": {
+      "start": 0.3672943040000391,
+      "end": 11.500708268999995,
+      "fixtureSeconds": {
+        "arrival": 2.566666666666667,
+        "retreat": 4,
+        "regroup": 5.8,
+        "counterattack": 6.8
+      }
+    }
+  }
+}

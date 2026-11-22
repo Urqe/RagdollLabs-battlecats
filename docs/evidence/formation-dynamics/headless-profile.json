@@ -1,0 +1,102 @@
+{
+  "browser": "Headless Chromium",
+  "viewport": [
+    390,
+    844
+  ],
+  "deviceScaleFactor": 2,
+  "m11": {
+    "gatesAndArtillery": {
+      "counts": {
+        "red": 48954,
+        "blue": 18307
+      },
+      "frames": 354,
+      "frameMs": {
+        "median": 16.7,
+        "p95": 16.8
+      },
+      "drawAndStepMs": {
+        "median": 1.9,
+        "p95": 3.1
+      }
+    },
+    "enormousFixture": {
+      "counts": {
+        "red": 500000,
+        "blue": 200000
+      },
+      "frames": 360,
+      "frameMs": {
+        "median": 16.7,
+        "p95": 16.8
+      },
+      "drawAndStepMs": {
+        "median": 1.8,
+        "p95": 2.7
+      }
+    },
+    "rapidDecline": {
+      "counts": {
+        "red": 500000,
+        "blue": 200000
+      },
+      "frames": 360,
+      "frameMs": {
+        "median": 16.7,
+        "p95": 16.8
+      },
+      "drawAndStepMs": {
+        "median": 1.9,
+        "p95": 2.2
+      }
+    }
+  },
+  "m12": {
+    "gatesAndArtillery": {
+      "counts": {
+        "red": 48954,
+        "blue": 18307
+      },
+      "frames": 334,
+      "frameMs": {
+        "median": 16.7,
+        "p95": 16.8
+      },
+      "drawAndStepMs": {
+        "median": 2.9,
+        "p95": 3.9
+      }
+    },
+    "enormousFixture": {
+      "counts": {
+        "red": 500000,
+        "blue": 200000
+      },
+      "frames": 345,
+      "frameMs": {
+        "median": 16.7,
+        "p95": 16.8
+      },
+      "drawAndStepMs": {
+        "median": 1.9,
+        "p95": 2.8
+      }
+    },
+    "rapidDecline": {
+      "counts": {
+        "red": 500000,
+        "blue": 200000
+      },
+      "frames": 356,
+      "frameMs": {
+        "median": 16.7,
+        "p95": 16.8
+      },
+      "drawAndStepMs": {
+        "median": 1.5,
+        "p95": 2.5
+      }
+    }
+  }
+}

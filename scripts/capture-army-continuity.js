@@ -51,7 +51,7 @@ async function battle(page, elapsed, context, policy, level, win) {
   const box = await page.locator("#game").boundingBox();
   const aim = level === 2 ? purrapultAim("artillery-first") : createAim(policy);
   let target = (await snapshot()).gunX;
-  while (elapsed() < 230) {
+  while (elapsed() < 360) {
     const state = await snapshot();
     if (state.gates[1].open) marks.gate99 ??= elapsed();
     if (state.gates[2].open) marks.gate999 ??= elapsed();
@@ -135,6 +135,51 @@ async function fixture(page, elapsed) {
   return { start, end: elapsed(), populations: await page.evaluate(() => window.continuityMarks) };
 }
 
+async function formationFixture(page, elapsed) {
+  await page.evaluate(async () => {
+    const [{ createState }, { createMotion }, { createRenderer }] = await Promise.all([
+      import("/src/state.js"), import("/src/motion.js"), import("/src/render.js"),
+    ]);
+    document.querySelector("#menu").hidden = true;
+    const label = document.createElement("div");
+    label.style.cssText = "position:absolute;top:18px;left:0;width:100%;text-align:center;z-index:10;font:bold 14px system-ui";
+    document.body.append(label);
+    const state = createState();
+    Object.assign(state, { mode: "playing", front: 290, blueTotal: 320, redTotal: 650 });
+    const motion = createMotion();
+    const renderer = createRenderer(state, document.querySelector("#game"), motion);
+    const wave = { x: 210, entryY: 565, count: 99, mult: 99, phase: 1, slot: 0, marchTime: 0 };
+    const dt = 1 / 60;
+    let tick = 0;
+    motion.step(0, 0, state.blueTotal, true, state.level, state);
+    function frame() {
+      state.t = ++tick * dt;
+      const retreat = state.t >= 4 && state.t < 5.8;
+      const advance = state.t >= 6.8 && state.t < 9.8;
+      const speed = retreat ? 16 : advance ? -12 : 0;
+      state.front += speed * dt;
+      if (tick === 24) state.squads.push(wave);
+      if (state.squads.length) wave.marchTime += dt;
+      if (tick === 154) {
+        state.squads.length = 0;
+        state.blueTotal += wave.count;
+        motion.receive("arrival", state.t, wave, state.front);
+      }
+      label.textContent = "RENDERING FIXTURE · " +
+        (retreat ? "RETREAT" : advance ? "COUNTERATTACK" : state.t < 4 ? "HOLD AND RECEIVE" : "REGROUP");
+      motion.step(state.t, speed, state.blueTotal, true, state.level, state);
+      renderer.draw();
+      if (tick < 630) requestAnimationFrame(frame);
+      else window.finishedFormationFixture = true;
+    }
+    renderer.resize();
+    requestAnimationFrame(frame);
+  });
+  const start = elapsed();
+  await page.waitForFunction(() => window.finishedFormationFixture, null, { timeout: 120000 });
+  return { start, end: elapsed(), fixtureSeconds: { arrival: 154 / 60, retreat: 4, regroup: 5.8, counterattack: 6.8 } };
+}
+
 function encode({ name, file, marks }) {
   const start = Math.max(0, marks.start - 0.23);
   const result = spawnSync("ffmpeg", [
@@ -151,13 +196,18 @@ const scenarios = [
   ["b-level-1-defeat", (page, time, ctx) => battle(page, time, ctx, "A", 1, false)],
   ["c-level-2-victory", (page, time, ctx) => battle(page, time, ctx, null, 2, true)],
   ["d-population-decline", fixture],
+  ["e-formation-fixture", formationFixture],
 ];
 try {
   const selected = requested.length
     ? scenarios.filter(([name]) => requested.some((prefix) => name.startsWith(prefix)))
     : scenarios;
-  const captures = await Promise.all(selected.map(([name, action]) => record(name, action)));
-  for (const capture of captures) encode(capture);
+  const captures = [];
+  for (const [name, action] of selected) {
+    const capture = await record(name, action);
+    encode(capture);
+    captures.push(capture);
+  }
   const marks = Object.fromEntries(captures.map(({ name, marks }) => [name, marks]));
   await writeFile(resolve(output, "timing.json"), JSON.stringify(marks, null, 2) + "\n");
 } finally {

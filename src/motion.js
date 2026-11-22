@@ -1,6 +1,7 @@
 import { clamp } from "./config.js";
 import { LEVEL_ONE } from "./levels.js";
 import { impactShape } from "./formation.js";
+import { createFormationDynamics } from "./formation-dynamics.js";
 import { LITERAL_ARMY } from "./army-visual.js";
 import {
   createArmyPresentation, resetArmyPresentation, stepArmyPresentation,
@@ -72,6 +73,7 @@ export function createMotion(onReversal = () => {}) {
   let direction = 0;
   let nextDirection = 0;
   let directionTime = 0;
+  const dynamics = createFormationDynamics();
   const contact = {
     redArmy: createArmyPresentation(),
     blueArmy: createArmyPresentation(),
@@ -84,6 +86,7 @@ export function createMotion(onReversal = () => {}) {
     clock = direction = nextDirection = directionTime = 0;
     tails.length = falls.length = 0;
     lastRed = lastBlue = null;
+    dynamics.reset();
     resetArmyPresentation(contact.redArmy);
     resetArmyPresentation(contact.blueArmy);
     Object.assign(impact, {
@@ -105,12 +108,11 @@ export function createMotion(onReversal = () => {}) {
       foughtAt: -1,
       clashX: 210,
       clashAge: 0,
-      hold: 0,
       surgeAt: -Infinity,
 
       blueAnchor: 210,
       blueAnchorTarget: 210,
-      supportFront: null,
+      formation: null,
       cutoffAt: null,
       entryRate: 0,
     });
@@ -132,10 +134,14 @@ export function createMotion(onReversal = () => {}) {
     allocateJoins(oldField, oldReserve);
     if (battle) {
       stepArmyPresentation(contact.redArmy, battle.redTotal, dt);
-      const follow = contact.supportFront ?? battle.front;
-      contact.supportFront = battle.front + clamp(
-        (follow - battle.front) * Math.exp(-dt / 0.19), -10, 10,
-      );
+      if (battle.mode === "playing") {
+        const engaged = blueStrength > 0 && battle.redTotal > 0;
+        const depth = clamp(contact.blueArmy.target.field / 320 + contact.blueArmy.target.reserve / 640, 0, 1);
+        const arrivalAt = Math.max(arrivals[0], arrivals[1], arrivals[2]);
+        const losses = contact.blue * Math.max(0, 1 - (time - contact.foughtAt) / 0.38);
+        dynamics.step(time, battle.front, level, engaged, arrivalAt, losses, depth);
+        contact.formation = dynamics.pose;
+      }
       if (battle.mode === "victory") {
         contact.foughtAt = -Infinity;
         contact.red = contact.blue = 0;
@@ -162,8 +168,6 @@ export function createMotion(onReversal = () => {}) {
       (velocity > 0 ? level.combat.redAdvance : level.combat.blueAdvance);
     contact.pressure +=
       (normalized - contact.pressure) * (1 - Math.exp(-dt / 0.24));
-    const hold = 1 - Math.min(1, Math.abs(contact.pressure) * 2.6);
-    contact.hold += (hold - contact.hold) * (1 - Math.exp(-dt / 0.21));
     contact.clashAge = clock - contact.foughtAt;
     const sign =
       contact.pressure > 0.13 ? 1 : contact.pressure < -0.13 ? -1 : 0;
