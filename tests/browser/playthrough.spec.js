@@ -144,6 +144,8 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
   expect(cleared.front).toBeGreaterThan(30);
   await expect(page.locator("#result")).toBeHidden();
   expect(await flagIsBlue(page)).toBe(false);
+  expect(await page.evaluate(async () => (await import("/src/progress.js")).readProgress()))
+    .toMatchObject({ completed: [cleared.level.id] });
   await page.keyboard.press("ArrowLeft");
   await page.clock.runFor(850);
   s = await snapshot(page);

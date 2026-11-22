@@ -27,7 +27,14 @@ let barrierLabels = [];
 
 function onEffect(kind, time, value, front, redLoss, blueLoss) {
   motion.receive(kind, time, value, front, redLoss, blueLoss);
-  if (kind === "arrival" || kind === "victory") return;
+  if (kind === "victory") {
+    if (!progress.completed.includes(state.level.id)) {
+      progress.completed.push(state.level.id);
+      saveProgress(progress);
+    }
+    return;
+  }
+  if (kind === "arrival") return;
   if (kind === "multiply") sound.play(`gate${value}`);
   else if (kind === "break")
     sound.play(value === "catapult" ? "artilleryReady" : "gateUnlock");
@@ -49,10 +56,6 @@ function notify(message, seconds = 2) {
 
 function end(won) {
   const { level } = state;
-  if (won && !progress.completed.includes(level.id)) {
-    progress.completed.push(level.id);
-    saveProgress(progress);
-  }
   el("result").classList.toggle("won", won);
   el("result").hidden = false;
   el("battleNav").hidden = true;
