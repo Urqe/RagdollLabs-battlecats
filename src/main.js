@@ -27,11 +27,11 @@ let barrierLabels = [];
 
 function onEffect(kind, time, value, front, redLoss, blueLoss) {
   motion.receive(kind, time, value, front, redLoss, blueLoss);
-  if (kind === "arrival") return;
+  if (kind === "arrival" || kind === "victory") return;
   if (kind === "multiply") sound.play(`gate${value}`);
   else if (kind === "break")
     sound.play(value === "catapult" ? "artilleryReady" : "gateUnlock");
-  else sound.play(kind);
+  else sound.play(kind === "flagCapture" ? "victory" : kind);
 }
 
 function updateSoundButtons() {
@@ -216,10 +216,7 @@ function loop(now) {
   const wasPlaying = state.mode === "playing";
   battleClock.advance((now - last) / 1000);
   last = now;
-  if (wasPlaying && state.mode === "victory") {
-    el("banner").style.opacity = 0;
-    el("battleNav").hidden = true;
-  }
+  if (wasPlaying && state.mode === "victory") el("banner").style.opacity = 0;
   if (state.mode === "playing" || state.mode === "victory") updateHud();
   renderer.draw();
   if (state.mode === "playing" || state.mode === "victory")

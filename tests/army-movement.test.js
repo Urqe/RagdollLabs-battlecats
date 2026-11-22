@@ -6,7 +6,7 @@ import { createFigures } from "../src/figures.js";
 import { LEVEL_ONE, LEVEL_TWO } from "../src/levels.js";
 import { createMotion } from "../src/motion.js";
 import {
-  mergeProgress, receivingY, victoryAdvance, victoryWaveVisibility,
+  FLAG_CAPTURE_TIME, mergeProgress, receivingY, victoryAdvance, victoryWaveVisibility,
 } from "../src/army-movement.js";
 
 const wave = (mult, x = 210) => ({
@@ -175,18 +175,22 @@ for (const level of [LEVEL_ONE, LEVEL_TWO]) {
     assert.equal(motion.contact.foughtAt, -Infinity);
     if (state.support) assert.equal(state.support.shot, null);
     let previous = 0;
-    for (let i = 1; i <= 90; i++) {
+    for (let i = 1; i <= Math.round(duration * 60); i++) {
       game.update(1 / 60);
       step(motion, state, state.t + state.victoryElapsed);
-      const ahead = victoryAdvance(stand.front, state.victoryElapsed, duration);
+      const advance = (depth = 0) => victoryAdvance(stand.front, level.objective.flagY, state.victoryElapsed, depth);
+      const ahead = advance();
       assert.ok(ahead >= previous && ahead - previous < 3.2);
       if (i === 1) {
-        assert.ok(ahead > level.combat.blueAdvance / 60 * 5);
-        assert.equal(victoryAdvance(stand.front, state.victoryElapsed, duration, 1), 0);
+        assert.ok(ahead > 0);
+        assert.equal(advance(1), 0);
+      }
+      if (i === 15) {
+        assert.ok(ahead > level.combat.blueAdvance * 0.25 * 4);
       }
       if (i === 45) {
         assert.ok(ahead > level.combat.blueAdvance * 0.75);
-        assert.ok(victoryAdvance(stand.front, state.victoryElapsed, duration, 1) < ahead);
+        assert.ok(advance(1) < ahead);
         assert.ok(Math.min(...probe.blue(state, motion).map((d) => d.y)) < firstY - 20);
         assert.deepEqual(probe.red(state, motion), []);
       }
@@ -197,7 +201,8 @@ for (const level of [LEVEL_ONE, LEVEL_TWO]) {
     }
     game.update(0.01);
     assert.equal(state.mode, "end");
-    assert.ok(stand.front - previous < 23);
+    assert.equal(stand.front + 6 - previous, level.objective.flagY);
+    assert.equal(victoryAdvance(stand.front, level.objective.flagY, FLAG_CAPTURE_TIME), previous);
     assert.equal(victoryWaveVisibility(duration, duration), 0);
     motion.reset();
     game.reset(LEVEL_ONE);

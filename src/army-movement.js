@@ -1,6 +1,8 @@
 import { clamp } from "./config.js";
 
 export const JOIN_DURATION = 0.34;
+export const FLAG_CAPTURE_TIME = 0.95;
+export const FLAG_RAISE_TIME = 0.36;
 
 export function smoothStep(value) {
   const t = clamp(value, 0, 1);
@@ -26,13 +28,11 @@ export function mergeProgress(elapsed) {
   return smoothStep(elapsed / JOIN_DURATION);
 }
 
-// All displacements start at the recorded line. The lead reaches the
-// entrance first, while depth delays and reduces the supporting advance.
-export function victoryAdvance(front, elapsed, duration, depth = 0) {
-  const delay = 0.18 * depth;
-  const time = clamp((elapsed / duration - delay) / (0.70 + depth * 0.15), 0, 1);
-  const progress = 1 - (1 - time) ** 2.3;
-  return Math.max(0, front - 10) * (1 - depth * 0.25) * progress;
+// The first rank starts six pixels behind the frozen combat line.
+export function victoryAdvance(front, flagY, elapsed, depth = 0) {
+  const delay = 0.22 * depth;
+  const time = clamp((elapsed - delay) / (FLAG_CAPTURE_TIME + 0.18 * depth), 0, 1);
+  return (front + 6 - flagY) * (1 - depth * 0.14) * smoothStep(time ** 0.75);
 }
 
 export function victoryWaveVisibility(elapsed, duration) {

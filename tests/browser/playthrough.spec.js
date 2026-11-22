@@ -1,7 +1,23 @@
 import { writeFile } from "node:fs/promises";
 import { test, expect } from "@playwright/test";
+import { FLAG_CAPTURE_TIME, FLAG_RAISE_TIME } from "../../src/army-movement.js";
 import { LEVEL } from "../../src/config.js";
 import { advanceUntil, setup, snapshot } from "./harness.js";
+
+async function flagIsBlue(page) {
+  return page.locator("#game").evaluate((canvas, flagY) => {
+    const ctx = canvas.getContext("2d");
+    const scale = canvas.width / 420;
+    const { data } = ctx.getImageData(
+      213 * scale, (flagY - 30) * scale, 18 * scale, 12 * scale,
+    );
+    let blue = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i] === 50 && data[i + 1] === 143 && data[i + 2] === 232) blue++;
+    }
+    return blue > 40;
+  }, LEVEL.flagY);
+}
 
 function battlefield(s) {
   return {
@@ -127,6 +143,7 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
   expect(cleared.t).toBeLessThan(120);
   expect(cleared.front).toBeGreaterThan(30);
   await expect(page.locator("#result")).toBeHidden();
+  expect(await flagIsBlue(page)).toBe(false);
   await page.keyboard.press("ArrowLeft");
   await page.clock.runFor(850);
   s = await snapshot(page);
@@ -141,6 +158,10 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
   });
   await page.screenshot({ path: testInfo.outputPath("phase-3-cleared.png") });
 
+  await advanceUntil(page, (state) =>
+    state.victoryElapsed >= FLAG_CAPTURE_TIME + FLAG_RAISE_TIME, 1, 50);
+  expect(await flagIsBlue(page)).toBe(true);
+  await expect(page.locator("#result")).toBeHidden();
   s = await advanceUntil(page, (state) => state.mode === "end", 2, 100);
   await expect(page.locator("#resultTitle")).toHaveText("The castle stands!");
   expect(s.victoryElapsed).toBe(LEVEL.victoryDuration);
