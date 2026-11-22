@@ -128,6 +128,7 @@ test("entry files use the reserve budget and fade after a cutoff", () => {
   assert.equal(entryRepresentation(200, 2000, 0.65), 0);
 
   const battle = createState();
+  battle.mode = "playing";
   const motion = createMotion();
   battle.redTotal = 5;
   battle.blueTotal = 5;

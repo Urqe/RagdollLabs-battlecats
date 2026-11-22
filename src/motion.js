@@ -1,5 +1,5 @@
 import { arrowSpread, ARROW_AFTERMATH_LIFE, reactToArrows } from "./archer-render.js";
-import { createAirborneCats } from "./airborne-cats.js";
+import { createAirborneCats, MAX_AIRBORNE_CATS } from "./airborne-cats.js";
 import { clamp } from "./config.js";
 import { LEVEL_ONE } from "./levels.js";
 import { impactShape, launchImpactCats } from "./formation.js";
@@ -90,6 +90,7 @@ export function createMotion(onReversal = () => {}) {
   const impact = {};
   let battleFront;
   const archers = { launch: null, impact: null };
+  let supportLoss = 0;
   let lastRed = null;
   let exchangeIndex = 0;
   let lastBlue = null;
@@ -104,6 +105,7 @@ export function createMotion(onReversal = () => {}) {
     battleFront = undefined;
     lastRed = lastBlue = null;
     archers.launch = archers.impact = null;
+    supportLoss = 0;
     exchangeIndex = 0;
     for (const exchange of contact.exchanges) exchange.at = -Infinity;
     dynamics.reset();
@@ -161,6 +163,7 @@ export function createMotion(onReversal = () => {}) {
       if (battle.mode !== "playing") {
         archers.launch = archers.impact = null;
         impact.at = -Infinity;
+        falls.length = 0;
       }
       stepArmyPresentation(contact.redArmy, battle.redTotal, dt);
       if (battle.mode === "playing") {
@@ -186,13 +189,17 @@ export function createMotion(onReversal = () => {}) {
     if (battle) {
       const red = Math.ceil(battle.redTotal);
       const blue = Math.ceil(blueStrength);
-      if (lastRed > red && impact.at !== time)
-        showLoss(lastRed, red, battle.front, true, time);
-      if (lastBlue > blue)
-        showLoss(lastBlue, blue, battle.front, false, time);
+      if (battle.mode === "playing") {
+        const redWithoutSupportLoss = Math.ceil(battle.redTotal + supportLoss);
+        if (lastRed > redWithoutSupportLoss)
+          showLoss(lastRed, redWithoutSupportLoss, battle.front, true, time);
+        if (lastBlue > blue)
+          showLoss(lastBlue, blue, battle.front, false, time);
+      }
       lastRed = red;
       lastBlue = blue;
     }
+    supportLoss = 0;
     const normalized =
       velocity /
       (velocity > 0 ? level.combat.redAdvance : level.combat.blueAdvance);
@@ -217,7 +224,7 @@ export function createMotion(onReversal = () => {}) {
       if (tails[i].until <= clock) tails.splice(i, 1);
     }
     while (falls.length && falls[0].at + FALL_LIFE <= clock) falls.shift();
-    if (battle?.mode === "end") tails.length = falls.length = 0;
+    if (battle?.mode === "end") tails.length = 0;
   }
 
   function stepArchers(battle, time) {
@@ -278,7 +285,12 @@ export function createMotion(onReversal = () => {}) {
   }
 
   function meleeReactions(at, x, front, redLoss, blueLoss) {
+    // Once volleys begin, keep two slots available to support reactions.
+    let meleeRoom = archers.launch
+      ? MAX_AIRBORNE_CATS - 2 - airborne.active.reduce((count, cat) => count + Number(!cat.fromImpact), 0)
+      : Infinity;
     for (const exchange of contact.exchanges) {
+      if (meleeRoom <= 0) return;
       const { red } = exchange;
       const loss = red ? redLoss : blueLoss;
       const army = red ? contact.redArmy : contact.blueArmy;
@@ -286,7 +298,7 @@ export function createMotion(onReversal = () => {}) {
       // Literal formations already animate the disappearance of each lost slot.
       if (loss >= 1 && army.population > LITERAL_ARMY && at >= nextCasualty[Number(red)]) {
         const force = clamp(loss / 20, 0, 1);
-        airborne.launch({
+        const launched = airborne.launch({
           at, red, defeated: true, intensity: 3,
           x: 210 + clamp((red ? x : 420 - x) - 210, -26, 26) + (random() - 0.5) * 18,
           y: front + side * (8 + random() * 10),
@@ -294,10 +306,11 @@ export function createMotion(onReversal = () => {}) {
           lift: 142 + force * 42, spin: (random() < 0.5 ? -1 : 1) * 10,
           bounce: 0.24,
         });
+        if (launched) meleeRoom--;
         nextCasualty[Number(red)] = at + 1.15 + random() * 0.45;
       }
     }
-    if (at < nextKnockback || redLoss + blueLoss <= 0) return;
+    if (meleeRoom <= 0 || at < nextKnockback || redLoss + blueLoss <= 0) return;
     const red = hitIndex % 2 === 0;
     const army = red ? contact.redArmy : contact.blueArmy;
     const count = Math.min(12, Math.ceil(army.target.field ?? 0));
@@ -330,8 +343,12 @@ export function createMotion(onReversal = () => {}) {
 
   function receive(kind, time, value, front, redLoss, blueLoss) {
     if (kind === "archerLaunch") archers.launch = { ...value };
-    if (kind === "archerImpact") archers.impact = { ...value };
+    if (kind === "archerImpact") {
+      archers.impact = { ...value };
+      supportLoss += value.loss;
+    }
     if (kind === "artilleryImpact" && value?.loss > 0) {
+      supportLoss += value.loss;
       impactShape(impact, value);
       let impactSeed = Math.round(time * 1000) >>> 0;
       launchImpactCats(airborne, impact, battleFront ?? impact.y + 32, contact.redArmy, () => {

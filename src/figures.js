@@ -409,8 +409,10 @@ export function createFigures(ctx, ownerDocument) {
       const flight = flights?.[i];
       if (flight && coverage && alpha > 0 && clock >= flight.at) {
         // Substitute the living slot with its animated pose for this draw.
-        flight.x = x;
-        flight.y = within;
+        // Support reactions lift off at the strike and reunite with the moving rank.
+        const blend = flight.fromImpact ? smoothStep((clock - flight.at) / flight.flight) : 1;
+        flight.drawX = flight.x + (x - flight.x) * blend;
+        flight.drawY = flight.y + (within - flight.y) * blend;
         flight.size = size;
         flight.coverage = alpha;
         flight.visible = true;
@@ -561,8 +563,8 @@ export function createFigures(ctx, ownerDocument) {
       if (!flight.visible) continue;
       const baseSize = flight.size ?? clamp(4.35 + flight.y * 0.0027, 4.35, 6.12);
       const size = baseSize * (1 + clamp(flight.rise / 28, 0, 1) * 0.28);
-      const x = flight.x + flight.dx;
-      const y = flight.y + flight.dy;
+      const x = (flight.drawX ?? flight.x) + flight.dx;
+      const y = (flight.drawY ?? flight.y) + flight.dy;
       ctx.save();
       ctx.globalAlpha = flight.alpha * (flight.coverage ?? 1);
       if (flight.rise > 6) ellipse(ctx, x, y + flight.rise + 3, 3.5, 1.4, "#20262c55");

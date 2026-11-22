@@ -186,8 +186,10 @@ function updateHud() {
   el("redCount").textContent = Math.ceil(state.redTotal).toLocaleString(
     "en-US",
   );
-  for (const { slot, value } of barrierLabels)
-    value.textContent = barrierStatus(state, slot).label;
+  for (const { slot, value } of barrierLabels) {
+    const label = barrierStatus(state, slot).label;
+    if (value.textContent !== label) value.textContent = label;
+  }
 }
 
 function loop(now) {
