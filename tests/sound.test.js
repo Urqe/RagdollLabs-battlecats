@@ -108,3 +108,30 @@ test("combat repeats are throttled, and a ×999 chord uses a bounded voice budge
   context.currentTime = 1;
   assert.equal(sound.play("gate20"), true);
 });
+
+test("pausing suspends a victory cue and only abandoning it closes the context", async () => {
+  const first = audioContext();
+  first.suspend = async () => { first.state = "suspended"; };
+  first.close = async () => { first.state = "closed"; };
+  const second = audioContext();
+  const contexts = [first, second];
+  const sound = createSound({
+    makeContext: () => contexts.shift(),
+    getStorage: () => null,
+  });
+  await sound.setEnabled(true);
+  assert.equal(sound.play("victory"), true);
+  sound.suspend();
+  assert.equal(first.state, "suspended");
+  assert.equal(sound.play("victory"), false);
+  assert.equal(await sound.unlock(), true);
+  assert.equal(first.state, "running");
+  assert.equal(first.oscillators.length, 3);
+
+  sound.suspend();
+  sound.discard();
+  assert.equal(first.state, "closed");
+  assert.equal(await sound.unlock(), true);
+  assert.equal(second.state, "running");
+  assert.equal(second.oscillators.length, 0);
+});

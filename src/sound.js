@@ -103,6 +103,17 @@ export function createSound({
     }
   }
 
+  function suspend() {
+    if (context && context.state !== "closed")
+      void context.suspend().catch(() => {});
+  }
+
+  function discard() {
+    if (context && context.state !== "closed")
+      void context.close().catch(() => {});
+    context = master = undefined;
+  }
+
   function setEnabled(value) {
     enabled = value;
     try {
@@ -155,6 +166,8 @@ export function createSound({
       return enabled;
     },
     unlock,
+    suspend,
+    discard,
     setEnabled,
     play,
   };

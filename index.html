@@ -18,6 +18,10 @@
         <button id="battleLevels" class="secondary" type="button">
           Levels
         </button>
+        <button id="pauseBattle" class="secondary" type="button"
+          aria-label="Pause" aria-haspopup="dialog">
+          <span aria-hidden="true"></span>
+        </button>
       </nav>
       <div id="hud">
         <div class="stat">BLUE CATS<b id="blueCount">0</b></div>
@@ -75,6 +79,18 @@
             Main menu
           </button>
         </section>
+      </div>
+      <div id="pauseOverlay" class="overlay" role="dialog" aria-modal="true"
+        aria-labelledby="pauseTitle" aria-describedby="pauseText" hidden>
+        <div class="panel">
+          <h2 id="pauseTitle">GAME PAUSED</h2>
+          <p id="pauseText">Even the cats need a moment.</p>
+          <button id="resumeBattle" type="button">Resume</button>
+          <div class="pause-actions">
+            <button id="restartBattle" class="secondary" type="button">Restart</button>
+            <button id="pausedLevels" class="secondary" type="button">Levels</button>
+          </div>
+        </div>
       </div>
       <div id="result" class="overlay" hidden>
         <div class="panel">
