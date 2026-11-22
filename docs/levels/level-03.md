@@ -33,3 +33,37 @@ Does steady ranged support change the aim decision enough to deserve its own lev
 ## Revision history
 
 Initial Milestone 6 brief. Revisit after the [Purrapult playtests](../playtest-log.md).
+
+## Milestone 14A simulation foundation
+
+`ARCHER_SUPPORT` in `src/levels.js` is a provisional preset, not a playable
+level. A controlled level can supply it as `support`, with a matching barricade;
+existing projectile hits unlock it through the normal support lifecycle.
+`kind: "archers"` selects aggregate arrow resolution instead of Purrapult splash.
+
+Initial assumptions: six arrows × eight damage = 48 casualties per successful
+volley, 0.2 seconds of flight, then 0.6 seconds of reload (60 damage/second).
+The first launch waits one reload after unlock. Arrow count is clamped to 1–12.
+Use positive finite reload/flight values and an integer arrow count in level data.
+The preset's maximum damage rate is below even the starting red reinforcement
+rate (150/second); it cannot overcome continuing reinforcements by itself.
+These are conservative hypotheses for later playtesting, not final balance.
+
+Aim is fixed at launch, 24 units behind the front, within the real army's
+100-unit occupied band. Launch requires positive red population and a target
+within 520 vertical units of the crew (x/y define the future launch origin).
+At impact the aim must still be inside the current occupied band and range;
+otherwise the whole volley misses. There is no splash coverage calculation,
+individual target identity, or per-arrow physics. Damage is capped at remaining
+red population, and only the ordinary army simulation moves the frontline.
+No-target time does not bank volleys. Timing uses scheduled deadlines to avoid
+frame-rate drift during normal 30/60/120 Hz updates; large time jumps are not a
+combat replay facility. One volley can be in flight at a time.
+
+The existing `onEffect(type, time, payload)` callback emits `archerLaunch` with
+`x`, `y`, `originX`, `originY`, `arrows`, `launchedAt`, and `impactAt`. A renderer
+can interpolate a bounded volley using those timestamps without a per-frame
+flight event. `archerImpact` repeats those fields and adds `at` and actual `loss`,
+including zero-loss misses. Payloads are snapshots. Reset/level switch replaces
+support state; victory/defeat discards flight without a later impact event.
+Rendering and archer-specific sound remain for the next milestone.

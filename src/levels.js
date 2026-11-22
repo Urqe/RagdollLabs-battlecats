@@ -60,6 +60,23 @@ const leftWood = barricade("left-gate", 90, "×99 OPEN — AIM LEFT!");
 const rightWood = barricade("right-gate", 231, "×999 OPEN — AIM RIGHT!");
 const supportWood = barricade("artillery", 36, "PURRAPULT CREW READY!");
 
+// Provisional simulation preset; no playable Level 3 definition yet.
+export const ARCHER_SUPPORT = Object.freeze({
+  kind: "archers",
+  id: "archers",
+  barricadeId: "archers",
+  x: 361,
+  y: 555,
+  width: 76,
+  reload: 0.6,
+  flight: 0.2,
+  arrows: 6,
+  damagePerArrow: 8,
+  range: 520,
+  targetDepth: 24,
+  bandDepth: 100,
+});
+
 export const LEVEL_ONE = Object.freeze({
   id: "last-stand",
   number: 1,
