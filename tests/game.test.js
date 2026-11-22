@@ -1,10 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { LEVEL, workNeeded } from "../src/config.js";
-import { createGame } from "../src/game.js";
+import { createBattleClock, createGame } from "../src/game.js";
 import { updateProjectiles, fire } from "../src/projectiles.js";
 import { createMultipliers } from "../src/multipliers.js";
 import { updateArmy } from "../src/army.js";
+import { FLAG_CAPTURE_TIME } from "../src/army-movement.js";
+import { LEVEL_ONE, LEVEL_TWO, LEVEL_THREE } from "../src/levels.js";
 import { createRenderer } from "../src/render.js";
 const noop = () => {};
 function fixture() {
@@ -167,7 +169,7 @@ test("controlling the supply entrance cuts reinforcements while the remaining ho
   assert.ok(s.front > LEVEL.reinforcementCutoff);
 });
 
-test("victory freezes combat on elimination and shows the result after 1.5 seconds", () => {
+test("victory freezes combat on elimination and shows the result after the capture sequence", () => {
   const results = [];
   const game = createGame({ onEnd: (won) => results.push(won) });
   game.reset();
@@ -281,4 +283,100 @@ test("castle breach causes defeat and restart resumes play", () => {
   assert.deepEqual(results, [false]);
   game.reset();
   assert.equal(game.state.mode, "playing");
+});
+
+test("zero red with supply open can be followed by fresh red arrivals", () => {
+  const game = fixture();
+  const s = game.state;
+  s.front = LEVEL.reinforcementCutoff + 2;
+  s.redTotal = 0;
+  s.blueTotal = 3000;
+  game.update(1 / 60);
+  assert.equal(s.redTotal, 0);
+  assert.equal(s.redEntryOpen, true);
+  assert.equal(s.mode, "playing");
+  s.blueTotal = 1;
+  game.update(1 / 60);
+  assert.ok(s.redTotal > 0);
+  assert.equal(s.victoryElapsed, 0);
+});
+
+for (const [level, blue, killer] of [
+  [LEVEL_ONE, 1, "melee"],
+  [LEVEL_ONE, 500000, "melee"],
+  [LEVEL_TWO, 15, "artilleryImpact"],
+  [LEVEL_THREE, 15, "archerImpact"],
+]) {
+  test(`${killer} with ${blue} blue starts victory on the decisive tick at 30/60/120 Hz`, () => {
+    const runs = [30, 60, 120].map((hz) => {
+      const events = [];
+      const game = createGame({
+        level,
+        onEffect: (kind, time) => events.push([kind, time]),
+        onEnd: (won) => events.push(["result", won]),
+      });
+      const clock = createBattleClock(game.update);
+      game.reset();
+      const s = game.state;
+      s.redEntryOpen = false;
+      s.front = 98;
+      s.redTotal = killer === "melee" ? 0.001 : 5;
+      s.blueTotal = blue;
+      s.squads.push({ count: 20, y: s.front + LEVEL.arrivalOffset + 2, marchTime: 1 });
+      if (s.support) {
+        s.support.open = true;
+        s.support.shot = { x: 210, y: 96, impactAt: 1 / 60, arrows: 6 };
+      }
+
+      while (s.mode === "playing") {
+        clock.advance(1 / hz);
+        assert.ok(s.t <= 1 / 60);
+      }
+      assert.equal(s.mode, "victory");
+      assert.equal(s.redTotal, 0);
+      assert.equal(s.squads.length, 1);
+      assert.ok(s.blueTotal > 0);
+      assert.equal(s.support?.shot ?? null, null);
+      if (s.support) {
+        assert.equal(s.support.damage, 5);
+        assert.equal(s.support.impacts, 1);
+      }
+      const frozen = { front: s.front, time: s.t, blue: s.blueTotal, squads: structuredClone(s.squads) };
+      assert.deepEqual(events.map(([kind]) => kind), s.support ? [killer, "victory"] : ["victory"]);
+      for (let frame = 0; frame < Math.ceil((level.combat.victoryDuration + 0.1) * hz); frame++)
+        clock.advance(1 / hz);
+      assert.equal(s.mode, "end");
+      assert.equal(s.victoryElapsed, level.combat.victoryDuration);
+      assert.deepEqual({ front: s.front, time: s.t, blue: s.blueTotal, squads: s.squads }, frozen);
+      const tail = events.slice(-2);
+      assert.deepEqual(tail, [["flagCapture", s.t + FLAG_CAPTURE_TIME], ["result", true]]);
+      assert.equal(events.length, s.support ? 4 : 3);
+      return { frozen, events };
+    });
+    assert.deepEqual(runs[0], runs[1]);
+    assert.deepEqual(runs[1], runs[2]);
+  });
+}
+
+test("restarting or switching levels during the charge cancels its capture and result", () => {
+  const events = [];
+  const game = createGame({
+    onEffect: (kind) => events.push(kind),
+    onEnd: () => events.push("result"),
+  });
+  for (const nextLevel of [LEVEL_ONE, LEVEL_TWO]) {
+    game.reset();
+    game.state.redTotal = 0;
+    game.state.redEntryOpen = false;
+    game.update(1 / 60);
+    game.update(0.4);
+    assert.equal(game.state.mode, "victory");
+    game.reset(nextLevel);
+    assert.equal(game.state.victoryElapsed, 0);
+    assert.equal(game.state.mode, "playing");
+    game.update(1 / 60);
+    assert.equal(game.state.level, nextLevel);
+    assert.equal(game.state.redEntryOpen, true);
+  }
+  assert.deepEqual(events, ["victory", "victory"]);
 });

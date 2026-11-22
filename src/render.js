@@ -1,4 +1,4 @@
-import { smoothStep, victoryAdvance } from "./army-movement.js";
+import { FLAG_CAPTURE_TIME, FLAG_RAISE_TIME, smoothStep } from "./army-movement.js";
 import { H, TAU, W, clamp } from "./config.js";
 import {
   drawArtilleryShot,
@@ -345,34 +345,37 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     }
   }
 
-  function drawVictory(progress, front) {
-    const y = Math.max(30, front + 8);
-    ctx.save();
-    ctx.globalAlpha = clamp(progress * 2.6, 0, 1);
-    ctx.strokeStyle = "#37546a";
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(210, y + 7);
-    ctx.lineTo(210, y - 30);
-    ctx.stroke();
-    polygon(ctx, "#367fd3", [
-      211,
-      y - 31,
-      240,
-      y - 30,
-      233,
-      y - 21,
-      240,
-      y - 14,
-      211,
-      y - 15,
+  function drawCaptureFlag() {
+    const x = state.level.battlefield.width / 2;
+    const y = state.level.objective.flagY;
+    const age = state.victoryElapsed - FLAG_CAPTURE_TIME;
+    const raised = smoothStep(age / FLAG_RAISE_TIME);
+    const hoist = y - 8 - raised * 23;
+    const width = 8 + raised * 27;
+    const flutter = Math.sin((state.t + state.victoryElapsed) * 13) * raised * 2;
+
+    ctx.fillStyle = "#534f42";
+    ctx.fillRect(x - 4, y, 8, 3);
+    ctx.fillStyle = "#e6dfc6";
+    ctx.fillRect(x - 1.2, y - 32, 2.4, 34);
+    polygon(ctx, raised > 0 ? "#328fe8" : "#e6dfc6", [
+      x, hoist, x + width, hoist + flutter + 1,
+      x + width * 0.79, hoist + 6 + raised * 3,
+      x + width, hoist + 10 + raised * 6 + flutter,
+      x, hoist + 10 + raised * 6,
     ]);
-    ctx.globalAlpha *= 1 - progress * 0.6;
-    for (let i = 0; i < 14; i++) {
-      const x = 210 + Math.cos(i * 2.4) * progress * (24 + i * 5);
-      const markY = y + Math.sin(i * 2.4) * progress * 45 - (i % 4) * 5;
-      ctx.fillStyle = i % 2 ? "#fff1ac" : "#bdeaff";
-      ctx.fillRect(x, markY, 2.5, 4);
+
+    if (age < 0 || age >= 1.15) return;
+    const progress = age / 1.15;
+    ctx.save();
+    ctx.globalAlpha = 1 - progress;
+    for (let i = 0; i < 22; i++) {
+      const angle = i * 2.4;
+      const spread = smoothStep(progress) * (36 + (i % 7) * 9);
+      const markX = x + Math.cos(angle) * spread;
+      const markY = y - 10 + Math.sin(angle) * spread * 0.38 + progress ** 2 * 38;
+      ctx.fillStyle = i % 2 ? "#fff1ac" : "#82d7ff";
+      ctx.fillRect(markX, markY, 3, 5);
     }
     ctx.restore();
   }
@@ -483,12 +486,7 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     cannon();
     if (emplacement && !archerSupport && state.mode === "playing")
       drawArtilleryShot(ctx, state);
-    if (celebration > 0.54) {
-      const front = state.front - victoryAdvance(
-        state.front, state.victoryElapsed, state.level.combat.victoryDuration,
-      );
-      drawVictory(smoothStep((celebration - 0.54) / 0.46), front);
-    }
+    drawCaptureFlag();
   }
 
   return {

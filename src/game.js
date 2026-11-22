@@ -5,6 +5,7 @@ import { createMultipliers } from "./multipliers.js";
 import { fire, updateProjectiles } from "./projectiles.js";
 import { createDanger } from "./danger.js";
 import { updateArmy } from "./army.js";
+import { FLAG_CAPTURE_TIME } from "./army-movement.js";
 // Keep combat on the same timeline when the browser renders at different rates.
 export function createBattleClock(step) {
   const interval = 1 / 60;
@@ -61,10 +62,13 @@ export function createGame({
   }
   function update(dt) {
     if (state.mode === "victory") {
+      const previous = state.victoryElapsed;
       state.victoryElapsed = Math.min(
         state.level.combat.victoryDuration,
         state.victoryElapsed + dt,
       );
+      if (previous < FLAG_CAPTURE_TIME && state.victoryElapsed >= FLAG_CAPTURE_TIME)
+        onEffect?.("flagCapture", state.t + FLAG_CAPTURE_TIME);
       if (state.victoryElapsed === state.level.combat.victoryDuration) {
         state.mode = "end";
         onEnd(true);

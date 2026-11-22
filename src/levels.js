@@ -10,7 +10,7 @@ const battlefield = Object.freeze({
   marchSpeed: 104,
 });
 
-const objective = Object.freeze({ reinforcementCutoff: 100, castleFront: 690 });
+const objective = Object.freeze({ reinforcementCutoff: 100, castleFront: 690, flagY: 38 });
 const combat = Object.freeze({
   initialFront: 335,
   initialRed: 2225,
@@ -27,7 +27,7 @@ const combat = Object.freeze({
   blueAdvance: 13.7,
   reinforcementApproach: 3,
   combatEffectInterval: 0.12,
-  victoryDuration: 1.5,
+  victoryDuration: 2.4,
   minFront: 25,
   maxFront: 712,
   minMarchTime: 0.25,

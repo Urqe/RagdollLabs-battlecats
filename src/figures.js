@@ -4,7 +4,7 @@ import { waveProfile, waveRelease, waveY } from "./motion.js";
 import { breakthroughOffset, exchangeOffset, exchangeSeam, formationLag } from "./formation-dynamics.js";
 import { gapShift, gapStrength } from "./formation.js";
 import {
-  mergeProgress, receivingY, smoothStep, victoryAdvance, victoryWaveVisibility,
+  FLAG_CAPTURE_TIME, mergeProgress, receivingY, smoothStep, victoryAdvance, victoryWaveVisibility,
 } from "./army-movement.js";
 import { collapsePose, retirementOpacity, rowsAt, slotCoverage } from "./army-continuity.js";
 import {
@@ -302,24 +302,25 @@ export function createFigures(ctx, ownerDocument) {
     const presentation = red ? contact.redArmy : contact.blueArmy;
     const initialized = state.mode !== "end" && presentation?.population === total;
     const { field, reserve } = initialized ? presentation : armyScale(total, scale);
-    const fieldExtent = initialized ? presentation.fieldExtent : field;
-    const reserveExtent = initialized ? presentation.reserveExtent : reserve;
+    const celebrating = !red && (state.mode === "victory" || state.victoryElapsed > 0);
+    const fieldExtent = initialized && !celebrating ? presentation.fieldExtent : field;
+    const reserveExtent = initialized && !celebrating ? presentation.reserveExtent : reserve;
     const rows = initialized ? presentation.rows : rowsAt(field);
     const recoil = initialized ? presentation.recoil : 0;
-    const compression = initialized ? presentation.compression : 0;
+    const release = 1 - smoothStep(state.victoryElapsed / 0.38);
+    const compression = initialized ? presentation.compression * release : 0;
     const fallPose = initialized ? collapsePose(presentation.collapseAge) : 0;
     if (!fieldExtent && !reserveExtent) return;
     const side = red ? -1 : 1;
     const tip = front + side * 6;
     const end = red ? 3 : 702;
     const reach = Math.abs(end - tip);
-    const marching = !red && state.mode === "victory";
+    const marching = celebrating && state.victoryElapsed < FLAG_CAPTURE_TIME + 0.4;
     const pressure = red ? contact.pressure : -contact.pressure;
     const redPressure = (red ? total : opposing) * state.level.combat.redPressurePerCat;
     const balance = red ? encounterBalance(redPressure, opposing)
       : encounterBalance(total, redPressure);
     const formation = contact.formation;
-    const release = 1 - smoothStep(state.victoryElapsed / 0.58);
     const packed = (formation?.compression ?? 0) * release;
     const step = Math.min(
       (reach * 0.59) / Math.max(1, rows),
@@ -365,7 +366,9 @@ export function createFigures(ctx, ownerDocument) {
         const depth = Math.min(1, row / Math.max(6, rows));
         const travel = red ? 0 : advance(state, depth * 0.52);
         const lag = formationLag(formation, front, Math.min(0.74, row / 22)) * 0.72 * release;
-        baseline = tip + side * row * step + lag - travel;
+        const cheerTime = state.victoryElapsed - FLAG_CAPTURE_TIME - depth * 0.36;
+        const cheer = Math.sin(Math.PI * clamp(cheerTime / 0.55, 0, 1)) * 7;
+        baseline = tip + side * row * step + lag - travel - cheer;
         lane = laneHalfWidth(baseline) - 6;
         spacing = Math.min(12.5, lane / Math.max(2, Math.min(7, 2 + row)));
         anchor = red ? 0 : (contact.blueAnchor - 210) * clamp((baseline - 275) / 320, 0, 0.32);
@@ -399,7 +402,7 @@ export function createFigures(ctx, ownerDocument) {
         + spacingNoise[i] * Math.min(1.2, step * 0.2);
       const displaced = fallen ? y + side * fallPose * (3 + recoil * 7)
         : y + gapShift(x, y, gap, red ? gapAmount : 0, i);
-      const within = boundCatY(displaced, seam, red, engaged ? 6.8 : 1.9);
+      const within = boundCatY(displaced, seam, red, celebrating ? -3 : engaged ? 6.8 : 1.9);
       const size = clamp(4.35 + within * 0.0027, 4.35, 6.12);
       let alpha = fallen ? retirementOpacity(field, fieldExtent, i, fallPose) : coverage;
       if (!red && coverage && fieldJoins[i]) {
@@ -443,7 +446,7 @@ export function createFigures(ctx, ownerDocument) {
 
   function advance(state, depth) {
     return state.victoryElapsed
-      ? victoryAdvance(state.front, state.victoryElapsed, state.level.combat.victoryDuration, depth)
+      ? victoryAdvance(state.front, state.level.objective.flagY, state.victoryElapsed, depth)
       : 0;
   }
 
