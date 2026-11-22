@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meowmen · Archer visual fixture</title>
+<link rel="stylesheet" href="/styles.css">
+<div id="app">
+  <div id="hud" style="display:flex">
+    <div class="stat">ARCHER VISUAL FIXTURE <b>Meowmen</b></div>
+    <div class="stat" id="status">VOLLEYS <b>0</b></div>
+    <div class="stat" id="loss">ARCHER LOSSES <b>0</b></div>
+  </div>
+  <canvas id="game" aria-label="Meowmen archer battlefield"></canvas>
+</div>
+<script type="module">
+  import { createGame } from "/src/game.js";
+  import { ARCHER_SUPPORT, LEVEL_ONE, LEVEL_TWO } from "/src/levels.js";
+  import { createMotion } from "/src/motion.js";
+  import { createRenderer } from "/src/render.js";
+
+  const level = {
+    ...LEVEL_TWO,
+    id: "archer-visual-fixture",
+    combat: { ...LEVEL_TWO.combat, initialRed: 480, redReinforcements: 0, redReinforcementGrowth: 0 },
+    support: ARCHER_SUPPORT,
+    barricades: [...LEVEL_TWO.barricades.slice(0, 2), {
+      id: "archers", hits: 1, hitY: 545, message: "MEOWMEN READY",
+    }],
+  };
+  const motion = createMotion();
+  const game = createGame({ level, random: () => 0.5, onEffect: motion.receive });
+  const { state } = game;
+  const canvas = document.getElementById("game");
+  const renderer = createRenderer(state, canvas, motion);
+  const status = document.querySelector("#status b");
+  const loss = document.querySelector("#loss b");
+
+  function reset(nextLevel = level) {
+    motion.reset();
+    game.reset(nextLevel);
+    if (nextLevel === level) state.gunX = ARCHER_SUPPORT.x;
+    renderer.resize();
+  }
+
+  function tick(dt) {
+    game.update(dt);
+    motion.step(state.t + state.victoryElapsed, 0, state.blueTotal, state.redEntryOpen, state.level, state);
+    renderer.draw();
+    status.textContent = state.support?.shotsFired ?? 0;
+    loss.textContent = state.support?.damage ?? 0;
+  }
+
+  reset();
+  window.archerFixture = { canvas, motion, state, tick, reset, levelOne: LEVEL_ONE };
+</script>
+</html>

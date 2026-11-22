@@ -6,6 +6,7 @@ import {
   drawImpactAir,
   drawImpactGround,
 } from "./artillery-render.js";
+import { drawArcherCrew, drawArcherVolley } from "./archer-render.js";
 import { barrierIndex, barrierStatus } from "./barricades.js";
 import { createFigures } from "./figures.js";
 import { drawTerrain, laneHalfWidth, polygon } from "./terrain.js";
@@ -437,9 +438,14 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     figures.blueArmy(state, surge, motion.contact, motion.tails, motion.impact);
     for (const gate of state.gates) drawGate(gate, gate.style);
     const emplacement = state.level.support;
+    const archerSupport = emplacement?.kind === "archers";
     if (emplacement) {
-      drawCatapult(ctx, state, figures);
-      label("PURRAPULT", emplacement.x, emplacement.y - 45, 10, "#ffe7ce");
+      if (archerSupport) {
+        drawArcherCrew(ctx, state, figures, motion.archers.launch, clock);
+      } else {
+        drawCatapult(ctx, state, figures);
+        label("PURRAPULT", emplacement.x, emplacement.y - 45, 10, "#ffe7ce");
+      }
       if (!state.support.open) {
         drawBarricade(
           emplacement,
@@ -466,8 +472,12 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     }
     cannon();
     if (emplacement && state.mode === "playing") {
-      drawArtilleryShot(ctx, state);
-      drawImpactAir(ctx, figures, motion.impact, impactAge);
+      if (archerSupport) {
+        drawArcherVolley(ctx, clock, motion.archers.launch, motion.archers.impact);
+      } else {
+        drawArtilleryShot(ctx, state);
+        drawImpactAir(ctx, figures, motion.impact, impactAge);
+      }
     }
     if (celebration > 0.54) {
       const front = state.front - victoryAdvance(

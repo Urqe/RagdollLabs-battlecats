@@ -81,6 +81,7 @@ export function createMotion(onReversal = () => {}) {
     blueArmy: createArmyPresentation(),
   };
   const impact = {};
+  const archers = { launch: null, impact: null };
   let lastRed = null;
   let exchangeIndex = 0;
   let lastBlue = null;
@@ -89,6 +90,7 @@ export function createMotion(onReversal = () => {}) {
     clock = direction = nextDirection = directionTime = 0;
     tails.length = falls.length = 0;
     lastRed = lastBlue = null;
+    archers.launch = archers.impact = null;
     exchangeIndex = 0;
     for (const exchange of contact.exchanges) exchange.at = -Infinity;
     dynamics.reset();
@@ -138,6 +140,7 @@ export function createMotion(onReversal = () => {}) {
     stepArmyPresentation(contact.blueArmy, blueStrength, dt, true);
     allocateJoins(oldField, oldReserve);
     if (battle) {
+      if (battle.mode !== "playing") archers.launch = archers.impact = null;
       stepArmyPresentation(contact.redArmy, battle.redTotal, dt);
       if (battle.mode === "playing") {
         const engaged = blueStrength > 0 && battle.redTotal > 0;
@@ -234,6 +237,8 @@ export function createMotion(onReversal = () => {}) {
   }
 
   function receive(kind, time, value, front, redLoss, blueLoss) {
+    if (kind === "archerLaunch") archers.launch = value;
+    if (kind === "archerImpact") archers.impact = value;
     if (kind === "artilleryImpact" && value?.loss > 0) impactShape(impact, value);
     if (kind === "multiply") pulses[indexOf(value)] = time;
     if (kind === "arrival") {
@@ -271,5 +276,5 @@ export function createMotion(onReversal = () => {}) {
   }
 
   reset();
-  return { contact, impact, tails, falls, pulses, arrivals, receive, reset, step };
+  return { contact, impact, archers, tails, falls, pulses, arrivals, receive, reset, step };
 }
