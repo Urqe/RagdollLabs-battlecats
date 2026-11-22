@@ -432,9 +432,9 @@ export function createRenderer(state, canvas, motion = createMotion()) {
           : 0;
       gateGround(gate, gate.style);
     }
-    if (state.mode !== "end") drawImpactGround(ctx, motion.impact, impactAge);
+    if (state.mode === "playing") drawImpactGround(ctx, motion.impact, impactAge);
     figures.redArmy(state, motion.contact, motion.impact);
-    figures.blueArmy(state, surge, motion.contact, motion.tails);
+    figures.blueArmy(state, surge, motion.contact, motion.tails, motion.impact);
     for (const gate of state.gates) drawGate(gate, gate.style);
     const emplacement = state.level.support;
     if (emplacement) {
@@ -450,7 +450,7 @@ export function createRenderer(state, canvas, motion = createMotion()) {
       }
     }
     supplyFlags();
-    if (state.mode !== "end") figures.fallen(motion.falls);
+    if (state.mode === "playing") figures.fallen(motion.falls);
     if (state.mode === "playing") {
       contactEffects();
       for (const gate of state.gates) brokenWood(gate);
@@ -465,7 +465,7 @@ export function createRenderer(state, canvas, motion = createMotion()) {
       ctx.globalAlpha = 1;
     }
     cannon();
-    if (emplacement && state.mode !== "end") {
+    if (emplacement && state.mode === "playing") {
       drawArtilleryShot(ctx, state);
       drawImpactAir(ctx, figures, motion.impact, impactAge);
     }

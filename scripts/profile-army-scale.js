@@ -1,7 +1,8 @@
-import { chromium } from "@playwright/test";
+import { chromium, webkit } from "@playwright/test";
 
 const url = process.argv[2] ?? "http://127.0.0.1:4173";
-const browser = await chromium.launch();
+const engine = process.argv[3] === "webkit" ? webkit : chromium;
+const browser = await engine.launch();
 try {
   const page = await browser.newPage({
     viewport: { width: 390, height: 844 }, isMobile: true, deviceScaleFactor: 2,
@@ -27,7 +28,7 @@ try {
       state.gunX = aim(state);
       const previous = state.front;
       game.update(1 / 60);
-      motion.step(state.t, (state.front - previous) * 60,
+      motion.step(state.t + state.victoryElapsed, (state.front - previous) * 60,
         state.blueTotal, state.redEntryOpen, state.level, state);
     }
     function stats(values) {
@@ -37,7 +38,7 @@ try {
         p95: +values[Math.floor(values.length * 0.95)].toFixed(2),
       };
     }
-    async function sample(step) {
+    async function sample(step, duration = 6000) {
       const counts = { red: Math.ceil(state.redTotal), blue: Math.ceil(state.blueTotal) };
       const submissions = [];
       const intervals = [];
@@ -52,7 +53,7 @@ try {
           step();
           renderer.draw();
           submissions.push(performance.now() - before);
-          if (now - start < 6000) requestAnimationFrame(frame);
+          if (now - start < duration) requestAnimationFrame(frame);
           else done();
         }
         requestAnimationFrame(frame);
@@ -67,6 +68,9 @@ try {
         break;
     }
     const gatesAndArtillery = await sample(advance);
+    while (state.mode === "playing" && state.t < 180) advance();
+    if (state.mode !== "victory") throw new Error("The profile strategy did not reach victory");
+    const victory = await sample(advance, 1400);
     game.reset();
     motion.reset();
     Object.assign(state, { redTotal: 500000, blueTotal: 200000, redEntryRate: 2200 });
@@ -80,9 +84,9 @@ try {
       state.blueTotal = populations[Math.min(5, Math.floor(age))];
       motion.step(state.t, 0, state.blueTotal, true, state.level, state);
     });
-    return { gatesAndArtillery, enormousFixture, rapidDecline };
+    return { gatesAndArtillery, victory, enormousFixture, rapidDecline };
   });
-  console.log(JSON.stringify(results, null, 2));
+  console.log(JSON.stringify({ browser: browser.browserType().name(), version: browser.version(), ...results }, null, 2));
 } finally {
   await browser.close();
 }

@@ -58,6 +58,7 @@ function end(won) {
   el("battleNav").hidden = true;
   el("hud").style.display = "none";
   el("banner").style.opacity = 0;
+  el("danger").hidden = true;
   el("resultEmoji").textContent = won ? "🏆" : "😿";
   el("resultTitle").textContent = won
     ? "The castle stands!"
@@ -69,6 +70,7 @@ function end(won) {
 }
 
 function stopFrame() {
+  el("danger").hidden = true;
   if (frame !== null) cancelAnimationFrame(frame);
   frame = null;
 }
@@ -161,6 +163,18 @@ function chooseLevel() {
 
 function updateHud() {
   if (state.t > state.bannerUntil) el("banner").style.opacity = 0;
+  const warning = el("danger");
+  const { danger } = state;
+  const showing = state.mode === "playing" && state.t < danger.flashUntil;
+  warning.hidden = !showing;
+  if (showing) {
+    const target = danger.gate ? ` · AIM AT ×${danger.gate}` : "";
+    const message = (danger.level === "critical"
+      ? "REINFORCEMENTS NEEDED!"
+      : "FRONTLINE UNDER PRESSURE!") + target;
+    warning.dataset.level = danger.level;
+    if (warning.textContent !== message) warning.textContent = message;
+  }
   const marching = state.squads.reduce((n, q) => n + q.count, 0);
   el("blueCount").textContent = Math.floor(
     state.blueTotal + marching,

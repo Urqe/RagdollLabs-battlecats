@@ -225,6 +225,8 @@ for (const hz of [30, 60, 120]) {
       ...LEVEL_TWO,
       support: { ...LEVEL_TWO.support, damage: 0 },
     };
-    assert.equal(simulatePurrapult("artillery-first", hz, inert).won, false);
+    const withoutDamage = simulatePurrapult("artillery-first", hz, inert);
+    assert.ok(artillery.furthest < withoutDamage.furthest - 100);
+    assert.ok(!withoutDamage.won || artillery.seconds < withoutDamage.seconds - 15);
   });
 }

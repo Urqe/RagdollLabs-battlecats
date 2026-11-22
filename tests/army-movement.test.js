@@ -31,6 +31,7 @@ function renderProbe() {
       return draws.slice();
     },
     red(state, motion) {
+      figures.setClock(state.t + state.victoryElapsed);
       draws.length = 0;
       figures.redArmy(state, motion.contact, motion.impact);
       return draws.slice();
@@ -178,8 +179,11 @@ for (const level of [LEVEL_ONE, LEVEL_TWO]) {
       game.update(1 / 60);
       step(motion, state, state.t + state.victoryElapsed);
       const ahead = victoryAdvance(stand.front, state.victoryElapsed, duration);
-      assert.ok(ahead >= previous && ahead - previous < 2.1);
-      if (i === 1) assert.ok(ahead > 0);
+      assert.ok(ahead >= previous && ahead - previous < 3.2);
+      if (i === 1) {
+        assert.ok(ahead > level.combat.blueAdvance / 60 * 5);
+        assert.equal(victoryAdvance(stand.front, state.victoryElapsed, duration, 1), 0);
+      }
       if (i === 45) {
         assert.ok(ahead > level.combat.blueAdvance * 0.75);
         assert.ok(victoryAdvance(stand.front, state.victoryElapsed, duration, 1) < ahead);
@@ -271,4 +275,29 @@ test("artillery and casualties preserve continuous slot geometry and opposing si
   assert.deepEqual([...motion.contact.formation.anchors], [399, 399, 399]);
   assert.equal(motion.contact.formation.compression, 0);
   assert.equal(motion.impact.at, -Infinity);
+});
+
+test("opposing field sprites respect the shared lane seam during an exchange", () => {
+  const game = createGame();
+  game.reset();
+  const s = game.state;
+  Object.assign(s, { blueTotal: 75, redTotal: 75, front: 280 });
+  const motion = createMotion();
+  const probe = renderProbe();
+  step(motion, s, 0);
+  motion.receive("clash", 0.1, 210, s.front, 8, 0);
+  const opening = motion.contact.exchanges[0];
+  s.t = 0.32;
+  step(motion, s, s.t);
+  const red = probe.red(s, motion);
+  const blue = probe.blue(s, motion);
+  const nearestBlue = blue.reduce((nearest, cat) => cat.y < nearest.y ? cat : nearest);
+  assert.ok(nearestBlue.y < s.front + 5);
+  assert.ok(Math.abs(nearestBlue.x - opening.x) < 18);
+  for (const b of blue) {
+    for (const r of red) {
+      if (Math.abs(b.x - r.x) < 5) assert.ok(b.y - r.y > 9);
+    }
+  }
+  assert.equal(s.front, 280);
 });

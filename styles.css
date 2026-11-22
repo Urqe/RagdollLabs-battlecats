@@ -270,3 +270,26 @@ button:active {
     max-height: calc(100dvh - 24px);
   }
 }
+
+#danger {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 94%;
+  padding: 6px 9px;
+  border: 1px solid #e5b05a;
+  border-radius: 5px;
+  background: #29201af0;
+  color: #ffe0a0;
+  font-size: clamp(10px, 3vw, 13px);
+  font-weight: 900;
+  text-align: center;
+  pointer-events: none;
+}
+#danger[data-level="critical"] {
+  border-color: #ff927f;
+  background: #5b2922f5;
+  color: #fff3e9;
+}

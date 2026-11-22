@@ -3,6 +3,7 @@ import { updateArtillery } from "./artillery.js";
 import { LEVEL_ONE } from "./levels.js";
 import { createMultipliers } from "./multipliers.js";
 import { fire, updateProjectiles } from "./projectiles.js";
+import { createDanger } from "./danger.js";
 import { updateArmy } from "./army.js";
 export function createGame({
   level = LEVEL_ONE,
@@ -15,6 +16,7 @@ export function createGame({
   const rand = (a, b) => a + random() * (b - a);
   function end(won) {
     state.mode = won ? "victory" : "end";
+    state.danger = createDanger();
     if (state.support) state.support.shot = null;
     if (won) onEffect?.("victory", state.t);
     else onEnd(false);
@@ -66,6 +68,10 @@ export function createGame({
       state.barricadeFlashes[i] = Math.max(0, state.barricadeFlashes[i] - dt);
     updateProjectiles(state, dt, multiply, sprinkle, notify, onEffect);
     updateArtillery(state, onEffect);
+    if (!state.redEntryOpen && state.redTotal === 0) {
+      end(true);
+      return;
+    }
     updateArmy(state, dt, sprinkle, end, notify, onEffect);
     for (let j = state.burst.length - 1; j >= 0; j--) {
       const b = state.burst[j];

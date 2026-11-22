@@ -50,3 +50,19 @@ The following 390 × 844 captures document the Milestone 7 baseline. Chromium us
 - [Artillery-assisted counterattack](evidence/purrapult/07-counterattack.png) · [Victory](evidence/purrapult/08-victory.png) · [Saved completion marker](evidence/purrapult/09-completion-marker.png)
 
 The target band is an aggregate approximation. A headless Chromium stress sample at 390 × 844 and 2× device pixel ratio exercised ×999 and artillery together. On the shared runner, the updated build submitted draws in about 3 ms median and 13 ms at the 95th percentile, while requestAnimationFrame intervals were irregular. The test used simulated battle setup and concurrent load, so it does not establish a sustained frame rate. Terrain, the sprite atlas, release limits, and bounded impact geometry keep the rendering cost independent of total logical troop count. Human impressions and physical iPhone performance remain unmeasured.
+
+## Milestone 13
+
+Level 2 shares the engagement cap and increased red territorial weight.
+Purrapult unlock, reload, flight, targeting and damage stay on their existing
+simulation path. Actual impacts still create a visual gap. Nearby blue ranks
+can press into the gap while the observed frontline is advancing.
+
+At 60 Hz, artillery-first improves from 93.02 s and about 52,123 artillery
+casualties to 91.70 s and about 50,860 artillery casualties. Gates-first
+improves from 105.48 s to 100.05 s. Gates-only still wins and artillery-only
+still loses. With the retuned melee model, the artillery-first policy can also
+win with inert artillery. In that comparison, the live weapon wins about
+27 s sooner and keeps the retreat over 238 battlefield units farther from the
+castle. The live weapon resolves fewer impacts before victory than the inert run.
+[Strategy results](evidence/combat-readability/strategy-results.json)
