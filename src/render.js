@@ -423,6 +423,8 @@ export function createRenderer(state, canvas, motion = createMotion()) {
       state.victoryElapsed / state.level.combat.victoryDuration;
     const surge = 1 - (1 - celebration) ** 2;
     const clock = state.t + state.victoryElapsed;
+    const emplacement = state.level.support;
+    const archerSupport = emplacement?.kind === "archers";
     const impactAge = clock - motion.impact.at;
     figures.setClock(clock);
     for (const gate of state.gates) {
@@ -440,10 +442,10 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     if (flights) {
       drawImpactBurst(ctx, motion.impact, impactAge);
       figures.airborne(flights.active);
+      if (archerSupport)
+        drawArcherVolley(ctx, clock, motion.archers.launch, motion.archers.impact);
     }
     for (const gate of state.gates) drawGate(gate, gate.style);
-    const emplacement = state.level.support;
-    const archerSupport = emplacement?.kind === "archers";
     if (emplacement) {
       if (archerSupport) {
         drawArcherCrew(ctx, state, figures, motion.archers.launch, clock);
@@ -477,13 +479,8 @@ export function createRenderer(state, canvas, motion = createMotion()) {
       ctx.globalAlpha = 1;
     }
     cannon();
-    if (emplacement && state.mode === "playing") {
-      if (archerSupport) {
-        drawArcherVolley(ctx, clock, motion.archers.launch, motion.archers.impact);
-      } else {
-        drawArtilleryShot(ctx, state);
-      }
-    }
+    if (emplacement && !archerSupport && state.mode === "playing")
+      drawArtilleryShot(ctx, state);
     if (celebration > 0.54) {
       const front = state.front - victoryAdvance(
         state.front, state.victoryElapsed, state.level.combat.victoryDuration,
