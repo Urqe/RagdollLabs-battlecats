@@ -4,6 +4,7 @@ import { archerPose, arrowPosition, arrowSpread, drawArcherVolley, MAX_VISUAL_AR
 import { activateArtillery, updateArtillery } from "../src/artillery.js";
 import { ARCHER_SUPPORT, LEVEL_ONE, LEVEL_TWO } from "../src/levels.js";
 import { MAX_AIRBORNE_CATS } from "../src/airborne-cats.js";
+import { createFigures } from "../src/figures.js";
 import { laneHalfWidth } from "../src/terrain.js";
 import { createMotion } from "../src/motion.js";
 import { resetState } from "../src/state.js";
@@ -139,7 +140,7 @@ test("misses retain their impact without adding casualties, and a later hit uses
 });
 
 test("victory, defeat and reset discard presentation data", () => {
-  for (const mode of ["victory", "end", "reset", "switch"]) {
+  for (const mode of ["victory", "end", "menu", "reset", "switch"]) {
     const { state, motion, tick } = fixture();
     tick(0.6);
     tick(0.8);
@@ -156,6 +157,66 @@ test("victory, defeat and reset discard presentation data", () => {
     }
     assert.deepEqual(motion.archers, { launch: null, impact: null });
     assert.equal(motion.airborne.active.length, 0);
+  }
+});
+
+test("sustained melee leaves room for a volley and its survivors start at the strikes", () => {
+  const { state, motion, tick } = fixture();
+  state.blueTotal = state.redTotal = 220;
+  tick(0.6);
+  const { airborne } = motion;
+  for (let slot = 0; slot < MAX_AIRBORNE_CATS - 2; slot++) {
+    airborne.launch({ at: 0.6, x: 210, y: state.front, vx: 0, vy: 0,
+      lift: 90, spin: 8, slot });
+  }
+  motion.receive("clash", 0.75, 210, state.front, 15, 15);
+  assert.equal(airborne.active.length, MAX_AIRBORNE_CATS - 2);
+  state.front += 18;
+  tick(0.8);
+  assert.equal(airborne.active.length, MAX_AIRBORNE_CATS);
+  const survivor = airborne.active.find(cat => cat.red && !cat.defeated);
+  assert.ok(survivor);
+  const strike = [survivor.x, survivor.y];
+  const translations = [];
+  const ctx = new Proxy({ globalAlpha: 1, translate: (x, y) => translations.push([x, y]) },
+    { get: (target, key) => target[key] ?? (() => {}) });
+  const atlasContext = new Proxy({}, { get: () => () => {} });
+  const figures = createFigures(ctx, { createElement: () => ({ getContext: () => atlasContext }) });
+  figures.setClock(state.t);
+  figures.redArmy(state, motion.contact, motion.impact, airborne.slots[1]);
+  figures.airborne([survivor]);
+  assert.deepEqual(translations.at(-1), strike);
+});
+
+test("a saturated volley prioritizes one living reaction without displacing an airborne survivor", () => {
+  const { state, motion, tick } = fixture();
+  tick(0.6);
+  const { airborne } = motion;
+  const flight = { at: 0.6, x: 210, y: state.front, vx: 0, vy: 0, lift: 90, spin: 8 };
+  for (let slot = 0; slot < MAX_AIRBORNE_CATS - 2; slot++)
+    airborne.launch({ ...flight, slot });
+  const meleeSurvivors = airborne.active.slice();
+  for (let i = 0; i < 2; i++)
+    airborne.launch({ ...flight, defeated: true, intensity: 3 });
+
+  tick(0.8);
+  assert.equal(airborne.active.length, MAX_AIRBORNE_CATS);
+  assert.ok(meleeSurvivors.every(cat => airborne.active.includes(cat)));
+  assert.equal(airborne.active.filter(cat => cat.fromImpact && !cat.defeated).length, 1);
+});
+
+test("support losses get one presentation while same-frame melee losses still show", () => {
+  for (const meleeLoss of [0, 1]) {
+    const { state, motion, tick } = fixture();
+    state.redTotal = 60;
+    tick(0.6);
+    state.redTotal -= meleeLoss;
+    tick(0.82);
+    assert.equal(motion.archers.impact.loss, 48);
+    assert.equal(motion.falls.length, meleeLoss);
+    state.mode = "victory";
+    tick(0.83);
+    assert.equal(motion.falls.length, 0);
   }
 });
 

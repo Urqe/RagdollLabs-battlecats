@@ -41,7 +41,7 @@ export function launchImpactCats(airborne, hit, front, army, random) {
     if (!defeated) {
       let best = (hit.radiusX * 0.7) ** 2;
       for (let j = 0; j < field; j++) {
-        if (airborne.slots[1][j]?.at >= hit.at) continue;
+        if (airborne.slots[1][j]) continue;
         const row = fieldRow(j);
         const rowY = tip - row * step;
         const spacing = Math.min(12.5, (laneHalfWidth(rowY) - 6) / Math.min(7, 2 + row));
@@ -54,7 +54,7 @@ export function launchImpactCats(airborne, hit, front, army, random) {
       if (slot === undefined) continue;
     }
     airborne.launch({
-      at: hit.at + (i % 3) * 0.026, x, y, red: true, slot, defeated,
+      at: hit.at + (i % 3) * 0.026, x, y, red: true, slot, defeated, fromImpact: true,
       vx: side * (36 + power * 106),
       vy: depth * (18 + power * 37),
       lift: 77 + power * 166,

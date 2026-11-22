@@ -17,7 +17,7 @@ export function createAirborneCats(limit = MAX_AIRBORNE_CATS) {
   }
 
   function launch({ at, x, y, vx, vy, lift, spin, red = false, slot, defeated = false,
-    height = 0, bounce = 0, intensity = 1, priority = false }) {
+    height = 0, bounce = 0, intensity = 1, priority = false, fromImpact = false }) {
     const team = slots[Number(red)];
     const occupant = slot === undefined ? null : team[slot];
     if (occupant && (!priority || occupant.priority)) return false;
@@ -35,7 +35,7 @@ export function createAirborneCats(limit = MAX_AIRBORNE_CATS) {
     const flight = Math.min(MAX_FLIGHT, flightTime(height, lift));
     const rebound = Math.min(MAX_FLIGHT - flight, 2 * Math.max(0, GRAVITY * flight - lift) * bounce / GRAVITY);
     const cat = { at, x, y, vx, vy, lift, spin, red, slot, defeated, height,
-      flight, rebound, intensity, priority, visible: slot === undefined };
+      flight, rebound, intensity, priority, fromImpact, visible: slot === undefined };
     if (slot !== undefined) team[slot] = cat;
     active.push(cat);
     return true;

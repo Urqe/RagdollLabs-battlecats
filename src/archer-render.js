@@ -69,7 +69,7 @@ export function reactToArrows(airborne, impact, remaining) {
     used.add(slot);
     const outward = x < impact.x ? -1 : 1;
     airborne.launch({
-      at: impact.at, x, y, red: true, defeated: true,
+      at: impact.at, x, y, red: true, defeated: true, fromImpact: true,
       vx: outward * (dramatic ? 111 : 62), vy: -24,
       lift: dramatic ? 202 : 133, spin: outward * (dramatic ? 13 : 10),
       bounce: 0.18, intensity: 4,
@@ -81,10 +81,12 @@ export function reactToArrows(airborne, impact, remaining) {
     used.add(slot);
     const sideways = x < impact.x ? -1 : 1;
     const launched = airborne.launch({
-      at: impact.at + count * 0.027, x, y, slot, red: true,
+      at: impact.at + count * 0.027, x, y, slot, red: true, fromImpact: true,
       vx: sideways * (45 + count * 23), vy: -16 - count * 6,
       lift: 78 + count * 26, spin: sideways * (6 + count * 2),
-      bounce: count === 1 ? 0.15 : 0, intensity: 2,
+      bounce: count === 1 ? 0.15 : 0,
+      // Give each volley one chance to reclaim a weaker melee casualty.
+      intensity: count === 0 ? 3.5 : 2,
     });
     if (launched && ++count === 3) break;
   }
