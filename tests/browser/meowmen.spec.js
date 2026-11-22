@@ -15,7 +15,7 @@ test("Meowmen selection, defeat, replay, victory and progress on mobile", async 
 
   await aim(LEVEL_THREE.support.x);
   const flight = await advanceUntil(page, (s) => s.support.shot !== null, 5, 100);
-  await expect(page.locator("#banner")).toHaveText("MEOWMEN ARCHERS READY!");
+  await expect(page.locator("#banner")).toHaveText("MEOWMEN BARRAGE STARTED!");
   expect(flight.support.shot).toMatchObject({
     originX: LEVEL_THREE.support.x, originY: LEVEL_THREE.support.y, arrows: 6,
   });
@@ -40,7 +40,7 @@ test("Meowmen selection, defeat, replay, victory and progress on mobile", async 
   }
   expect(state.mode).toBe("victory");
   expect(state.finalActivated).toBe(true);
-  expect(state.support.impacts).toBeGreaterThan(50);
+  expect(state.support.impacts).toBeGreaterThan(200);
   await advanceUntil(page, (s) => s.mode === "end", 3);
   await expect(page.locator("#resultTitle")).toHaveText("The castle stands!");
   await page.locator("#resultLevels").click();

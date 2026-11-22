@@ -1,4 +1,4 @@
-import { createGame } from "./game.js";
+import { createBattleClock, createGame } from "./game.js";
 import { createRenderer } from "./render.js";
 import { createMotion } from "./motion.js";
 import { createSound } from "./sound.js";
@@ -112,6 +112,7 @@ function start(level = playableLevel(progress.selected)) {
   el("hud").style.display = "flex";
   buildBarrierHud();
   updateHud();
+  battleClock.reset();
   last = performance.now();
   frame = requestAnimationFrame(loop);
 }
@@ -192,11 +193,7 @@ function updateHud() {
   }
 }
 
-function loop(now) {
-  frame = null;
-  const dt = Math.min((now - last) / 1000, 0.045);
-  last = now;
-  const wasPlaying = state.mode === "playing";
+const battleClock = createBattleClock((dt) => {
   const previousFront = state.front;
   const previousTime = state.t;
   const previousPresentation = state.t + state.victoryElapsed;
@@ -212,6 +209,13 @@ function loop(now) {
       state,
     );
   }
+});
+
+function loop(now) {
+  frame = null;
+  const wasPlaying = state.mode === "playing";
+  battleClock.advance((now - last) / 1000);
+  last = now;
   if (wasPlaying && state.mode === "victory") {
     el("banner").style.opacity = 0;
     el("battleNav").hidden = true;

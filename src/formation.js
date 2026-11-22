@@ -12,14 +12,14 @@ export function impactShape(impact, hit) {
   impact.at = hit.at;
   impact.loss = hit.loss;
   impact.force = force;
-  impact.radiusX = 14 + force * 42;
-  impact.radiusY = 6 + force * 29;
+  impact.radiusX = 16 + force * (hit.opening ? 66 : 56);
+  impact.radiusY = 8 + force * (hit.opening ? 45 : 38);
 }
 
 // Find a living field slot near each outward ray. The renderer supplies its
 // exact current pose, so launching a survivor replaces its sprite until recovery.
 export function launchImpactCats(airborne, hit, front, army, random) {
-  const count = 2 + Math.round(hit.force * 6);
+  const count = 2 + Math.round(hit.force * 8);
   const defeatedCount = Math.min(Math.floor(hit.loss), 1 + Math.floor(hit.force * 3));
   const remaining = Math.max(0, (army.population ?? hit.loss) - hit.loss);
   const { field } = armyScale(remaining);
@@ -30,7 +30,7 @@ export function launchImpactCats(airborne, hit, front, army, random) {
     const angle = phase + i * TAU / count;
     const side = Math.cos(angle);
     const depth = Math.sin(angle);
-    const reach = 0.33 + random() * 0.42;
+    const reach = 0.38 + random() * 0.48;
     const y = clamp(hit.y + depth * hit.radiusY * reach, 8, Math.max(8, front - 7));
     const half = laneHalfWidth(y) - 7;
     const x = clamp(hit.x + side * hit.radiusX * reach, 210 - half, 210 + half);
@@ -55,9 +55,9 @@ export function launchImpactCats(airborne, hit, front, army, random) {
     }
     airborne.launch({
       at: hit.at + (i % 3) * 0.026, x, y, red: true, slot, defeated, fromImpact: true,
-      vx: side * (36 + power * 106),
-      vy: depth * (18 + power * 37),
-      lift: 77 + power * 166,
+      vx: side * (40 + power * 145),
+      vy: depth * (23 + power * 57),
+      lift: 85 + power * 205,
       spin: (side < 0 ? -1 : 1) * (6 + power * 11),
       bounce: i % 4 === 2 ? 0.12 : 0.28,
       priority: hit.force > 0.45,

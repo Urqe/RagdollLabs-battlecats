@@ -5,6 +5,22 @@ import { createMultipliers } from "./multipliers.js";
 import { fire, updateProjectiles } from "./projectiles.js";
 import { createDanger } from "./danger.js";
 import { updateArmy } from "./army.js";
+// Keep combat on the same timeline when the browser renders at different rates.
+export function createBattleClock(step) {
+  const interval = 1 / 60;
+  let elapsed = 0;
+  return {
+    reset() { elapsed = 0; },
+    advance(dt) {
+      elapsed += Math.min(Math.max(0, dt), 0.05);
+      while (elapsed + 1e-9 >= interval) {
+        elapsed -= interval;
+        step(interval);
+      }
+    },
+  };
+}
+
 export function createGame({
   level = LEVEL_ONE,
   notify = () => {},

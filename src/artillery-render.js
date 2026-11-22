@@ -162,6 +162,17 @@ export function drawImpactBurst(ctx, hit, age) {
     4 + spread * radiusY * 1.33, 0, 0, TAU);
   ctx.stroke();
 
+  ctx.globalAlpha = (1 - progress) ** 2 * (0.44 + force * 0.42);
+  ctx.strokeStyle = "#ffc279";
+  ctx.lineWidth = 1 + force * 3;
+  ctx.beginPath();
+  ctx.ellipse(x, y, 4 + spread * radiusX, 3 + spread * radiusY, 0, 0, TAU);
+  ctx.stroke();
+  if (age < 0.14) {
+    ctx.globalAlpha = (1 - age / 0.14) * force * 0.55;
+    ellipse(ctx, x, y, 13 + spread * 38, 7 + spread * 21, "#fff1c6");
+  }
+
   const particles = 4 + Math.round(force * 8);
   ctx.globalAlpha = (1 - progress) ** 2 * (0.52 + force * 0.36);
   for (let i = 0; i < particles; i++) {

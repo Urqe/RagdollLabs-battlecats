@@ -58,9 +58,9 @@ function barricade(id, hits, message, hitY = 545) {
 
 const leftWood = barricade("left-gate", 90, "×99 OPEN — AIM LEFT!");
 const rightWood = barricade("right-gate", 231, "×999 OPEN — AIM RIGHT!");
-const supportWood = barricade("artillery", 36, "PURRAPULT CREW READY!");
+const supportWood = barricade("artillery", 36, "PURRAPULT UNLEASHED!");
 
-// Baseline volley configuration for the archer support system.
+// Shared archer support defaults.
 export const ARCHER_SUPPORT = Object.freeze({
   kind: "archers",
   id: "archers",
@@ -116,16 +116,17 @@ export const LEVEL_TWO = Object.freeze({
     width: 76,
     reload: 2.4,
     flight: 0.94,
-    damage: 2250,
-    radius: 37,
+    openingDelay: 0.15,
+    damage: 3400,
+    radius: 54,
     targetDepth: 32,
     bandDepth: 100,
-    pocketFloor: 350,
-    pocketShare: 0.2,
+    pocketFloor: 550,
+    pocketShare: 0.23,
   }),
 });
 
-const archerWood = barricade("archers", 30, "MEOWMEN ARCHERS READY!");
+const archerWood = barricade("archers", 30, "MEOWMEN BARRAGE STARTED!");
 const meowmenStrongWood = barricade("left-gate", 72, "×99 OPEN — AIM LEFT!");
 const meowmenFinalWood = barricade("right-gate", 225, "×999 OPEN — AIM RIGHT!");
 
@@ -147,9 +148,10 @@ export const LEVEL_THREE = Object.freeze({
     ...ARCHER_SUPPORT,
     x: 54,
     width: 72,
-    damagePerArrow: 60,
-    reload: 0.52,
-    flight: 0.28,
+    damagePerArrow: 25,
+    openingDelay: 0.1,
+    reload: 0.05,
+    flight: 0.19,
     range: 460,
   }),
 });

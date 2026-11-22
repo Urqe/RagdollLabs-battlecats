@@ -89,7 +89,7 @@ export function createMotion(onReversal = () => {}) {
   };
   const impact = {};
   let battleFront;
-  const archers = { launch: null, impact: null };
+  const archers = { launch: null, impact: null, aftermath: [] };
   let supportLoss = 0;
   let lastRed = null;
   let exchangeIndex = 0;
@@ -105,6 +105,7 @@ export function createMotion(onReversal = () => {}) {
     battleFront = undefined;
     lastRed = lastBlue = null;
     archers.launch = archers.impact = null;
+    archers.aftermath.length = 0;
     supportLoss = 0;
     exchangeIndex = 0;
     for (const exchange of contact.exchanges) exchange.at = -Infinity;
@@ -162,6 +163,7 @@ export function createMotion(onReversal = () => {}) {
       battleFront = battle.front;
       if (battle.mode !== "playing") {
         archers.launch = archers.impact = null;
+        archers.aftermath.length = 0;
         impact.at = -Infinity;
         falls.length = 0;
       }
@@ -228,7 +230,9 @@ export function createMotion(onReversal = () => {}) {
   }
 
   function stepArchers(battle, time) {
-    const { launch, impact: hit } = archers;
+    const { launch, impact: hit, aftermath } = archers;
+    while (aftermath.length && time - aftermath[0].at >= ARROW_AFTERMATH_LIFE)
+      aftermath.shift();
     if (launch && !launch.points)
       launch.points = arrowSpread(launch, battle.front, battle.redTotal);
     if (!hit) return;
@@ -344,6 +348,11 @@ export function createMotion(onReversal = () => {}) {
   function receive(kind, time, value, front, redLoss, blueLoss) {
     if (kind === "archerLaunch") archers.launch = { ...value };
     if (kind === "archerImpact") {
+      const { impact: previous, aftermath } = archers;
+      if (previous?.points && time - previous.at < ARROW_AFTERMATH_LIFE) {
+        if (aftermath.length === 2) aftermath.shift();
+        aftermath.push(previous);
+      }
       archers.impact = { ...value };
       supportLoss += value.loss;
     }
