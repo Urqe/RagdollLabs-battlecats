@@ -1,3 +1,4 @@
+import { arrowSpread, ARROW_AFTERMATH_LIFE, reactToArrows } from "./archer-render.js";
 import { createAirborneCats } from "./airborne-cats.js";
 import { clamp } from "./config.js";
 import { LEVEL_ONE } from "./levels.js";
@@ -147,7 +148,10 @@ export function createMotion(onReversal = () => {}) {
     const dt = Math.max(0, time - clock);
     clock = time;
     if (battle && battle.mode !== "playing") airborne.reset();
-    else airborne.step(time);
+    else {
+      if (battle) stepArchers(battle, time);
+      airborne.step(time);
+    }
     const oldField = contact.blueArmy.population === null ? 0 : contact.blueArmy.target.field;
     const oldReserve = contact.blueArmy.population === null ? 0 : contact.blueArmy.target.reserve;
     stepArmyPresentation(contact.blueArmy, blueStrength, dt, true);
@@ -214,6 +218,22 @@ export function createMotion(onReversal = () => {}) {
     }
     while (falls.length && falls[0].at + FALL_LIFE <= clock) falls.shift();
     if (battle?.mode === "end") tails.length = falls.length = 0;
+  }
+
+  function stepArchers(battle, time) {
+    const { launch, impact: hit } = archers;
+    if (launch && !launch.points)
+      launch.points = arrowSpread(launch, battle.front, battle.redTotal);
+    if (!hit) return;
+    if (time - hit.at >= ARROW_AFTERMATH_LIFE) {
+      archers.impact = null;
+      return;
+    }
+    if (hit.points) return;
+    hit.points = hit.loss > 0
+      ? arrowSpread(hit, battle.front, battle.redTotal + hit.loss)
+      : launch?.points ?? arrowSpread(hit, battle.front, 0);
+    reactToArrows(airborne, hit, battle.redTotal);
   }
 
   function allocateJoins(field, reserve) {
@@ -310,8 +330,8 @@ export function createMotion(onReversal = () => {}) {
   }
 
   function receive(kind, time, value, front, redLoss, blueLoss) {
-    if (kind === "archerLaunch") archers.launch = value;
-    if (kind === "archerImpact") archers.impact = value;
+    if (kind === "archerLaunch") archers.launch = { ...value };
+    if (kind === "archerImpact") archers.impact = { ...value };
     if (kind === "artilleryImpact" && value?.loss > 0) {
       impactShape(impact, value);
       let impactSeed = Math.round(time * 1000) >>> 0;

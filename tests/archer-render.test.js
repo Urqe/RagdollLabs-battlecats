@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { archerPose, arrowPosition, drawArcherVolley } from "../src/archer-render.js";
+import { archerPose, arrowPosition, arrowSpread, drawArcherVolley, MAX_VISUAL_ARROWS } from "../src/archer-render.js";
 import { activateArtillery, updateArtillery } from "../src/artillery.js";
-import { ARCHER_SUPPORT, LEVEL_TWO } from "../src/levels.js";
+import { ARCHER_SUPPORT, LEVEL_ONE, LEVEL_TWO } from "../src/levels.js";
+import { MAX_AIRBORNE_CATS } from "../src/airborne-cats.js";
+import { laneHalfWidth } from "../src/terrain.js";
 import { createMotion } from "../src/motion.js";
 import { resetState } from "../src/state.js";
 
@@ -28,33 +30,46 @@ test("crew draws toward the deadline and releases and recovers on the scheduled 
   assert.deepEqual(archerPose(0, readyAt, null), { draw: 0, release: 0 });
   assert.ok(archerPose(readyAt - 0.08, readyAt, null).draw > 0.5);
   tick(readyAt);
-  const { launch } = motion.archers;
+  const { points, ...launch } = motion.archers.launch;
   assert.deepEqual(launch, state.support.shot);
   assert.deepEqual(archerPose(readyAt, readyAt, launch), { draw: 0, release: 1 });
+  assert.equal(archerPose(readyAt, readyAt, launch, 5).release, 0);
+  assert.ok(archerPose(readyAt + 0.12, readyAt, launch, 5).release > 0.9);
   assert.deepEqual(archerPose(readyAt + 0.2, readyAt, launch), { draw: 0, release: 0 });
 });
 
-test("the fan interpolates between real event coordinates with a bounded number of arrows", () => {
-  const { motion, tick } = fixture();
+test("a bounded spread selects reproducible occupied lanes and ranks", () => {
+  const { state, motion, tick } = fixture();
   tick(0.6);
   const { launch } = motion.archers;
-  for (const fan of [-27.5, 0, 27.5]) {
-    const start = arrowPosition(launch, launch.launchedAt, fan);
-    const end = arrowPosition(launch, launch.impactAt, fan);
-    assert.deepEqual([start.x, start.y], [launch.originX, launch.originY]);
-    assert.deepEqual([end.x, end.y], [launch.x, launch.y]);
+  const { points } = launch;
+  assert.deepEqual(points, arrowSpread(launch, state.front, state.redTotal));
+  assert.equal(arrowSpread({ ...launch, arrows: 99 }, state.front, state.redTotal).length,
+    MAX_VISUAL_ARROWS);
+  assert.notDeepEqual(points, arrowSpread({ ...launch, launchedAt: 1.4 }, state.front, state.redTotal));
+  assert.equal(new Set(points.map(({ slot }) => slot)).size, 12);
+  assert.ok(Math.max(...points.map(p => p.x)) - Math.min(...points.map(p => p.x)) > 50);
+  assert.ok(new Set(points.map(p => p.y)).size >= 3);
+  for (const { x, y } of points) {
+    assert.ok(Math.abs(x - launch.x) <= laneHalfWidth(y));
+    assert.ok(y < state.front && Math.abs(y - launch.y) <= 45);
   }
-  const middle = (launch.launchedAt + launch.impactAt) / 2;
-  assert.ok(arrowPosition(launch, middle, -27.5).x < arrowPosition(launch, middle, 27.5).x);
+  assert.ok(arrowSpread(launch, state.front, 1).every(p => p.slot === 0));
 
+  assert.ok(arrowPosition(launch, launch.launchedAt, 0));
+  assert.equal(arrowPosition(launch, launch.launchedAt, 5), null);
+  for (let i = 0; i < points.length; i++) {
+    const { x, y } = arrowPosition(launch, launch.impactAt, i);
+    assert.deepEqual([x, y], [points[i].x, points[i].y]);
+  }
   const positions = [];
-  const context = new Proxy({ translate: (...point) => positions.push(point) }, {
+  const ctx = new Proxy({ translate: (...point) => positions.push(point) }, {
     get: (target, key) => target[key] ?? (() => {}),
   });
-  drawArcherVolley(context, middle, { ...launch, arrows: 12 }, null);
-  assert.equal(positions.length, 6);
+  drawArcherVolley(ctx, launch.impactAt - 0.01, launch, null);
+  assert.equal(positions.length, MAX_VISUAL_ARROWS);
   positions.length = 0;
-  drawArcherVolley(context, launch.impactAt, launch, null);
+  drawArcherVolley(ctx, launch.impactAt, launch, null);
   assert.equal(positions.length, 0);
 });
 
@@ -68,12 +83,8 @@ test("misses retain their impact without adding casualties, and a later hit uses
   assert.equal(motion.archers.impact.loss, 0);
   assert.equal(state.redTotal, red);
   assert.equal(motion.falls.length, 0);
-  const tips = [];
-  const context = new Proxy({ translate: (...point) => tips.push(point) }, {
-    get: (target, key) => target[key] ?? (() => {}),
-  });
-  drawArcherVolley(context, 0.81, motion.archers.launch, motion.archers.impact);
-  assert.deepEqual(tips, Array.from({ length: 6 }, () => [motion.archers.impact.x, motion.archers.impact.y]));
+  assert.equal(motion.airborne.active.length, 0);
+  assert.deepEqual(motion.archers.impact.points, motion.archers.launch.points);
 
   state.front = front;
   tick(1.4);
@@ -81,21 +92,59 @@ test("misses retain their impact without adding casualties, and a later hit uses
   tick(1.6);
   assert.equal(motion.archers.impact.loss, 48);
   assert.equal(state.redTotal, red - 48);
+  const { impact } = motion.archers;
+  assert.equal(motion.airborne.active.length, 4);
+  assert.equal(motion.airborne.active.filter(cat => cat.defeated).length, 1);
+  assert.equal(new Set(motion.airborne.active.map(cat => cat.x + "," + cat.y)).size, 4);
+  const tips = [], puffs = [];
+  const ctx = new Proxy({
+    translate: (...point) => tips.push(point),
+    ellipse: (...args) => puffs.push(args.slice(0, 2)),
+  }, { get: (target, key) => target[key] ?? (() => {}) });
+  drawArcherVolley(ctx, 1.65, motion.archers.launch, impact);
+  assert.equal(new Set(tips.map(String)).size, 3);
+  assert.equal(new Set(puffs.map(String)).size, 12);
 });
 
 test("victory, defeat and reset discard presentation data", () => {
-  for (const mode of ["victory", "end", "reset"]) {
+  for (const mode of ["victory", "end", "reset", "switch"]) {
     const { state, motion, tick } = fixture();
     tick(0.6);
     tick(0.8);
-    tick(1.4);
     assert.ok(motion.archers.launch);
     assert.ok(motion.archers.impact);
-    if (mode === "reset") motion.reset();
+    assert.ok(motion.airborne.active.length);
+    if (mode === "reset" || mode === "switch") {
+      motion.reset();
+      if (mode === "switch") resetState(state, LEVEL_ONE);
+    }
     else {
       state.mode = mode;
-      tick(1.45);
+      tick(0.82);
     }
     assert.deepEqual(motion.archers, { launch: null, impact: null });
+    assert.equal(motion.airborne.active.length, 0);
   }
+});
+
+test("repeated and fractional impacts respect the shared budget and expire", () => {
+  const { state, motion, tick } = fixture();
+  for (let i = 0; i < 80; i++) {
+    const time = i * 0.8 + 0.6;
+    state.redTotal = 500;
+    tick(time);
+    tick(time + 0.2);
+    assert.ok(motion.airborne.active.length <= MAX_AIRBORNE_CATS);
+    assert.ok(motion.airborne.active.some(cat => cat.at >= time));
+  }
+
+  const hit = motion.archers.impact;
+  motion.reset();
+  motion.receive("archerImpact", hit.at, { ...state.support.impact, loss: 0.5 });
+  motion.step(hit.at, 0, 0, true, level, state);
+  assert.ok(motion.airborne.active.length);
+  assert.ok(motion.airborne.active.every(cat => !cat.defeated));
+  motion.step(hit.at + 2, 0, 0, true, level, state);
+  assert.equal(motion.archers.impact, null);
+  assert.equal(motion.airborne.active.length, 0);
 });
