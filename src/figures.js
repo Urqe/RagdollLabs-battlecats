@@ -605,9 +605,6 @@ export function createFigures(ctx, ownerDocument) {
     crew(x, y, pose) {
       cat(x, y, BLUE, 6, pose);
     },
-    scattered(x, y, size, pose) {
-      cat(x, y, AIR_RED, size, pose);
-    },
     projectile(shot) {
       cat(shot.x, shot.y, PROJECTILE, 6.0, shot.x * 0.75);
     },

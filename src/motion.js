@@ -1,7 +1,7 @@
 import { createAirborneCats } from "./airborne-cats.js";
 import { clamp } from "./config.js";
 import { LEVEL_ONE } from "./levels.js";
-import { impactShape } from "./formation.js";
+import { impactShape, launchImpactCats } from "./formation.js";
 import { createFormationDynamics, EXCHANGE_DURATION } from "./formation-dynamics.js";
 import { fieldColumn, LITERAL_ARMY } from "./army-visual.js";
 import {
@@ -87,6 +87,7 @@ export function createMotion(onReversal = () => {}) {
     blueArmy: createArmyPresentation(),
   };
   const impact = {};
+  let battleFront;
   const archers = { launch: null, impact: null };
   let lastRed = null;
   let exchangeIndex = 0;
@@ -99,6 +100,7 @@ export function createMotion(onReversal = () => {}) {
     nextCasualty.fill(0);
     nextKnockback = hitIndex = 0;
     seed = 1729;
+    battleFront = undefined;
     lastRed = lastBlue = null;
     archers.launch = archers.impact = null;
     exchangeIndex = 0;
@@ -114,7 +116,6 @@ export function createMotion(onReversal = () => {}) {
       force: 0,
       radiusX: 0,
       radiusY: 0,
-      airborne: 0,
     });
     pulses.fill(-Infinity);
     arrivals.fill(-Infinity);
@@ -152,7 +153,11 @@ export function createMotion(onReversal = () => {}) {
     stepArmyPresentation(contact.blueArmy, blueStrength, dt, true);
     allocateJoins(oldField, oldReserve);
     if (battle) {
-      if (battle.mode !== "playing") archers.launch = archers.impact = null;
+      battleFront = battle.front;
+      if (battle.mode !== "playing") {
+        archers.launch = archers.impact = null;
+        impact.at = -Infinity;
+      }
       stepArmyPresentation(contact.redArmy, battle.redTotal, dt);
       if (battle.mode === "playing") {
         const engaged = blueStrength > 0 && battle.redTotal > 0;
@@ -307,7 +312,14 @@ export function createMotion(onReversal = () => {}) {
   function receive(kind, time, value, front, redLoss, blueLoss) {
     if (kind === "archerLaunch") archers.launch = value;
     if (kind === "archerImpact") archers.impact = value;
-    if (kind === "artilleryImpact" && value?.loss > 0) impactShape(impact, value);
+    if (kind === "artilleryImpact" && value?.loss > 0) {
+      impactShape(impact, value);
+      let impactSeed = Math.round(time * 1000) >>> 0;
+      launchImpactCats(airborne, impact, battleFront ?? impact.y + 32, contact.redArmy, () => {
+        impactSeed = (Math.imul(1664525, impactSeed) + 1013904223) >>> 0;
+        return impactSeed / 2 ** 32;
+      });
+    }
     if (kind === "multiply") pulses[indexOf(value)] = time;
     if (kind === "arrival") {
       arrivals[indexOf(value.mult)] = time;

@@ -1,7 +1,10 @@
 import { TAU, clamp } from "./config.js";
 import { polygon } from "./terrain.js";
 
-const CAT_FLIGHT = 0.77;
+const DEBRIS_DIRECTIONS = Array.from({ length: 12 }, (_, i) => {
+  const angle = i * TAU / 12;
+  return [Math.cos(angle), Math.sin(angle)];
+});
 
 function ellipse(ctx, x, y, rx, ry, color) {
   ctx.beginPath();
@@ -142,59 +145,41 @@ export function drawImpactGround(ctx, hit, age) {
   ctx.save();
   ctx.globalAlpha = (1 - spread) * (0.36 + force * 0.34);
   ellipse(ctx, x, y, 9 + spread * hit.radiusX, 5 + spread * hit.radiusY, "#4c3131");
-  ctx.strokeStyle = "#ffe3c2";
-  ctx.lineWidth = 2.2 - spread;
-  ctx.beginPath();
-  ctx.ellipse(
-    x, y, 8 + spread * (26 + force * 38), 4 + spread * (15 + force * 16),
-    0, 0, TAU,
-  );
-  ctx.stroke();
   ctx.restore();
 }
 
-export function drawImpactAir(ctx, figures, hit, age) {
-  if (age < 0 || age >= CAT_FLIGHT + 0.1) return;
-  const ring = Math.min(1, age / 0.49);
-  if (ring < 1) {
-    ctx.save();
-    ctx.globalAlpha = (1 - ring) * 0.88;
-    for (let i = 0; i < 8; i++) {
-      const angle = i * TAU / 8;
-      const x = hit.x + Math.cos(angle) * (8 + ring * hit.radiusX);
-      const y = hit.y + Math.sin(angle) * (5 + ring * hit.radiusY)
-        - Math.sin(ring * Math.PI) * (6 + i % 3 * 3);
-      ellipse(
-        ctx, x, y, 2.3 + ring * 5, 1.6 + ring * 3,
-        i % 3 ? "#e5bf9d" : "#ffe7c8",
-      );
-    }
-    ctx.restore();
-  }
-  if (age < 0.16) {
-    ctx.save();
-    ctx.globalAlpha = 1 - age / 0.16;
-    yarn(ctx, hit.x, hit.y - age * 23, 11 + age * 28, age * 16);
-    ctx.restore();
-  }
+export function drawImpactBurst(ctx, hit, age) {
+  if (!(age >= 0 && age < 0.52)) return;
+  const progress = age / 0.52;
+  const spread = 1 - (1 - progress) ** 2;
+  const { x, y, force, radiusX, radiusY } = hit;
+  ctx.save();
+  ctx.globalAlpha = (1 - progress) ** 2 * (0.48 + force * 0.48);
+  ctx.strokeStyle = "#ffe7af";
+  ctx.lineWidth = 1 + (1 - progress) * (1 + force * 3.5);
+  ctx.beginPath();
+  ctx.ellipse(x, y, 7 + spread * radiusX * 1.55,
+    4 + spread * radiusY * 1.33, 0, 0, TAU);
+  ctx.stroke();
 
-  for (let i = 0; i < hit.airborne; i++) {
-    const progress = (age - (i % 4) * 0.019) / (CAT_FLIGHT - (i % 3) * 0.07);
-    if (progress < 0 || progress >= 1) continue;
-    const turn = i * 2.39996;
-    const travel = 9 + progress * (32 + (i % 5) * 8) * (0.5 + hit.force * 0.5);
-    const x = hit.x + Math.cos(turn) * travel;
-    const ground = hit.y + (0.21 + Math.sin(turn) * 0.49) * travel;
-    const lift = 4 * progress * (1 - progress) * (34 + (i % 4) * 10);
-    const alpha = Math.min(1, (1 - progress) * 3.7);
-    ctx.save();
-    ctx.globalAlpha = alpha * 0.27;
-    ellipse(ctx, x, ground + 2, 4.4 - lift * 0.031, 1.8, "#302536");
-    ctx.translate(x, ground - lift);
-    ctx.rotate(progress * (i % 2 ? -1 : 1) * (4.8 + i % 4));
-    ctx.globalAlpha = alpha;
-    const size = clamp(5.4 + ground * 0.0044 + lift * 0.02, 5.2, 8.1);
-    figures.scattered(0, 0, size, i);
-    ctx.restore();
+  const particles = 4 + Math.round(force * 8);
+  ctx.globalAlpha = (1 - progress) ** 2 * (0.52 + force * 0.36);
+  for (let i = 0; i < particles; i++) {
+    const [dx, dy] = DEBRIS_DIRECTIONS[i];
+    const reach = 0.75 + (i % 4) * 0.17;
+    const px = x + dx * (5 + spread * radiusX * reach);
+    const py = y + dy * (3 + spread * radiusY * reach)
+      - Math.sin(progress * Math.PI) * (5 + i % 3 * 6) * (0.5 + force * 0.5);
+    const puff = (2.5 + spread * 6) * (0.45 + force * 0.55);
+    ellipse(ctx, px, py, puff, puff * 0.63, i % 3 ? "#d8af87" : "#fff0c8");
+    if (i % 3 === 0) {
+      ctx.fillStyle = "#9f7154";
+      ctx.fillRect(px + dx * 5, py - 3, 2 + force * 3, 2);
+    }
   }
+  if (age < 0.17) {
+    ctx.globalAlpha = 1 - age / 0.17;
+    yarn(ctx, x, y - age * (18 + force * 14), 11 + age * 29, age * 20);
+  }
+  ctx.restore();
 }

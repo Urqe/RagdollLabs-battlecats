@@ -4,6 +4,8 @@ import { createAirborneCats, MAX_AIRBORNE_CATS } from "../src/airborne-cats.js";
 import { createGame } from "../src/game.js";
 import { LEVELS } from "../src/levels.js";
 import { createMotion } from "../src/motion.js";
+import { meowmenAim } from "./helpers/meowmen.js";
+import { purrapultAim } from "./helpers/purrapult.js";
 import { createAim } from "./helpers/strategies.js";
 
 const launch = { at: 0, x: 195, y: 320, vx: -35, vy: 21, lift: 115, spin: -9, red: false };
@@ -39,7 +41,6 @@ test("melee reactions obey the event's casualty side and clear at battle boundar
   const { state } = createGame();
   Object.assign(state, { mode: "playing", redTotal: 200, blueTotal: 220 });
   stepMotion(motion, state);
-  motion.receive("artilleryImpact", 0.1, { loss: 20 });
   motion.receive("clash", 0.2, 230, state.front, 0, 0);
   assert.deepEqual(motion.airborne.active, []);
   motion.receive("clash", 0.4, 230, state.front, 0, 8);
@@ -63,7 +64,7 @@ test("melee reactions obey the event's casualty side and clear at battle boundar
 });
 
 for (const hz of [30, 60, 120]) {
-  test(`each level preserves the complete battle state with melee visuals at ${hz} Hz`, () => {
+  test(`each level preserves the complete battle state with combat visuals at ${hz} Hz`, () => {
     for (const level of LEVELS.filter(level => level.status === "implemented")) {
       const motion = createMotion();
       const baseline = createGame({ level, random: () => 0.5 });
@@ -76,11 +77,13 @@ for (const hz of [30, 60, 120]) {
           motion.receive(...event);
         },
       });
-      const aim = createAim("C");
+      const aim = level.number === 2 ? purrapultAim("artillery-first", level)
+        : level.number === 3 ? meowmenAim("balanced") : createAim("C");
       baseline.reset();
       animated.reset();
       stepMotion(motion, animated.state);
       let frames = 0;
+      let purrapult = false;
       while (baseline.state.mode !== "end" && baseline.state.t < 240) {
         const x = aim(baseline.state);
         baseline.state.gunX = animated.state.gunX = x;
@@ -92,9 +95,14 @@ for (const hz of [30, 60, 120]) {
         for (const cat of motion.airborne.active) {
           knockback ||= !cat.defeated;
           casualty ||= cat.defeated;
+          purrapult ||= cat.priority;
         }
       }
       if (level.number === 1) assert.ok(knockback && casualty);
+      if (level.number === 2) {
+        assert.ok(purrapult);
+        assert.ok(animated.state.support.impacts > 1);
+      }
       assert.deepEqual(animated.state, baseline.state);
       assert.equal(animated.state.mode, "end");
       assert.deepEqual(motion.airborne.active, []);
