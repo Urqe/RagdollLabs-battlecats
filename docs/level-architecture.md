@@ -41,3 +41,48 @@ simulation and event flow. Keep unit quantity relevant to engagement
 capacity and endurance, even with higher quality per cat. Gates should
 remain the source of reinforcements. No class attributes are needed in
 the two current levels.
+
+## Milestone 17A · Headless dual-front simulation
+
+[The dual-front coordinator](../src/dual-front.js) takes exactly two crossing
+definitions keyed by `left` and `right`. Each specifies `combat`, `objective`,
+`marchSpeed`, and optionally `initialBlue` (default zero). These inputs use
+the existing combat and objective fields, with independent starting populations,
+reinforcement rates, growth and caps, march distances, cutoff points, and breach
+thresholds. Each crossing owns aggregate blue and red populations, a frontline,
+pending blue squads, red supply, and breach status. Balance and map geometry
+remain open for [Level 4](levels/level-04.md).
+
+The coordinator and the existing game share the [60 Hz clock](../src/battle-clock.js)
+and [lane calculations](../src/lane-combat.js). The coordinator advances left
+then right once per tick with a common timestamp. Each lane resolves marching
+arrivals in launch order, continuous red arrivals, casualties, territorial
+movement, and supply and breach checks. Enemy supply stays closed once cut.
+After both lanes finish, either breach causes defeat. Victory requires both
+supply routes closed and both red populations at zero. Either result freezes
+the authoritative battle immediately.
+
+`launchVolley(laneId, { multiplier, hits })` is the boundary for future cannon
+targeting. It represents a resolved volley through an open gate. Each landed
+kitten contributes the gate multiplier, and one to three landed kittens
+(default three) form one marching squad for the chosen crossing. Aiming code
+calls this once per resolved volley. It supplies the crossing and gate result
+without relying on screen coordinates in the simulation. Call commands at
+matching simulation boundaries for deterministic replays.
+
+An optional `onEvent(event)` observer receives records with `type`, `laneId`
+and simulation `time` in seconds. Blue `launch` and `arrival` records share a
+squad ID, count, multiplier and hit count. Red `arrival` records report the
+aggregate count admitted that tick. `casualties` and `clash` carry losses
+and the contact position. `frontline` carries previous and current positions
+so consumers can detect reversals. `supplyCutoff` and `breach` identify the
+crossing and position. Launch events are immediate, and tick events publish
+after both lanes and the outcome are updated. Observers can batch the tick
+events for presentation.
+
+`reset()` rebuilds both lanes and clears the clock remainder, squad IDs, and
+outcome. `reset(definitions)` starts with new crossing definitions. A host
+switching away calls `clear()` to discard both lanes and stop advancing the
+battle. The shipped game keeps its single-front state, effect signatures, and
+outcome choreography. Milestone 17B can bind the coordinator to input and
+presentation once geometry and targeting are defined.
