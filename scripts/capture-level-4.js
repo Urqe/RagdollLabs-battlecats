@@ -69,7 +69,8 @@ try {
   }
   highlights.victory = state.t;
   await page.getByRole("heading", { name: "The castle stands!" }).waitFor();
-  await page.waitForTimeout(1250);
+  await page.screenshot({ path: join(output, "victory.png") });
+  await page.waitForTimeout(1500);
   const timing = await page.evaluate(() => {
     const frames = window.captureFrames.sort((a, b) => a - b);
     return {
