@@ -72,7 +72,11 @@ export function createDualFront(crossings, { onEvent, beforeTick, afterTick } = 
   let nextSquadId = 1;
 
   const clock = createBattleClock((dt) => {
-    if (!state.lanes || state.outcome) return;
+    if (!state.lanes) return;
+    if (state.outcome) {
+      afterTick?.(dt);
+      return;
+    }
     state.time += dt;
     beforeTick?.(dt);
     const events = onEvent ? [] : null;
@@ -83,7 +87,7 @@ export function createDualFront(crossings, { onEvent, beforeTick, afterTick } = 
     for (const id of CROSSINGS) updateLane(state.lanes[id], state.time, dt, emit);
     state.outcome = battleOutcome(state.lanes);
     if (events) for (const event of events) onEvent(event);
-    afterTick?.();
+    afterTick?.(dt);
   });
 
   function clear() {

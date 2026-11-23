@@ -1,3 +1,4 @@
+import { FLAG_CAPTURE_TIME, FLAG_RAISE_TIME, smoothStep, victoryAdvance } from "./army-movement.js";
 import { barrierIndex, barrierStatus } from "./barricades.js";
 import { clamp, H, TAU, W } from "./config.js";
 import { crossings } from "./dual-battlefield.js";
@@ -87,32 +88,38 @@ export function frontlineGeometry(lane) {
   return { x: edge + 9, y: lane.front, width: width - 18 };
 }
 
-export function createDualRenderer(state, canvas, fixture) {
+export function createDualRenderer(state, canvas, battle) {
   const ctx = canvas.getContext("2d");
   const background = canvas.ownerDocument.createElement("canvas");
   const figures = createFigures(ctx, canvas.ownerDocument);
 
-  function formation(lane, redTeam) {
+  function formation(lane, redTeam, celebrating = false) {
     const { center } = crossings[lane.id];
     const count = redTeam ? lane.redTotal : lane.blueTotal;
     const size = Math.min(30, Math.ceil(Math.sqrt(count) * 1.28));
     const direction = redTeam ? -1 : 1;
-    const depth = redTeam ? lane.front - 125 : 540 - lane.front;
+    const depth = redTeam ? lane.front - 96 : 540 - lane.front;
     const spacing = clamp(depth / 7, 5, 16);
     for (let i = size - 1; i >= 0; i--) {
       const row = Math.floor(i / 7);
       const col = i % 7;
       const width = Math.min(7, size - row * 7);
       const x = center + (col - (width - 1) / 2) * 19 + Math.sin(i * 7) * 3;
-      const y = lane.front + direction * (9 + row * spacing) + Math.sin(i * 17) * 3;
+      const surge = celebrating
+        ? victoryAdvance(lane.front + 3 + row * spacing, lane.objective.flagY + row * 8,
+          state.victoryElapsed, row * 0.16)
+        : 0;
+      const y = lane.front + direction * (9 + row * spacing) + Math.sin(i * 17) * 3 - surge;
       figures.soldier(x, y, redTeam, 4.8, i + center);
     }
   }
 
   function laneHud(lane, local) {
     const { center, edge, width, name } = crossings[lane.id];
-    rect(ctx, local.danger ? "#673c38" : "#243941", edge, 18, width, 72);
-    rect(ctx, local.danger ? amber : "#729da2", edge, 18, width, 2);
+    const critical = lane.front >= lane.objective.castleFront - 32;
+    const dangerTone = critical ? red : amber;
+    rect(ctx, local.danger ? (critical ? "#78382f" : "#673c38") : "#243941", edge, 18, width, 72);
+    rect(ctx, local.danger ? dangerTone : "#729da2", edge, 18, width, 2);
     text(ctx, name, center, 37, 13);
     const share = lane.blueTotal / (lane.blueTotal + lane.redTotal || 1);
     rect(ctx, "#3b4a4f", edge + 12, 46, width - 24, 6);
@@ -124,20 +131,58 @@ export function createDualRenderer(state, canvas, fixture) {
     const supply = lane.redEntryOpen ? "RED SUPPLY OPEN" : "SUPPLY SECURED";
     text(ctx, supply, center, 82, 9, lane.redEntryOpen ? red : blue);
     if (local.danger) {
-      const fresh = state.t - local.dangerAt < 1.8;
-      rect(ctx, fresh ? "#9a4730" : "#654036", edge + 14, 486, width - 28, 22);
-      text(ctx, lane.breached ? "CASTLE BREACHED" : "▼  CASTLE AT RISK", center, 501, 12, amber);
+      rect(ctx, critical ? "#873f33" : "#624e37", edge + 6, 91, width - 12, 18);
+      text(ctx, lane.breached ? "CASTLE BREACHED" : critical ? "▼  BREACH IMMINENT" : "▼  CASTLE AT RISK",
+        center, 104, 11, dangerTone);
     }
+  }
+
+  function victoryFlag(center) {
+    const elapsed = state.victoryElapsed;
+    const progress = smoothStep((elapsed - FLAG_CAPTURE_TIME) / FLAG_RAISE_TIME);
+    const x = center - 66;
+    const base = 132;
+    const y = base - 13 - progress * 39;
+    const width = 9 + progress * 35;
+    const wave = Math.sin(elapsed * 14) * progress * 2;
+    rect(ctx, "#e8dba8", x - 1, 79, 3, base - 79);
+    polygon(ctx, progress > 0 ? "#328fe8" : "#d4caa7", [
+      x, y, x + width, y + wave, x + width - 8 * progress, y + 7,
+      x + width, y + 12 + wave, x, y + 13,
+    ]);
+    const age = (elapsed - FLAG_CAPTURE_TIME - FLAG_RAISE_TIME) / 1.45;
+    if (age < 0 || age >= 1) return;
+    ctx.save();
+    ctx.globalAlpha = 1 - age;
+    for (let i = 0; i < 16; i++) {
+      const angle = i * 2.4;
+      const spread = smoothStep(age) * (22 + i % 7 * 9);
+      rect(ctx, i % 2 ? blue : "#ffe39f",
+        center + Math.cos(angle) * spread, 107 + Math.sin(angle) * spread * 0.42 + age ** 2 * 34, 3, 5);
+    }
+    ctx.restore();
   }
 
   function drawLane(lane, local) {
     const { center, edge, width } = crossings[lane.id];
+    if (battle.state.outcome === "victory") {
+      text(ctx, crossings[lane.id].name, center, 37, 13);
+      text(ctx, state.victoryElapsed >= FLAG_CAPTURE_TIME + FLAG_RAISE_TIME ?
+        "FLAG CAPTURED" : "SUPPLY SECURED", center, 58, 12, blue);
+      formation(lane, false, true);
+      victoryFlag(center);
+      return;
+    }
     const front = frontlineGeometry(lane);
     const playing = state.mode === "playing";
     if (local.danger) {
-      rect(ctx, "#e76c3238", edge, 123, width, 396);
-      rect(ctx, amber, edge, 123, 3, 396);
-      rect(ctx, amber, edge + width - 3, 123, 3, 396);
+      const critical = lane.front >= lane.objective.castleFront - 32;
+      const tint = critical ? red : amber;
+      rect(ctx, critical ? "#ed58473e" : "#e76c3225", edge, 123, width, 396);
+      rect(ctx, "#422f2c", edge, 123, 3, 396);
+      rect(ctx, tint, edge, 123, 3, lane.front - 123);
+      rect(ctx, tint, edge, lane.objective.castleFront, 12, 3);
+      rect(ctx, tint, edge + width - 3, front.y - 6, 3, 12);
     }
     const flagColor = lane.redEntryOpen ? "#b94e4b" : "#358fc2";
     for (const direction of [-1, 1]) {
@@ -150,11 +195,11 @@ export function createDualRenderer(state, canvas, fixture) {
       const count = Math.min(5, Math.ceil(local.redIntake / 7));
       for (let i = 0; i < count; i++)
         figures.soldier(center + (i - (count - 1) / 2) * 12,
-          124 + (state.t - local.redPulse) * 52, true, 4.1, i + center);
+          Math.min(lane.front - 10, 124 + (state.t - local.redPulse) * 52), true, 4.1, i + center);
     }
     ctx.save();
     ctx.beginPath();
-    ctx.rect(edge + 3, 121, width - 6, 426);
+    ctx.rect(edge + 3, 91, width - 6, 456);
     ctx.clip();
     rect(ctx, "#382a27a0", front.x, front.y - 3, front.width, 6);
     const tone = local.direction > 0 ? red : blue;
@@ -193,7 +238,7 @@ export function createDualRenderer(state, canvas, fixture) {
     laneHud(lane, local);
   }
 
-  function gate(gate) {
+  function drawGate(gate) {
     const { x, hitY, width } = gate;
     const left = x - width / 2;
     const color = gate.mult === 20 ? blue : amber;
@@ -216,20 +261,28 @@ export function createDualRenderer(state, canvas, fixture) {
       rect(ctx, "#40332c", left, y, width, 2);
       rect(ctx, "#44372f", left + 6, y + 8, width - 12, 4);
       rect(ctx, amber, left + 6, y + 8, (width - 12) * progress, 4);
-      text(ctx, "BREAK", x, y + 25, 9);
+      text(ctx, `BREAK • ${Math.floor(progress * 100)}%`, x, y + 25, 9);
+    } else if (gate.barricadeId) {
+      text(ctx, "OPEN", x, hitY + 26, 9, amber);
     }
   }
 
   function draw() {
     ctx.drawImage(background, 0, 0, W, H);
-    if (!fixture.state.lanes) return;
-    figures.setClock(state.t);
-    for (const id of CROSSINGS) drawLane(fixture.state.lanes[id], fixture.feedback[id]);
-    for (const target of state.gates) gate(target);
+    if (!battle.state.lanes) return;
+    figures.setClock(state.t + state.victoryElapsed);
+    for (const id of CROSSINGS) drawLane(battle.state.lanes[id], battle.feedback[id]);
+    for (const target of state.gates) drawGate(target);
     if (state.mode === "playing") {
-      for (const offset of [-9, 0, 9]) {
+      for (let offset = -9; offset <= 9; offset += 9) {
         const x = state.gunX + offset;
-        const target = state.gates.find(g => Math.abs(g.x - x) <= g.width / 2);
+        let target;
+        for (const gate of state.gates) {
+          if (Math.abs(gate.x - x) <= gate.width / 2) {
+            target = gate;
+            break;
+          }
+        }
         const y = target?.open ? target.hitY :
           target ? state.level.barricades[barrierIndex(state, target.barricadeId)].hitY : 594;
         const tint = target ? (target.mult === 20 ? "#79d9ff" : amber) : "#c1b99c";

@@ -23,7 +23,7 @@ test("Level 2 is available immediately and starting, leaving and replaying disca
 }) => {
   const { aim, errors, hold } = await setup(page, browserName, false);
   await page.getByRole("button", { name: "Choose level" }).click();
-  await expect(page.locator(".level-choice:disabled")).toHaveCount(7);
+  await expect(page.locator(".level-choice:disabled")).toHaveCount(6);
   await expect(select(page, LEVEL_ONE)).toBeEnabled();
   await expect(select(page, LEVEL_TWO)).toBeEnabled();
   await select(page, LEVEL_TWO).click();

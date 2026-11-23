@@ -156,8 +156,56 @@ export const LEVEL_THREE = Object.freeze({
   }),
 });
 
+const crossingObjective = Object.freeze({
+  reinforcementCutoff: 120, castleFront: 510, flagY: 88,
+});
+const crossingCombat = {
+  ...combat,
+  minFront: 115,
+  maxFront: 520,
+  spawnY: 547,
+  blueAdvance: 6.5,
+  maxRedLoss: 97,
+  redAdvance: 9,
+  redPressurePerCat: 0.66,
+  redReinforcementGrowth: 2,
+  maxRedReinforcements: 100,
+  redLossPerBlue: 0.20,
+  blueContactLoss: 0.12,
+  reinforcementApproach: 16,
+};
+const laneIds = ["left", "right"];
+
+export const LEVEL_FOUR = Object.freeze({
+  id: "two-tails",
+  number: 4,
+  title: "A Tale of Two Tails",
+  status: "implemented",
+  battlefield: Object.freeze({ ...battlefield, minX: 30, maxX: 390, startX: 166,
+    shotInterval: 0.46, shotEndY: 548 }),
+  combat: Object.freeze({ projectileSpeed: 310, victoryDuration: 3.2 }),
+  defeatDuration: 0.85,
+  objective: crossingObjective,
+  gates: Object.freeze(laneIds.flatMap((laneId, i) => [
+    Object.freeze({ laneId, x: i ? 254 : 166, width: 84, mult: 20, hitY: 556, open: true }),
+    Object.freeze({ laneId, x: i ? 352 : 68, width: 84, mult: 60, hitY: 556,
+      open: false, barricadeId: laneId }),
+  ])),
+  barricades: Object.freeze(laneIds.map(id => barricade(id, 42, "STRONG GATE OPEN", 570))),
+  crossings: Object.freeze({
+    left: Object.freeze({
+      combat: Object.freeze({ ...crossingCombat, initialFront: 335, initialRed: 460, redReinforcements: 33 }),
+      objective: crossingObjective, marchSpeed: 175, initialBlue: 225,
+    }),
+    right: Object.freeze({
+      combat: Object.freeze({ ...crossingCombat, initialFront: 350, initialRed: 490, redReinforcements: 35 }),
+      objective: crossingObjective, marchSpeed: 175, initialBlue: 225,
+    }),
+  }),
+  support: null,
+});
+
 const candidates = [
-  ["two-tails", "A Tale of Two Tails"],
   ["pawtorians", "The Pawtorians"],
   ["clawlossus", "The Clawlossus"],
   ["cavalpurry", "The Cavalpurry"],
@@ -170,8 +218,9 @@ export const LEVELS = Object.freeze([
   LEVEL_ONE,
   LEVEL_TWO,
   LEVEL_THREE,
+  LEVEL_FOUR,
   ...candidates.map(([id, title], index) =>
-    Object.freeze({ id, title, number: index + 4, status: "proposed" }),
+    Object.freeze({ id, title, number: index + 5, status: "proposed" }),
   ),
 ]);
 

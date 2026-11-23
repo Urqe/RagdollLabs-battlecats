@@ -185,3 +185,43 @@ Median simulation and draw submission were 1.1–2.3 ms in Chromium and
 frame costs. WebKit had more variation in frame intervals. These are
 headless Linux measurements. Physical iPhone performance and human reaction
 time remain unmeasured. [Chromium profile](evidence/combat-readability/headless-chromium.json) · [WebKit profile](evidence/combat-readability/headless-webkit.json)
+
+## Milestone 17C · A Tale of Two Tails
+
+The 390 × 844 Chromium touch replay entered through the normal selector
+and used the upgrade-focused plan. East reached the danger band as its
+outer gate opened. The upgraded arrivals reversed the retreat, and the
+warning cleared after the line recovered. West kept moving independently.
+The final red defenders were still present just before the dual charge.
+Both flags rose before the victory overlay. The two portrait recordings
+and gameplay and victory stills accompany the review outside Git.
+
+Starter-only alternation and responsive switching won in deterministic
+replays. Holding either side caused a breach on the other. The release
+buys time to recover compared with the development fixture. Five-second
+switches are an automated reference point. Human reaction time and
+physical iPhone frame pacing remain unmeasured.
+[Level 4 rules](levels/level-04.md) · [Strategy results](level-4-balance.md)
+
+`npm test` passed all 20 test files. All 32 Chromium and WebKit
+Playwright cases passed across the full suite and targeted reruns. The
+Level 1 strategy and Levels 2–3 support reports matched 17B byte for
+byte. All six Level 4 strategies matched across 30, 60, and 120 Hz.
+
+### Portrait frame pacing
+
+An isolated headless Linux profile used a 390 × 844 viewport and 2×
+device scale. Each crossing started the test with 4,500 blue and 2,900
+red cats. After a short warm-up, eight seconds of active battle exercised
+both compact formations, red intake, and melee effects. Frame intervals
+include browser scheduling. Submission measures the simulation and
+Canvas calls from the animation-frame callback.
+
+| Engine | Frame interval median / p95 | Submission median / p95 |
+| --- | --- | --- |
+| Chromium | 16.7 / 16.8 ms | 0.5 / 1.0 ms |
+| WebKit | 18 / 42 ms | 1 / 1 ms |
+
+Each crossing draws up to 30 cats per army and four airborne
+representatives. The terrain is cached, and red intake is batched. WebKit
+had more variable frame intervals in this environment.

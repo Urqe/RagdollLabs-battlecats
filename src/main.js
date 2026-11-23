@@ -1,12 +1,12 @@
 import { createBattleClock, createGame } from "./game.js";
 import { createRenderer } from "./render.js";
-import { createDualBattlefield, fixtureLevel } from "./dual-battlefield.js";
+import { createDualBattlefield } from "./dual-battlefield.js";
 import { createDualRenderer } from "./dual-render.js";
 import { createMotion } from "./motion.js";
 import { createSound } from "./sound.js";
 import { bindControls } from "./controls.js";
 import { barrierStatus } from "./barricades.js";
-import { LEVELS, playableLevel } from "./levels.js";
+import { LEVELS, LEVEL_FOUR, LEVEL_ONE, playableLevel } from "./levels.js";
 import { readProgress, saveProgress } from "./progress.js";
 
 const el = (id) => document.getElementById(id);
@@ -15,33 +15,25 @@ const progress = readProgress();
 const sound = createSound();
 const motion = createMotion(() => sound.play("reversal"));
 const game = createGame({
-  level: playableLevel(progress.selected),
+  level: progress.selected === LEVEL_FOUR.id ? LEVEL_ONE : playableLevel(progress.selected),
   notify,
   onEnd: end,
   onEffect,
 });
 const state = game.state;
 const renderer = createRenderer(state, canvas, motion);
-const fixtureRequested = new URLSearchParams(location.search).get("fixture") === "dual-crossing";
-const fixture = fixtureRequested ? createDualBattlefield({
-  state, onEnd: end,
-  onEffect(kind, _time, value) {
-    if (kind === "multiply") sound.play(value === 20 ? "gate20" : "gate99");
-    else if (kind === "break") sound.play("gateUnlock");
-    else sound.play(kind);
-  },
-}) : null;
-const fixtureRenderer = fixture && createDualRenderer(state, canvas, fixture);
-const inFixture = () => state.level === fixtureLevel;
-const activeRenderer = () => inFixture() ? fixtureRenderer : renderer;
-const activeClock = () => inFixture() ? fixture : battleClock;
+const dual = createDualBattlefield({ state, onEnd: end, onEffect });
+let dualRenderer;
+const inDualBattle = () => state.level === LEVEL_FOUR;
+const activeRenderer = () => inDualBattle() ? dualRenderer : renderer;
+const activeClock = () => inDualBattle() ? dual : battleClock;
 const soundButtons = document.querySelectorAll("[data-sound]");
 let frame = null;
 let last = null;
 let barrierLabels = [];
 
 function onEffect(kind, time, value, front, redLoss, blueLoss) {
-  motion.receive(kind, time, value, front, redLoss, blueLoss);
+  if (!inDualBattle()) motion.receive(kind, time, value, front, redLoss, blueLoss);
   if (kind === "victory") {
     if (!progress.completed.includes(state.level.id)) {
       progress.completed.push(state.level.id);
@@ -50,7 +42,7 @@ function onEffect(kind, time, value, front, redLoss, blueLoss) {
     return;
   }
   if (kind === "arrival") return;
-  if (kind === "multiply") sound.play(`gate${value}`);
+  if (kind === "multiply") sound.play(`gate${inDualBattle() && value > 20 ? 99 : value}`);
   else if (kind === "break")
     sound.play(value === "catapult" ? "artilleryReady" : "gateUnlock");
   else sound.play(kind === "flagCapture" ? "victory" : kind);
@@ -81,10 +73,14 @@ function end(won) {
   el("resultTitle").textContent = won
     ? "The castle stands!"
     : "The horde broke through";
+  const breached = inDualBattle() && [dual.state.lanes.left, dual.state.lanes.right];
+  const defeatDetail = breached && (breached[0].breached && breached[1].breached
+    ? "Both crossings fell."
+    : `The ${breached[0].breached ? "west" : "east"} crossing fell.`);
   el("resultText").textContent = won
-    ? (inFixture() ? "Both enemy supply routes are secured and the crossings are clear."
+    ? (inDualBattle() ? "Both enemy supply routes are secured and the crossings are clear."
       : `Your cat army overwhelmed the invaders and cleared the battlefield. ${level.title} is won!`)
-    : inFixture() ? `The ${fixture.state.lanes.left.breached ? "west" : "east"} crossing fell. Keep both crossings reinforced to hold the castle.`
+    : defeatDetail ? `${defeatDetail} Keep both crossings reinforced to hold the castle.`
     : "The enemy reached your castle before you could turn the tide. Reinforce the frontline between volleys at the barricades.";
   el("resultLevel").textContent = `Level ${level.number} · ${level.title}`;
 }
@@ -96,7 +92,7 @@ function stopFrame() {
 }
 
 function battleActive() {
-  return state.mode === "playing" || state.mode === "victory";
+  return state.mode === "playing" || state.mode === "victory" || state.mode === "defeat";
 }
 
 function pause() {
@@ -162,12 +158,13 @@ function start(level = playableLevel(progress.selected)) {
   void sound.unlock();
   const changed = state.level !== level;
   motion.reset();
-  if (level === fixtureLevel) {
-    fixture.reset();
+  progress.selected = level.id;
+  saveProgress(progress);
+  if (level === LEVEL_FOUR) {
+    dual.reset();
+    dualRenderer ??= createDualRenderer(state, canvas, dual);
   } else {
-    if (inFixture()) fixture.clear();
-    progress.selected = level.id;
-    saveProgress(progress);
+    if (inDualBattle()) dual.clear();
     game.reset(level);
     motion.step(0, 0, state.blueTotal, state.redEntryOpen, level, state);
   }
@@ -176,8 +173,8 @@ function start(level = playableLevel(progress.selected)) {
   el("levels").hidden = true;
   el("result").hidden = true;
   el("battleNav").hidden = false;
-  el("hud").style.display = inFixture() ? "none" : "flex";
-  if (!inFixture()) {
+  el("hud").style.display = inDualBattle() ? "none" : "flex";
+  if (!inDualBattle()) {
     buildBarrierHud();
     updateHud();
   }
@@ -188,7 +185,9 @@ function start(level = playableLevel(progress.selected)) {
 }
 
 function showMenu() {
-  const level = fixtureRequested ? fixtureLevel : playableLevel(progress.selected);
+  const level = playableLevel(progress.selected);
+  el("singleFrontTip").hidden = level === LEVEL_FOUR;
+  el("dualFrontTip").hidden = level !== LEVEL_FOUR;
   el("menuLevel").textContent = `Level ${level.number} · ${level.title}`;
   const supportTip = el("artilleryTip");
   supportTip.hidden = !level.support;
@@ -203,9 +202,9 @@ function chooseLevel() {
   stopFrame();
   resetPause();
   motion.reset();
-  if (inFixture()) {
-    fixture.clear();
-    game.reset(playableLevel(progress.selected), "menu");
+  if (inDualBattle()) {
+    dual.clear();
+    game.reset(LEVEL_ONE, "menu");
     renderer.resize();
   } else game.reset(state.level, "menu");
   el("hud").style.display = "none";
@@ -295,7 +294,7 @@ function loop(now) {
   if (last !== null) activeClock().advance((now - last) / 1000);
   last = now;
   if (wasPlaying && state.mode === "victory") el("banner").style.opacity = 0;
-  if (battleActive() && !inFixture()) updateHud();
+  if (battleActive() && !inDualBattle()) updateHud();
   activeRenderer().draw();
   if (battleActive())
     frame = requestAnimationFrame(loop);
@@ -323,27 +322,20 @@ document.addEventListener("keydown", (event) => {
   if (activeClock().paused) resume();
   else pause();
 });
-el("play").addEventListener("click", () => start(fixtureRequested ? fixtureLevel : undefined));
+el("play").addEventListener("click", () => start());
 el("replay").addEventListener("click", () => start(state.level));
 for (const id of ["chooseLevel", "battleLevels", "pausedLevels", "resultLevels"]) {
   el(id).addEventListener("click", chooseLevel);
 }
 el("levelsBack").addEventListener("click", showMenu);
 addEventListener("resize", () => activeRenderer().resize());
-if (fixtureRequested) {
-  const description = el("menuLevel").parentElement;
-  description.replaceChildren(el("menuLevel"), document.createElement("br"), "Development fixture");
-  const supportTip = el("artilleryTip");
-  supportTip.parentElement.replaceChildren(supportTip,
-    "Slide the cannon to reinforce either bridge. Amber gates unlock after you break their barricades. Hold both crossings and cut both red supply routes.");
-}
 showMenu();
 renderer.resize();
 
 export function getSnapshot() {
-  if (!inFixture()) return structuredClone(state);
-  const feedback = Object.fromEntries(Object.entries(fixture.feedback).map(
+  if (!inDualBattle()) return structuredClone(state);
+  const feedback = Object.fromEntries(Object.entries(dual.feedback).map(
     ([id, { flights, ...local }]) => [id, { ...local, airborne: flights.active }],
   ));
-  return structuredClone({ ...state, dual: fixture.state, feedback });
+  return structuredClone({ ...state, dual: dual.state, feedback });
 }

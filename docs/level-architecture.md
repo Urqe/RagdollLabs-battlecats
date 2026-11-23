@@ -6,12 +6,12 @@
 
 | Area | Implementation |
 | --- | --- |
-| Definitions | [The registry](../src/levels.js) holds stable IDs, title, number, and status. Each playable definition has battlefield settings, gates, wood, escalation and combat values, an objective, and optionally a support emplacement. The eight remaining entries carry menu metadata. |
+| Definitions | [The registry](../src/levels.js) holds stable IDs, title, number, and status. Each playable definition has battlefield settings, gates, wood, escalation and combat values, an objective, and optionally a support emplacement. The six remaining entries carry menu metadata. |
 | Shared battle | [Game](../src/game.js) and [state](../src/state.js) build fresh runtime data from the level. The selected definition supplies movement, collision, marching, combat, supply cutoff and castle breach parameters. Restart preserves the selected definition. Returning to the selector stops the animation loop and clears the battle. |
 | Cannon and targets | [Controls](../src/controls.js) bind once. [Projectile collision](../src/projectiles.js) finds the closest crossed surface and consumes a shot once. Gate and support targets reference wood by ID. This preserves multiplicative crossings and sibling volleys opening a gate mid-flight. |
 | Artillery | [Artillery](../src/artillery.js) owns unlock, reload, target selection, flight, and once-only casualties. [Canvas effects](../src/artillery-render.js) draw the crew, trajectory, and resolved impact from those states. |
 | UI and progress | [The browser shell](../src/main.js) builds the selector and barrier HUD from the active data. Every implemented level is available immediately. The battle's **Levels** button sits outside the play surface. [Local progress](../src/progress.js) stores the last playable ID and completed IDs as an informational record. Unknown IDs, unsupported versions, corrupt data, and unavailable storage fall back to playable defaults. Sound has its own preference and live battle state stays in memory. |
-| Rendering | Both levels share the same logical viewport and one-crossing terrain. The definitions specify aim footprints and both render and collision use their barricade IDs and hit planes. Sprite, terrain, and motion caches remain shared. [Motion](../src/motion.js) keeps one recent successful impact with its simulation coordinates and casualty count. [Formation feedback](../src/formation.js) offsets existing draw slots while the [Canvas impact layer](../src/artillery-render.js) reuses up to 13 airborne cat sprites. The app clears impact and frontline motion state when restarting or changing levels. Both teams use [the same population curve](army-visual-scale.md) with individual fighting ranks and cached reserve tiles. [Army continuity](army-visual-scale.md#milestone-10--army-continuity) keeps fractional living budgets, fixed reserve-band slots and a separate short-lived fallen extent. The battle state and outcome timer remain authoritative. [Army movement](army-visual-scale.md#milestone-11--reinforcement-movement-and-victory-advance) adds bounded wave-to-slot handoffs and a victory position derived from the frozen battle front and the existing celebration clock. |
+| Rendering | Levels 1–3 share the same logical viewport and one-crossing terrain. The definitions specify aim footprints and both render and collision use their barricade IDs and hit planes. Sprite, terrain, and motion caches remain shared. [Motion](../src/motion.js) keeps one recent successful impact with its simulation coordinates and casualty count. [Formation feedback](../src/formation.js) offsets existing draw slots while the [Canvas impact layer](../src/artillery-render.js) reuses up to 13 airborne cat sprites. The app clears impact and frontline motion state when restarting or changing levels. Both teams use [the same population curve](army-visual-scale.md) with individual fighting ranks and cached reserve tiles. [Army continuity](army-visual-scale.md#milestone-10--army-continuity) keeps fractional living budgets, fixed reserve-band slots and a separate short-lived fallen extent. The battle state and outcome timer remain authoritative. [Army movement](army-visual-scale.md#milestone-11--reinforcement-movement-and-victory-advance) adds bounded wave-to-slot handoffs and a victory position derived from the frozen battle front and the existing celebration clock. |
 
 ## Validation and extension
 
@@ -19,7 +19,7 @@ Level 1's [committed results](level-1-balance.md#deterministic-results) and both
 
 To make another level playable, provide a complete definition and mark its registry entry implemented. Let the existing selector expose it. Add a new simulation rule only when the level needs one. Test a deterministic set of aim strategies, normal menu entry and replay, isolation on switching, a representative win and loss, and the shared mobile input.
 
-Both shipped levels currently use a single front and representative aggregate troops. Multiple fronts, independently modeled cohorts, or a different objective would need a concrete level brief and tests before extending these boundaries. Validate whether Level 2's support lifecycle should be shared with archer support during the next playtest review.
+Levels 1–3 use a single front and representative aggregate troops. Level 4 uses the dual-front coordinator and the same logical viewport.
 
 Milestone 12 formation dynamics live in the presentation path. [Motion](../src/motion.js) samples the authoritative line and consumes existing arrival and clash events. [Formation dynamics](../src/formation-dynamics.js) resolves the depth anchors, packing and local pressure, and [figures](../src/figures.js) uses them in the shared slot layout. Both level starts seed the anchors from the starting line, and restart or level selection clears the motion state. The renderer uses the displaced receiving band for the existing handoff and releases the combat deformation into the existing victory advance. [Model and rendering evidence](army-visual-scale.md#milestone-12--formation-dynamics-and-battlefield-momentum)
 
@@ -39,8 +39,7 @@ inputs along four independent dimensions.
 A future implementation can aggregate by class at the line with the same
 simulation and event flow. Keep unit quantity relevant to engagement
 capacity and endurance, even with higher quality per cat. Gates should
-remain the source of reinforcements. No class attributes are needed in
-the two current levels.
+remain the source of reinforcements. The implemented levels use aggregate cat populations.
 
 ## Milestone 17A · Headless dual-front simulation
 
@@ -106,5 +105,25 @@ authoritative populations. Each crossing has its own contact line, supply
 flags, marching squads, and warning. Casualties feed a bounded pool of four
 airborne cats per lane. Continuous red arrivals accumulate in a short bucket
 that drives the entrance animation. The fixture reuses replay, pause, and
-level navigation. Its URL and play instructions are in the
-[Level 4 brief](levels/level-04.md).
+level navigation. The 17C release uses the same battlefield through the normal level selector.
+
+## Milestone 17C · Level 4 release
+
+`LEVEL_FOUR` registers `two-tails` as an implemented level. Its data owns
+the four gate footprints, opening cost, and both crossing definitions.
+The browser shell selects the corresponding renderer and battle clock when
+the player starts that registry entry. The usual progress record stores
+selection and completion. The same start path handles replay and restart.
+
+On either outcome, the coordinator stops advancing populations, frontlines,
+marches, and projectiles. Its existing fixed-step clock continues to drive
+only the outcome presentation. Victory is recorded when both supplies
+are secured and both red populations reach zero. The dual renderer uses
+the shared rank-advance and flag timing primitives to render both charges
+from their frozen frontlines before the result at 3.2 seconds. Defeat runs
+a 0.85-second breached-crossing reaction before the normal overlay. The
+shared pause controls freeze both clocks through visibility changes and
+resume on a new wall-clock baseline. Leaving the level discards both lanes
+and the presentation timers.
+
+[Level 4 rules](levels/level-04.md) · [Deterministic balance evidence](level-4-balance.md)
