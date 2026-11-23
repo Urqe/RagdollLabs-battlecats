@@ -1,4 +1,5 @@
 import { createAirborneCats } from "./airborne-cats.js";
+import { connectedSiegeRules } from "./connected-siege.js";
 import { CROSSINGS, createDualFront } from "./dual-front.js";
 import { FLAG_CAPTURE_TIME } from "./army-movement.js";
 import { LEVEL_FOUR } from "./levels.js";
@@ -19,14 +20,19 @@ const freshFeedback = () => ({
   flights: createAirborneCats(4),
 });
 
-export function createDualBattlefield({ state, onEnd = ignore, onEffect = ignore }) {
+// The connected model is an opt-in headless fixture until its renderer is ready.
+export function createDualBattlefield({
+  state, onEnd = ignore, onEffect = ignore, connected = false, onEvent,
+}) {
   const feedback = {};
   const battle = createDualFront(LEVEL_FOUR.crossings, {
     beforeTick: updateCannon, onEvent: receive, afterTick: updatePresentation,
     phalanx: LEVEL_FOUR.phalanx,
+    connectedRules: connected ? connectedSiegeRules : undefined,
   });
 
   function receive(event) {
+    onEvent?.(event, battle.state);
     const local = feedback[event.laneId];
     switch (event.type) {
       case "launch":

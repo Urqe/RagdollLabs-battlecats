@@ -1,3 +1,4 @@
+import { createConnectedSiege } from "./connected-siege.js";
 import { createBattleClock } from "./battle-clock.js";
 import { advanceLaneCombat, marchSquad } from "./lane-combat.js";
 
@@ -34,12 +35,12 @@ function marchReinforcements(lane, dt, emit) {
   lane.squads.length = pending;
 }
 
-function updateLane(lane, time, dt, emit) {
+function updateLane(lane, time, dt, emit, march) {
   const { combat, objective } = lane;
   const previousFront = lane.front;
   const supplyWasOpen = lane.redEntryOpen;
 
-  marchReinforcements(lane, dt, emit);
+  march(lane, dt, emit);
 
   const { redArrived, redLost, blueLost } = advanceLaneCombat(lane, combat, objective, time, dt);
   if (emit) {
@@ -64,7 +65,7 @@ function updateLane(lane, time, dt, emit) {
   }
 }
 
-function advancePhalanx(formation, rules, time, emit) {
+function advancePhalanx(formation, rules, time) {
   const elapsed = time - formation.since;
   let phase = formation.phase;
   if (phase === "unlocked" && elapsed > 0) phase = "marching";
@@ -72,7 +73,7 @@ function advancePhalanx(formation, rules, time, emit) {
   else if (phase === "deploying" && elapsed >= rules.deployTime) phase = "secured";
   if (phase === formation.phase) return;
   Object.assign(formation, { phase, since: time });
-  emit?.("left", "phalanx", { phase });
+  return phase;
 }
 
 function holdCrossing(lane, rules, time, dt, emit) {
@@ -98,8 +99,11 @@ function battleOutcome({ left, right }) {
   return null;
 }
 
-export function createDualFront(crossings, { onEvent, beforeTick, afterTick, phalanx } = {}) {
+export function createDualFront(crossings, { onEvent, beforeTick, afterTick, phalanx, connectedRules } = {}) {
   const state = { time: 0, lanes: null, outcome: null };
+  if (connectedRules && !phalanx) throw new TypeError("Connected siege requires phalanx rules");
+  const connected = connectedRules && createConnectedSiege(state, phalanx, connectedRules);
+  const march = connected ? connected.march : marchReinforcements;
   let definition = crossings;
   let nextSquadId = 1;
 
@@ -117,17 +121,34 @@ export function createDualFront(crossings, { onEvent, beforeTick, afterTick, pha
     }) : null;
 
     const { left, right } = state.lanes;
+    connected?.advanceTransfers(right, dt, emit);
     if (phalanx && state.phalanx.phase === "secured") {
-      holdCrossing(left, phalanx, state.time, dt, emit);
+      if (connected) {
+        march(left, dt, emit);
+        connected.hold(left, dt, emit);
+      } else {
+        holdCrossing(left, phalanx, state.time, dt, emit);
+      }
     } else {
-      updateLane(left, state.time, dt, emit);
-      if (phalanx && !left.breached) advancePhalanx(state.phalanx, phalanx, state.time, emit);
+      updateLane(left, state.time, dt, emit, march);
+      if (phalanx && !left.breached) {
+        const phase = advancePhalanx(state.phalanx, phalanx, state.time);
+        if (phase && connected) {
+          const type = "phalanx" + phase[0].toUpperCase() + phase.slice(1);
+          emit?.("left", type, { phase, front: phase === "secured" ? phalanx.holdFront : left.front });
+          if (phase === "secured") connected.secure(left, emit);
+        } else if (phase) {
+          emit?.("left", "phalanx", { phase });
+        }
+      }
     }
-    updateLane(right, state.time, dt, emit);
+    updateLane(right, state.time, dt, emit, march);
     if (!phalanx) {
       state.outcome = battleOutcome(state.lanes);
     } else if (left.breached || right.breached) {
       state.outcome = "defeat";
+    } else if (connected) {
+      connected.advanceOffensive(left, right, dt, emit);
     } else if (!right.redEntryOpen && right.redTotal === 0) {
       // The command camp has fallen. Record survivors withdrawing separately
       // from combat losses so the renderer can show the retreat.
@@ -147,6 +168,7 @@ export function createDualFront(crossings, { onEvent, beforeTick, afterTick, pha
     state.lanes = null;
     state.outcome = null;
     nextSquadId = 1;
+    if (connected) state.siege = null;
     if (phalanx) {
       state.phalanx = null;
       state.retreat = null;
@@ -160,6 +182,7 @@ export function createDualFront(crossings, { onEvent, beforeTick, afterTick, pha
     definition = nextCrossings;
     state.lanes = { left, right };
     if (phalanx) state.phalanx = { phase: "locked", since: 0 };
+    connected?.reset();
   }
 
   function launchVolley(laneId, { multiplier, hits = 3, origin }) {
@@ -178,17 +201,19 @@ export function createDualFront(crossings, { onEvent, beforeTick, afterTick, pha
       count: hits * multiplier,
       multiplier,
       hits,
-      y: lane.combat.spawnY,
-      marchTime: 0,
       ...(origin === undefined ? {} : { origin }),
     };
-    lane.squads.push(squad);
+    if (connected) connected.routeVolley(squad);
+    else Object.assign(squad, { y: lane.combat.spawnY, marchTime: 0 });
+    state.lanes[squad.laneId].squads.push(squad);
     onEvent?.({ ...squad, type: "launch", side: "blue", time: state.time });
   }
 
   function unlockPhalanx() {
     if (state.phalanx?.phase !== "locked" || state.outcome) return;
     Object.assign(state.phalanx, { phase: "unlocked", since: state.time });
+    if (connected) onEvent?.({ type: "phalanxUnlocked", laneId: "left",
+      time: state.time, phase: "unlocked", front: state.lanes.left.front });
   }
 
   reset();
