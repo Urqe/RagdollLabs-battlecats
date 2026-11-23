@@ -183,8 +183,19 @@ test("a real cannon replay conserves troops through breakthrough, flank movement
   function run(hz) {
     const events = [];
     let final;
+    let checkedAt;
     const result = simulateDual("mixed", hz, { connected: true, onEvent(event, state) {
       events.push(event);
+      if (checkedAt !== event.time && event.type !== "launch" && event.type !== "phalanxUnlocked") {
+        checkedAt = event.time;
+        const { left, right } = state.lanes;
+        const { transfers, flank } = state.siege;
+        const moving = [...left.squads, ...right.squads, ...transfers];
+        if (flank) moving.push(flank);
+        assert.equal(new Set(moving.map(cohort => cohort.id)).size, moving.length);
+        assert.ok([left.blueTotal, right.blueTotal, left.redTotal, right.redTotal,
+          ...moving.map(cohort => cohort.count)].every(count => count >= 0));
+      }
       if (event.type === "victory") final = structuredClone(state);
     } });
     return { result, events, final };
