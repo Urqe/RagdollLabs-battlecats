@@ -19,6 +19,7 @@ export function updateProjectiles(
     let index = -1;
     let hitY = -Infinity;
     for (const gate of gates) {
+      if (gate.open && gate.mult === null) continue;
       if (Math.abs(shot.x - gate.x) > gate.width / 2) continue;
       const slot = gate.open ? -1 : barrierIndex(state, gate.barricadeId);
       const y = gate.open ? gate.hitY : level.barricades[slot].hitY;
@@ -63,7 +64,7 @@ export function updateProjectiles(
       );
       if (surface === support && surface.open) activateArtillery(state);
       if (surface.open) {
-        const target = surface === support ? emplacement.id : surface.mult;
+        const target = surface === support ? emplacement.id : surface.mult ?? surface.barricadeId;
         onEffect?.("break", state.t, target);
       } else {
         onEffect?.("wood", state.t);

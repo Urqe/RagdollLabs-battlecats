@@ -1,49 +1,30 @@
 # Level 4 · A Tale of Two Tails
 
-[Roadmap](../roadmap.md) · [Balance evidence](../level-4-balance.md)
+[Roadmap](../roadmap.md) · [Balance and validation](../level-4-balance.md)
 
-**Status** · Implemented. Choose **A Tale of Two Tails** from the level menu.
-All four implemented levels are immediately available.
+Choose **A Tale of Two Tails** from the level menu. One red horde fills the northern staging grounds. The west bridge and the east ravine meet again on the castle apron. Both passages share one castle and one sliding cannon.
 
-## Hold both crossings
+## Hold the flank
 
-Two red invasion routes lead from separate supply camps on the north bank.
-Their west and east bridges cross the same river. On the south bank, both
-roads open onto the approach to one blue castle, with a single curtain wall,
-central gatehouse and shared cannon courtyard. Each crossing keeps its own
-combat front, army counts, reinforcement gates and breach warning.
+The cannon fires three kittens every 0.46 seconds. Each shot follows its own launch position. The two ×20 gates start open, and a shot hitting closed wood is spent on the barricade. The gate labels show the progress of each barricade.
 
-The cannon slides horizontally and fires three kittens automatically every
-0.46 seconds. Aim at the inner ×20 gates for immediate reinforcements. An
-outer ×60 gate opens after its barricade takes 42 direct hits, or 14 clean
-volleys. Each kitten follows its own shot path. At the center seam the two
-outer shots in a volley can feed opposite crossings while the center shot
-misses. The level has no support emplacements.
+| Target | Direct hits | Result |
+| --- | ---: | --- |
+| West ×20 | 0 | 60 kittens from a clean volley |
+| West ×99 | 24 | 297 kittens from a clean volley |
+| Meowrtan Phalanx | 36 | Releases the shield formation |
+| East ×20 | 0 | 60 kittens from a clean volley |
+| East ×99 | 27 | 297 kittens from a clean volley |
+| East ×999 | 72 | 2,997 kittens from a clean volley |
 
-The directional marks on each frontline show which way it is moving. When
-a crossing nears the castle, an amber warning marks the endangered side.
-The warning turns red in breach range and clears after the frontline pushes
-back far enough. A gate displays its barricade progress or **Open**. Each
-camp has one marked supply point. Its label reports the cutoff while its flag
-marks control of the camp.
+The west frontage limits how many ordinary blue troops can contribute to pushing the line. Its capacity meter fills as blue troops arrive. The west ×99 can rally the defense and buy time to break the phalanx barricade while the horde's arrivals grow. Split early fire between the passages and watch the arrows and castle warnings.
 
-## Win and lose
+The phalanx starts **locked**. The last hit leaves it **unlocked**, then the Meowrtans begin **marching** for 2.4 seconds. They spend another 1.15 seconds **deploying**, while ordinary fighting and the risk of a breach continue. When the shields lock, the flank becomes **secured**. The wall pushes the contact line back toward the bridge and then holds its ground. Red troops already present stay visibly opposed to the shields, and further arrivals queue only up to the available space. Blue troops behind the shields take no further melee losses.
 
-Advance both lines to their enemy entrances to permanently cut supplies.
-Victory requires both entrances secured and zero red troops on both
-crossings. Combat freezes at that point. Leading blue ranks charge first,
-the following ranks close up, and each army reaches its camp's flagpole.
-Each red flag drops and a blue flag rises at the same pole. Both blue flags
-are up before the victory result appears at 3.2 seconds.
+## Break the horde
 
-If either red army reaches the castle, both crossings freeze. A
-0.85-second reaction highlights the breached side before the defeat
-result. If both cross on the same tick, both are named. Pause freezes
-combat and both outcome sequences. Restart resets the entire battle.
+Aim the full cannon at the east once the Meowrtans are holding. Either east upgrade can be opened independently of the phalanx. The ×999 sends dense marching waves down the approach, giving the main blue army the numbers to sustain a faster push through the ravine.
 
-## Playtest focus
+Moving the east line to the red command camp cuts supply permanently. Victory occurs once the east force is also cleared. Remaining west reds retreat as survivors, and the Meowrtans salute in position while the east blue ranks charge and raise the flag. The overlay follows after 3.2 seconds. A temporary red count of zero with supply still open leaves the battle running.
 
-Five-second alternation between starter gates is a reliable first plan in
-the deterministic replay. One stronger gate can help a crossing recover,
-but continuous fire against wood leaves the opposite crossing exposed.
-Physical iPhone frame pacing and human switching tolerance remain open.
+A breach at either castle approach ends the battle. The 0.85-second defeat reaction names the failed crossing. Pause freezes deployment and outcome presentation, and restart rebuilds the whole siege.

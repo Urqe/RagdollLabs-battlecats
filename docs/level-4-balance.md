@@ -1,55 +1,34 @@
-# Level 4 balance
+# Level 4 balance · Milestone 18
 
-Run `node scripts/simulate-dual.js` to replay the six aim strategies
-against the public Level 4 definition. Aim changes happen on matching
-one-second boundaries. Every reinforcement comes from an auto-fired
-projectile, a gate collision, and a march to the frontline. The same
-results are asserted at 30, 60, and 120 Hz render schedules.
+[Level rules](levels/level-04.md) · [Milestone 17 symmetric release results](level-4-balance-m17.md)
 
-| Strategy | Decision rule |
-| --- | --- |
-| West camping | Hold the west starter throughout. |
-| East camping | Hold the east starter throughout. |
-| Even alternation | Alternate starter gates every five seconds, starting west. |
-| Threat-responsive | Aim at the starter on the crossing with the highest score. The score combines distance toward the castle and the pressure difference. |
-| Upgrade-focused | Break west, then east, then fire through the upgraded gate on the higher-pressure crossing. |
-| Mixed | Reinforce with starter gates while opening the outer gates in short windows. Use a starter for emergency defense before both upgrades open, then aim the stronger gates by pressure. |
+Run `node scripts/simulate-dual.js` to replay all eight strategies through the normal cannon, barricades, projectile routing, march and lane combat. Aim decisions occur on one-second boundaries. Combat times exclude the outcome sequence. The unit suite compares complete results at render schedules of 30, 60 and 120 Hz.
 
-## Release results
+| Strategy | Decision | Result | Combat (s) | West secured (s) | East cutoff (s) |
+| --- | --- | --- | ---: | ---: | ---: |
+| West camping | Hold west ×20 | East breach | 28.7 | — | — |
+| East camping | Hold east ×20 | West breach | 21.9 | — | — |
+| Even alternation | Switch ×20 every two seconds | West breach | 36.3 | — | — |
+| West upgrade | Open west ×99 and alternate with east ×20 | West breach | 44.8 | — | — |
+| East siege first | Open and camp east ×999 | West breach | 21.9 | — | — |
+| Phalanx rush | Open the phalanx and leave the cannon there | East breach | 28.7 | 8.9 | — |
+| Flank first | Defend both, open west ×99, release the phalanx, then invest east | Win | 109.3 | 21.4 | 108.4 |
+| Mixed | Open east ×99 during western investment, reinforce both, then release the phalanx and push east | Win | 93.3 | 33.3 | 93.3 |
 
-Combat duration excludes the outcome presentation. Paired times are west /
-east, in seconds. Final populations are blue:red and exclude squads still
-marching when combat freezes. Reinforcing time counts aim at open gates and
-excludes time spent breaking wood. Dashes indicate an event that never
-occurred.
+In the flank-first replay the west ×99 opens at 8.6 seconds, so clean volleys go from 60 to 297 recruits while the phalanx barricade is still closed. The west gate supplies the defense in short bursts while other volleys work on the barricade. The phalanx rush clears the west problem much sooner but leaves the east frontline falling. The east-first replay opens ×999 at 10.9 seconds and pressure on the exposed west still reaches the castle. Both wins open ×999, at 46.7 and 44.9 seconds respectively.
 
-| Strategy | Outcome | Combat | Final west · east | Unlock | Cut supply | Reinforcing |
-| --- | --- | ---: | --- | --- | --- | --- |
-| West camping | East breach | 22.7 | 2,632:0 · 2:1,558 | — / — | — / — | 22.7 / 0.0 |
-| East camping | West breach | 24.7 | 1:1,640 · 2,819:0 | — / — | — / — | 0.0 / 24.7 |
-| Even alternation | Win | 88.7 | 5,743:0 · 1,442:0 | — / — | 40.0 / 85.7 | 45.0 / 43.7 |
-| Threat-responsive | Win | 49.0 | 3,085:0 · 1,957:0 | — / — | 48.5 / 49.0 | 28.0 / 21.0 |
-| Upgrade-focused | Win | 93.8 | 8,118:0 · 7,307:0 | 6.2 / 13.2 | 86.2 / 86.3 | 41.7 / 39.7 |
-| Mixed | Win | 78.4 | 6,842:0 · 5,361:0 | 17.3 / 29.2 | 73.4 / 73.2 | 37.1 / 28.7 |
+On the larger east approach, the fraction of maximum advance speed rises with the blue population up to 32,000. Three seconds after ×999 opens in the mixed replay, east blue grows from roughly 2,800 to 14,700. The matched replay that stays on east ×99 after securing west wins in 103.9 seconds, so the ×999 opening work saves 10.5 seconds in this approach.
 
-With the same strategy decisions, 17B wins took 17.1–49.8 seconds and
-camping losses took 9.9–17.9 seconds. The release opens with 225 blue cats
-per crossing and 460 west / 490 east red cats. There is a similar recovery
-window on either side. The final balance slows territorial movement and
-caps red casualties at 97 per second per crossing. A late red supply rate
-of up to 100 per second keeps a defending group on the field until the
-entrance is approached, making cutoff and the final clear distinct.
+## Why ordinary west defense eventually fails
 
-The even and mixed strategies fall within the 60–100 second target. The
-tuned threat-response strategy wins faster by shifting fire before the
-frontline reaches danger. Opening both gates first puts the east crossing
-into danger, but the upgraded gate supplies 180 cats in a clean volley and
-can turn the retreat around. Opening those gates in windows while defending
-is faster in this replay. Neither upgrade is required for the two starter
-strategies that win.
+The west bridge has frontage for the pressure equivalent of 850 ordinary blue cats. Blue reserves still march in and sustain the frontline through casualties. Red arrivals at the west approach rise by 15 per second each second, starting at 12 per second and capping at 800. The approach stays connected to the horde throughout the west frontline's reachable range. Ordinary contact can remove at most 68 reds per second. As arrivals build, the west line reverses toward the castle even with blue reserves behind it.
 
-In a recovery replay, holding west for the first eight seconds and then
-using the threat-responsive starter strategy still won in 79.8 seconds.
-Holding west for 12 seconds let east enter the warning band. The same
-recovery strategy cleared the warning and won in 135.2 seconds, outside
-the target duration for a clean win.
+The balance regression gives the player an optimistic bound that ignores all cannon and march costs. It gives west maximum blue pressure and maximum red losses on every fixed tick. Under those assumptions west still breaches by **46.65 seconds**. The earliest east cutoff requires moving 230 logical units at the full maximum speed of 4.8 units per second, at least **47.92 seconds**, even with instant overwhelming reinforcements. The optimizer's fictional west defense is stronger than any legitimate aim strategy. An actual win requires the phalanx to finish locking its shields before the west breaches. The east gate availability and victory check depend on the local targets and combat state.
+
+## Browser and portrait evidence
+
+[390 × 844 battlefield screenshot after deployment](evidence/level-4-rework/phalanx-secured.png)
+
+Run `npm run test:all` for the unit suite and the Chromium and WebKit projects. Level 4 tests exercise the normal selector and pointer input, pause during lock-in, restart, switching to Level 2, each breach reaction, exact upgrade routing, the survivor retreat and the command flag. The fixed-step suite also keeps the Level 1–3 outcome regressions.
+
+With the local server and Playwright Chromium installed, run `node scripts/capture-level-4.js` to record the mixed playthrough at 390 × 844 and save a screenshot as the shield wall takes over. The script uses Chromium touch input and records frame intervals while capturing. The reference run finished combat in 93.25 seconds. Its 5,446 frame samples had a 16.7 ms median and a 33.3 ms 95th percentile while recording. Physical iPhone frame pacing and first-attempt comprehension remain open for playtesting.

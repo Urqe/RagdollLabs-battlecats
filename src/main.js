@@ -42,7 +42,7 @@ function onEffect(kind, time, value, front, redLoss, blueLoss) {
     return;
   }
   if (kind === "arrival") return;
-  if (kind === "multiply") sound.play(`gate${inDualBattle() && value > 20 ? 99 : value}`);
+  if (kind === "multiply") sound.play(`gate${value}`);
   else if (kind === "break")
     sound.play(value === "catapult" ? "artilleryReady" : "gateUnlock");
   else sound.play(kind === "flagCapture" ? "victory" : kind);
@@ -78,9 +78,11 @@ function end(won) {
     ? "Both crossings fell."
     : `The ${breached[0].breached ? "west" : "east"} crossing fell.`);
   el("resultText").textContent = won
-    ? (inDualBattle() ? "Both enemy supply routes are secured and the crossings are clear."
+    ? (inDualBattle() ? "The Meowrtans held the west. The command camp fell in the east, and the red horde fled."
       : `Your cat army overwhelmed the invaders and cleared the battlefield. ${level.title} is won!`)
-    : defeatDetail ? `${defeatDetail} Keep both crossings reinforced to hold the castle.`
+    : defeatDetail ? `${defeatDetail} ${breached[0].breached
+      ? "Free the Meowrtans before the west flank is overrun."
+      : "Reinforce the east while you open barricades."}`
     : "The enemy reached your castle before you could turn the tide. Reinforce the frontline between volleys at the barricades.";
   el("resultLevel").textContent = `Level ${level.number} · ${level.title}`;
 }

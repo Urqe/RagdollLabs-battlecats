@@ -14,7 +14,7 @@ SiegeDolls is a mobile-first arcade strategy game about miniature cats taking si
 
 ## Development status
 
-Level 1 is the playable regression baseline. Level 2 adds yarn-ball artillery, Level 3 adds the Meowmen, and Level 4 splits defense across two crossings. Every implemented level stays available from the menu. The five merged milestones established modular JavaScript and CI, deterministic aim strategies and browser playthroughs, escalating frontline pressure, a wider battlefield and short victory sequence, then combat motion and optional sound. [Level 1 design](levels/level-01.md) · [Balance, tests, and recordings](level-1-balance.md)
+Level 1 is the playable regression baseline. Level 2 adds yarn-ball artillery, Level 3 adds the Meowmen, and Level 4 turns two crossings into one asymmetric castle siege. Every implemented level stays available from the menu. The five merged milestones established modular JavaScript and CI, deterministic aim strategies and browser playthroughs, escalating frontline pressure, a wider battlefield and short victory sequence, then combat motion and optional sound. [Level 1 design](levels/level-01.md) · [Balance, tests, and recordings](level-1-balance.md)
 
 **Implemented** means playable. **Next** identifies the current implementation candidate. **Proposed** means a preliminary design. **Under review** flags a decision or missing evidence that needs attention. **Deferred** records an intentional postponement. Titles and mechanics for Levels 5–10 are provisional.
 
@@ -25,7 +25,7 @@ Level 1 is the playable regression baseline. Level 2 adds yarn-ball artillery, L
 | 1 | [The Last Stand](levels/level-01.md) | Implemented | Multipliers, direct-hit barricades, and escalating pressure provide the shared baseline. |
 | 2 | [The Purrapult](levels/level-02.md) | Implemented | Unlock a yarn-ball catapult. Shared level definitions, direct-hit wood, and simulation-owned artillery are in place. |
 | 3 | [The Meowmen](levels/level-03.md) | Implemented | Unlock cat archers for steady ranged support. |
-| 4 | [A Tale of Two Tails](levels/level-04.md) | Implemented | Reinforce two crossings with one cannon, secure both enemy supply routes, and capture both flags. |
+| 4 | [A Tale of Two Tails](levels/level-04.md) | Implemented | Reinforce two bottlenecks with one cannon, secure the west with the Meowrtan Phalanx, then capture the red command camp in the east. |
 | 5 | [The Pawtorians](levels/level-05.md) | Proposed | Armored red cats make shot timing and support choice matter. Needs a readable mixed horde and distinct damage interactions. |
 | 6 | [The Clawlossus](levels/level-06.md) | Proposed | A siege tower gives the player a moving target for concentrated damage. Builds on direct-hit targets and clear enemy threat states. |
 | 7 | [The Cavalpurry](levels/level-07.md) | Proposed | Mounted blue cats charge periodically. Depends on a readable support windup and clear frontline impact. |
@@ -35,7 +35,7 @@ Level 1 is the playable regression baseline. Level 2 adds yarn-ball artillery, L
 
 ## Special formations and visual themes (provisional)
 
-The recurring core can be humble kitten conscripts; selected battles may instead feature memorable elite formations, veteran knights, or culturally themed armies. The goal is variety in **scale, silhouette, formation, animation, and battlefield fantasy**, not a separate class system for each level. A few hundred disciplined Meowrtans holding against a vast Persian-inspired horde may be more exciting than yet another six-figure kitten flood—but only in a coherent Greek-inspired environment (terrain, architecture, equipment, enemy presentation). Treat this as a **candidate themed encounter**, not a commitment to a particular level number or a replacement for an already planned mechanic.
+The recurring core can be humble kitten conscripts; selected battles may instead feature memorable elite formations, veteran knights, or culturally themed armies. The goal is variety in **scale, silhouette, formation, animation, and battlefield fantasy**, not a separate class system for each level. Level 4 uses bronze-helmed Meowrtans and a narrow stone-and-timber crossing to give its small shield formation a clear role and silhouette. Future themed encounters still need a setting and a distinct tactical role.
 
 Do not distribute new army archetypes evenly across Levels 1–10. Introduce them selectively after reviewing the level's setting, player experience, rendering cost, and whether they make the battle more satisfying. Reuse existing army visuals between special encounters so the exceptions feel special. Preserve the decision of when to reinforce versus when to invest in unlocking another option. If a visual change needs strength tuning, keep the rationale and count-versus-effectiveness distinction legible to the player and regression-test the same strategic outcomes.
 
@@ -58,7 +58,8 @@ A candidate future special encounter could unlock a **Royal Armory** after costl
 3. **Milestone 8 · Battlefield impact and visual polish.** Faster Purrapult support and visible formation disruption join shared contact and reinforcement polish. Both levels retain their strategy outcomes. Check readability and enjoyment in a human session before choosing the next level. [Balance and motion evidence](purrapult-balance.md)
 4. **Milestone 9 · Army scale and combat fidelity.** Literal small encounters, shared reserve scaling and population-driven formation reactions are part of the level foundation. [Army scale and combat evidence](army-visual-scale.md)
 5. **Level 3 · The Meowmen.** Add unlockable ranged support.
-6. **Milestone 17 · A Tale of Two Tails.** Add independent lane combat, two-crossing cannon play, and a public Level 4 with dual victory flags. [Balance evidence](level-4-balance.md)
+6. **Milestone 17 · A Tale of Two Tails.** Release fixed-step lane combat and two-crossing cannon play. [Release archive](level-4-balance-m17.md)
+7. **Milestone 18 · Hold the Flank, Break the Horde.** One castle and one invasion. Buy room on the west bridge, deploy the Meowrtan shield wall, then send the ×999 surge through the eastern ravine and capture the red command camp. [Level design](levels/level-04.md) · [Measured balance](level-4-balance.md)
 
 Treat Levels 5–10 as candidates. Use playtest results from the support levels and the two crossings before planning mixed units or combined encounters.
 
