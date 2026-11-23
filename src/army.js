@@ -1,14 +1,8 @@
 import { clamp } from "./config.js";
 import { updateDanger } from "./danger.js";
+import { advanceLaneCombat, marchSquad } from "./lane-combat.js";
 
-export function casualtyRates(blue, red, combat) {
-  const contact = Math.min(blue, red);
-  const engagedRed = Math.min(red, contact * combat.redEngagementRatio);
-  return {
-    red: Math.min(combat.maxRedLoss, blue * combat.redLossPerBlue),
-    blue: engagedRed * combat.blueLossPerRed + contact * combat.blueContactLoss,
-  };
-}
+export { casualtyRates } from "./lane-combat.js";
 
 export function updateArmy(
   state,
@@ -21,12 +15,7 @@ export function updateArmy(
   const { combat, battlefield, objective } = state.level;
   for (let j = state.squads.length - 1; j >= 0; j--) {
     const q = state.squads[j];
-    q.y -= battlefield.marchSpeed * dt;
-    q.marchTime = (q.marchTime ?? 0) + dt;
-    if (
-      q.marchTime >= combat.minMarchTime &&
-      q.y <= state.front + combat.arrivalOffset
-    ) {
+    if (marchSquad(q, state.front, combat, battlefield.marchSpeed, dt)) {
       state.blueTotal += q.count;
       state.squads.splice(j, 1);
       onEffect?.("arrival", state.t, q, state.front);
@@ -43,53 +32,8 @@ export function updateArmy(
     }
   }
 
-  // Taking the entrance cuts off new arrivals. The existing army stays in combat.
-  const access = state.redEntryOpen
-    ? clamp(
-        (state.front - objective.reinforcementCutoff) /
-          combat.reinforcementApproach,
-        0,
-        1,
-      )
-    : 0;
-  state.redEntryRate =
-    access *
-    Math.min(
-      combat.maxRedReinforcements,
-      combat.redReinforcements + combat.redReinforcementGrowth * state.t,
-    );
-  state.redTotal += state.redEntryRate * dt;
-
-  const blue = state.blueTotal;
-  const red = state.redTotal;
-  const rates = casualtyRates(blue, red, combat);
-  const redLost = Math.min(red, rates.red * dt);
-  const blueLost = Math.min(blue, rates.blue * dt);
   const previousFront = state.front;
-  state.redTotal -= redLost;
-  state.blueTotal -= blueLost;
-
-  const bluePressure = state.blueTotal;
-  const redPressure = state.redTotal * combat.redPressurePerCat;
-  const totalPressure = bluePressure + redPressure;
-  if (totalPressure > 0) {
-    const momentum = (redPressure - bluePressure) / totalPressure;
-    const speed = momentum > 0 ? combat.redAdvance : combat.blueAdvance;
-    state.front = clamp(
-      state.front + momentum * speed * dt,
-      combat.minFront,
-      combat.maxFront,
-    );
-  }
-
-  if (
-    state.redEntryOpen &&
-    state.blueTotal > 0 &&
-    state.front <= objective.reinforcementCutoff
-  ) {
-    state.redEntryOpen = false;
-    state.redEntryRate = 0;
-  }
+  const { redLost, blueLost } = advanceLaneCombat(state, combat, objective, state.t, dt);
   if (!state.redEntryOpen && state.redTotal === 0) {
     end(true);
     return;
