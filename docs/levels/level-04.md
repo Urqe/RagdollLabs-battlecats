@@ -4,7 +4,7 @@
 
 ## Identity
 
-**Status** · Proposed. Hold two crossings with one cannon and a limited supply of volleys.
+**Status** · Development fixture. Hold two crossings with one sliding, auto-firing cannon.
 
 ## Player experience
 
@@ -29,6 +29,23 @@ Requires readable routing, independent lane pressure and breaches, compact units
 ## Open questions
 
 Can players tell which crossing needs help while sliding? Would staggered pressure or a shared breach buffer make mistakes fairer?
+
+## Play the 17B fixture
+
+Run `npm run dev` and open `http://127.0.0.1:4173/?fixture=dual-crossing`. Use
+**Defend the castle** to start. Slide toward an inner ×20 gate for immediate
+reinforcements, or aim at the outer ×65 barricade to open the stronger gate.
+The arrows on each contact line show the direction of movement. An amber
+crossing and downward warning mark enemies approaching the castle.
+
+For a quick warning and defeat, hold the starting west aim. To exercise both
+upgrades and see victory, start on the west barricade and alternate between
+the outer gates about every three seconds. **Pause → Restart** resets both
+crossings. **Levels** leaves the fixture. Level 4 remains unavailable in
+the normal selector.
+
+Fixture gate values, populations, and timing are provisional. Milestone 17C
+covers final balance, public selection, and progression.
 
 ## Revision history
 

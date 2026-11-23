@@ -66,7 +66,7 @@ function battleOutcome({ left, right }) {
   return null;
 }
 
-export function createDualFront(crossings, { onEvent } = {}) {
+export function createDualFront(crossings, { onEvent, beforeTick, afterTick } = {}) {
   const state = { time: 0, lanes: null, outcome: null };
   let definition = crossings;
   let nextSquadId = 1;
@@ -74,6 +74,7 @@ export function createDualFront(crossings, { onEvent } = {}) {
   const clock = createBattleClock((dt) => {
     if (!state.lanes || state.outcome) return;
     state.time += dt;
+    beforeTick?.(dt);
     const events = onEvent ? [] : null;
     const emit = events ? ((laneId, type, payload) => {
       events.push({ ...payload, type, laneId, time: state.time });
@@ -82,6 +83,7 @@ export function createDualFront(crossings, { onEvent } = {}) {
     for (const id of CROSSINGS) updateLane(state.lanes[id], state.time, dt, emit);
     state.outcome = battleOutcome(state.lanes);
     if (events) for (const event of events) onEvent(event);
+    afterTick?.();
   });
 
   function clear() {
@@ -100,7 +102,7 @@ export function createDualFront(crossings, { onEvent } = {}) {
     state.lanes = { left, right };
   }
 
-  function launchVolley(laneId, { multiplier, hits = 3 }) {
+  function launchVolley(laneId, { multiplier, hits = 3, origin }) {
     if (!CROSSINGS.includes(laneId)) throw new RangeError("Unknown crossing");
     if (!Number.isSafeInteger(multiplier) || multiplier < 1 ||
         !Number.isInteger(hits) || hits < 1 || hits > 3 ||
@@ -118,11 +120,12 @@ export function createDualFront(crossings, { onEvent } = {}) {
       hits,
       y: lane.combat.spawnY,
       marchTime: 0,
+      ...(origin === undefined ? {} : { origin }),
     };
     lane.squads.push(squad);
     onEvent?.({ ...squad, type: "launch", side: "blue", time: state.time });
   }
 
   reset();
-  return { state, advance: clock.advance, launchVolley, reset, clear };
+  return { state, clock, advance: clock.advance, launchVolley, reset, clear };
 }

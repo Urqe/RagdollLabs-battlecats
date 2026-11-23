@@ -607,6 +607,9 @@ export function createFigures(ctx, ownerDocument) {
     blueArmy,
     fallen,
     airborne,
+    soldier(x, y, red, size, phase) {
+      cat(x, y, red ? RED : BLUE, size, phase);
+    },
     crew(x, y, pose) {
       cat(x, y, BLUE, 6, pose);
     },

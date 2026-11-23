@@ -65,8 +65,7 @@ the authoritative battle immediately.
 `launchVolley(laneId, { multiplier, hits })` is the boundary for future cannon
 targeting. It represents a resolved volley through an open gate. Each landed
 kitten contributes the gate multiplier, and one to three landed kittens
-(default three) form one marching squad for the chosen crossing. Aiming code
-calls this once per resolved volley. It supplies the crossing and gate result
+(default three) form one marching squad for the chosen crossing. Each call supplies the crossing and gate result
 without relying on screen coordinates in the simulation. Call commands at
 matching simulation boundaries for deterministic replays.
 
@@ -86,3 +85,26 @@ switching away calls `clear()` to discard both lanes and stop advancing the
 battle. The shipped game keeps its single-front state, effect signatures, and
 outcome choreography. Milestone 17B can bind the coordinator to input and
 presentation once geometry and targeting are defined.
+
+## Milestone 17B · Playable dual-crossing fixture
+
+The browser fixture uses the existing Canvas, pointer controls, battle shell,
+and animation loop. Its active clock is the coordinator's 60 Hz battle clock.
+The cannon and projectile collision run before lane combat in each tick.
+Presentation consumes the emitted events and updates lane feedback after combat.
+Levels 1–3 continue through the single-front game and renderer.
+
+The fixture uses the shared three-shot spread and projectile resolver. Each
+projectile keeps its launch X in flight. A hit on an open gate calls
+`launchVolley(gate.laneId, { multiplier, hits: 1, origin })` with the gate's
+owner and the projectile's X for the marching visualization. Hits on closed
+wood spend that projectile on the barricade. Shots in the gaps expire. A
+centered volley can feed both crossings through two distinct projectile hits.
+
+The dual renderer draws a cached 420 × 760 map and compact ranks from the two
+authoritative populations. Each crossing has its own contact line, supply
+flags, marching squads, and warning. Casualties feed a bounded pool of four
+airborne cats per lane. Continuous red arrivals accumulate in a short bucket
+that drives the entrance animation. The fixture reuses replay, pause, and
+level navigation. Its URL and play instructions are in the
+[Level 4 brief](levels/level-04.md).

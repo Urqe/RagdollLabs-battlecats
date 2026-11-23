@@ -31,14 +31,14 @@ async function touchAim(page, client, target) {
   });
   expect((await snapshot(page)).gunX).toBeCloseTo(target, 1);
 }
-export async function setup(page, browserName, start = true) {
+export async function setup(page, browserName, start = true, path = "/") {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => {
     if (m.type() === "error") errors.push(m.text());
   });
   await page.clock.install();
-  await page.goto("/");
+  await page.goto(path);
   await page.clock.pauseAt(new Date(Date.now() + 1000));
   if (start)
     await page.getByRole("button", { name: "DEFEND THE CASTLE" }).click();
