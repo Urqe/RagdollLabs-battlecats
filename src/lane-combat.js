@@ -43,12 +43,15 @@ export function advanceLaneCombat(state, combat, objective, time, dt) {
   state.redTotal -= redLost;
   state.blueTotal -= blueLost;
 
-  const bluePressure = state.blueTotal;
+  const bluePressure = Math.min(state.blueTotal, combat.bluePressureCapacity ?? Infinity);
   const redPressure = state.redTotal * combat.redPressurePerCat;
   const totalPressure = bluePressure + redPressure;
   if (totalPressure > 0) {
     const momentum = (redPressure - bluePressure) / totalPressure;
-    const speed = momentum > 0 ? combat.redAdvance : combat.blueAdvance;
+    const pushScale = combat.blueFullAdvanceAt
+      ? clamp(state.blueTotal / combat.blueFullAdvanceAt, 0.45, 1)
+      : 1;
+    const speed = momentum > 0 ? combat.redAdvance : combat.blueAdvance * pushScale;
     state.front = clamp(
       state.front + momentum * speed * dt,
       combat.minFront,

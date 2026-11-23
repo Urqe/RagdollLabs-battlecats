@@ -6,8 +6,8 @@ import { fire, updateProjectiles } from "./projectiles.js";
 import { resetState } from "./state.js";
 
 export const crossings = {
-  left: { center: 112, edge: 22, width: 180, name: "WEST CROSSING" },
-  right: { center: 308, edge: 218, width: 180, name: "EAST CROSSING" },
+  left: { center: 112, edge: 22, width: 180 },
+  right: { center: 308, edge: 218, width: 180 },
 };
 
 const ignore = () => {};
@@ -23,6 +23,7 @@ export function createDualBattlefield({ state, onEnd = ignore, onEffect = ignore
   const feedback = {};
   const battle = createDualFront(LEVEL_FOUR.crossings, {
     beforeTick: updateCannon, onEvent: receive, afterTick: updatePresentation,
+    phalanx: LEVEL_FOUR.phalanx,
   });
 
   function receive(event) {
@@ -72,7 +73,10 @@ export function createDualBattlefield({ state, onEnd = ignore, onEffect = ignore
       gate.flashAt = state.t;
       battle.launchVolley(gate.laneId, { multiplier: gate.mult, hits: 1, origin: x });
       onEffect("multiply", state.t, gate.mult);
-    }, ignore, ignore, onEffect);
+    }, ignore, ignore, (type, time, target) => {
+      if (type === "break" && target === "phalanx") battle.unlockPhalanx();
+      onEffect(type, time, target);
+    });
   }
 
   function updateFeedback() {
@@ -103,7 +107,7 @@ export function createDualBattlefield({ state, onEnd = ignore, onEffect = ignore
       const danger = lane.breached || lane.front >= lane.objective.castleFront - 32 ||
         (lane.front >= lane.objective.castleFront - (local.danger ? 92 : 78) &&
           (local.danger || local.direction > 0));
-      local.danger = danger;
+      local.danger = danger && !(id === "left" && battle.state.phalanx.phase === "secured");
     }
   }
 

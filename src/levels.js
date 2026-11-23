@@ -174,34 +174,51 @@ const crossingCombat = {
   blueContactLoss: 0.12,
   reinforcementApproach: 16,
 };
-const laneIds = ["left", "right"];
+function siegeGate(laneId, x, width, mult, barricadeId) {
+  return Object.freeze({ laneId, x, width, mult, hitY: 556,
+    open: !barricadeId, barricadeId });
+}
 
 export const LEVEL_FOUR = Object.freeze({
   id: "two-tails",
   number: 4,
   title: "A Tale of Two Tails",
   status: "implemented",
-  battlefield: Object.freeze({ ...battlefield, minX: 30, maxX: 390, startX: 166,
+  battlefield: Object.freeze({ ...battlefield, minX: 28, maxX: 392, startX: 155,
     shotInterval: 0.46, shotEndY: 548 }),
   combat: Object.freeze({ projectileSpeed: 310, victoryDuration: 3.2 }),
   defeatDuration: 0.85,
   objective: crossingObjective,
-  gates: Object.freeze(laneIds.flatMap((laneId, i) => [
-    Object.freeze({ laneId, x: i ? 254 : 166, width: 84, mult: 20, hitY: 556, open: true }),
-    Object.freeze({ laneId, x: i ? 352 : 68, width: 84, mult: 60, hitY: 556,
-      open: false, barricadeId: laneId }),
-  ])),
-  barricades: Object.freeze(laneIds.map(id => barricade(id, 42, "STRONG GATE OPEN", 570))),
+  gates: Object.freeze([
+    siegeGate("left", 38, 51, null, "phalanx"),
+    siegeGate("left", 96, 54, 99, "left"),
+    siegeGate("left", 155, 58, 20),
+    siegeGate("right", 214, 58, 20),
+    siegeGate("right", 280, 64, 99, "right"),
+    siegeGate("right", 362, 80, 999, "siege"),
+  ]),
+  barricades: Object.freeze([
+    barricade("phalanx", 36, "MEOWRTANS RELEASED", 570),
+    barricade("left", 24, "LEFT ×99 OPEN", 570),
+    barricade("right", 27, "RIGHT ×99 OPEN", 570),
+    barricade("siege", 72, "RIGHT ×999 OPEN", 570),
+  ]),
   crossings: Object.freeze({
     left: Object.freeze({
-      combat: Object.freeze({ ...crossingCombat, initialFront: 335, initialRed: 460, redReinforcements: 33 }),
-      objective: crossingObjective, marchSpeed: 175, initialBlue: 225,
+      combat: Object.freeze({ ...crossingCombat, initialFront: 335, initialRed: 430,
+        minFront: 265, bluePressureCapacity: 850, maxRedLoss: 68, redAdvance: 12,
+        redReinforcements: 12, redReinforcementGrowth: 15, maxRedReinforcements: 800 }),
+      objective: crossingObjective, marchSpeed: 175, initialBlue: 330,
     }),
     right: Object.freeze({
-      combat: Object.freeze({ ...crossingCombat, initialFront: 350, initialRed: 490, redReinforcements: 35 }),
-      objective: crossingObjective, marchSpeed: 175, initialBlue: 225,
+      combat: Object.freeze({ ...crossingCombat, initialFront: 350, initialRed: 660,
+        blueAdvance: 4.8, blueFullAdvanceAt: 32000, redAdvance: 8, redReinforcements: 55, redReinforcementGrowth: 2.2,
+        maxRedReinforcements: 220, maxRedLoss: 205, redLossPerBlue: 0.17 }),
+      objective: crossingObjective, marchSpeed: 175, initialBlue: 540,
     }),
   }),
+  phalanx: Object.freeze({ marchTime: 2.4, deployTime: 1.15, holdFront: 308,
+    pushSpeed: 55, queueCapacity: 1700 }),
   support: null,
 });
 

@@ -4,53 +4,40 @@ import { CROSSINGS } from "../src/dual-front.js";
 import { createState } from "../src/state.js";
 import { dualAim, dualStrategies } from "../tests/helpers/dual-strategies.js";
 
-export function simulateDual(strategy, hz) {
+export function simulateDual(strategy, hz, { useSiege = true } = {}) {
   const state = createState();
-  const gateUnlockedAt = { left: null, right: null };
+  const unlocked = {};
   const battle = createDualBattlefield({
     state,
     onEffect(type, time) {
       if (type !== "break") return;
       for (const gate of state.gates) {
-        if (gate.barricadeId && gate.open)
-          gateUnlockedAt[gate.laneId] ??= time;
+        if (gate.barricadeId && gate.open) unlocked[gate.barricadeId] ??= time;
       }
     },
   });
   battle.reset();
-  const { lanes } = battle.state;
-  const secondsAimed = { left: 0, right: 0 };
+  const { lanes, phalanx } = battle.state;
   for (let second = 0; second < 150 && !battle.state.outcome; second++) {
-    state.gunX = dualAim(strategy, second, lanes, state.gates);
-    const target = state.gates.find(gate => gate.x === state.gunX);
-    const start = state.t;
-    for (let frame = 0; frame < hz && !battle.state.outcome; frame++) {
-      battle.advance(1 / hz);
-    }
-    if (target.open) {
-      const ready = target.barricadeId ? gateUnlockedAt[target.laneId] : start;
-      secondsAimed[target.laneId] += state.t - Math.max(start, ready);
-    }
+    const aim = dualAim(strategy, second, lanes, state.gates, phalanx);
+    const east99 = state.gates.find(gate => gate.laneId === "right" && gate.mult === 99);
+    state.gunX = !useSiege && phalanx.phase === "secured" && east99.open ? east99.x : aim;
+    for (let frame = 0; frame < hz && !battle.state.outcome; frame++) battle.advance(1 / hz);
   }
   return {
     strategy,
     outcome: battle.state.outcome,
     duration: state.t,
     breached: CROSSINGS.filter(id => lanes[id].breached),
-    crossings: Object.fromEntries(CROSSINGS.map(id => [id, {
-      blue: lanes[id].blueTotal,
-      red: lanes[id].redTotal,
-      gateUnlockedAt: gateUnlockedAt[id],
-      supplyCutoffAt: Number.isFinite(battle.feedback[id].cutoffAt) ? battle.feedback[id].cutoffAt : null,
-      secondsAimed: secondsAimed[id],
-    }])),
+    unlocked,
+    securedAt: phalanx.phase === "secured" ? phalanx.since : null,
+    supplyCutoffAt: Number.isFinite(battle.feedback.right.cutoffAt) ? battle.feedback.right.cutoffAt : null,
+    retreated: battle.state.retreat?.count ?? 0,
   };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const results = [30, 60, 120].map(hz => ({
-    hz,
-    strategies: dualStrategies.map(strategy => simulateDual(strategy, hz)),
-  }));
-  console.log(JSON.stringify(results, null, 2));
+  console.log(JSON.stringify([30, 60, 120].map(hz => ({
+    hz, strategies: dualStrategies.map(strategy => simulateDual(strategy, hz)),
+  })), null, 2));
 }

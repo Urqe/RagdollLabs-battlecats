@@ -19,11 +19,8 @@ function createLane(id, { combat, objective, marchSpeed, initialBlue = 0 }) {
   };
 }
 
-function updateLane(lane, time, dt, emit) {
-  const { combat, objective } = lane;
-  const previousFront = lane.front;
-  const supplyWasOpen = lane.redEntryOpen;
-
+function marchReinforcements(lane, dt, emit) {
+  const { combat } = lane;
   // Keep pending squads in launch order, including when several arrive together.
   let pending = 0;
   for (const squad of lane.squads) {
@@ -35,6 +32,14 @@ function updateLane(lane, time, dt, emit) {
     }
   }
   lane.squads.length = pending;
+}
+
+function updateLane(lane, time, dt, emit) {
+  const { combat, objective } = lane;
+  const previousFront = lane.front;
+  const supplyWasOpen = lane.redEntryOpen;
+
+  marchReinforcements(lane, dt, emit);
 
   const { redArrived, redLost, blueLost } = advanceLaneCombat(lane, combat, objective, time, dt);
   if (emit) {
@@ -59,6 +64,33 @@ function updateLane(lane, time, dt, emit) {
   }
 }
 
+function advancePhalanx(formation, rules, time, emit) {
+  const elapsed = time - formation.since;
+  let phase = formation.phase;
+  if (phase === "unlocked" && elapsed > 0) phase = "marching";
+  else if (phase === "marching" && elapsed >= rules.marchTime) phase = "deploying";
+  else if (phase === "deploying" && elapsed >= rules.deployTime) phase = "secured";
+  if (phase === formation.phase) return;
+  Object.assign(formation, { phase, since: time });
+  emit?.("left", "phalanx", { phase });
+}
+
+function holdCrossing(lane, rules, time, dt, emit) {
+  const previousFront = lane.front;
+  marchReinforcements(lane, dt, emit);
+  lane.front = Math.min(lane.front, Math.max(rules.holdFront, lane.front - rules.pushSpeed * dt));
+  // Incoming ranks queue in front of the shields. Once the approach fills,
+  // troops already present hold position and further arrivals stop.
+  const available = Math.max(0, rules.queueCapacity - lane.redTotal);
+  const { redReinforcements, redReinforcementGrowth, maxRedReinforcements } = lane.combat;
+  const rate = Math.min(maxRedReinforcements, redReinforcements + redReinforcementGrowth * time);
+  const count = Math.min(available, rate * dt);
+  lane.redEntryRate = count / dt;
+  lane.redTotal += count;
+  if (count) emit?.("left", "arrival", { side: "red", count, front: lane.front });
+  if (lane.front !== previousFront) emit?.("left", "frontline", { previousFront, front: lane.front });
+}
+
 function battleOutcome({ left, right }) {
   if (left.breached || right.breached) return "defeat";
   if (!left.redEntryOpen && left.redTotal === 0 &&
@@ -66,7 +98,7 @@ function battleOutcome({ left, right }) {
   return null;
 }
 
-export function createDualFront(crossings, { onEvent, beforeTick, afterTick } = {}) {
+export function createDualFront(crossings, { onEvent, beforeTick, afterTick, phalanx } = {}) {
   const state = { time: 0, lanes: null, outcome: null };
   let definition = crossings;
   let nextSquadId = 1;
@@ -84,8 +116,27 @@ export function createDualFront(crossings, { onEvent, beforeTick, afterTick } = 
       events.push({ ...payload, type, laneId, time: state.time });
     }) : null;
 
-    for (const id of CROSSINGS) updateLane(state.lanes[id], state.time, dt, emit);
-    state.outcome = battleOutcome(state.lanes);
+    const { left, right } = state.lanes;
+    if (phalanx && state.phalanx.phase === "secured") {
+      holdCrossing(left, phalanx, state.time, dt, emit);
+    } else {
+      updateLane(left, state.time, dt, emit);
+      if (phalanx && !left.breached) advancePhalanx(state.phalanx, phalanx, state.time, emit);
+    }
+    updateLane(right, state.time, dt, emit);
+    if (!phalanx) {
+      state.outcome = battleOutcome(state.lanes);
+    } else if (left.breached || right.breached) {
+      state.outcome = "defeat";
+    } else if (!right.redEntryOpen && right.redTotal === 0) {
+      // The command camp has fallen. Record survivors withdrawing separately
+      // from combat losses so the renderer can show the retreat.
+      state.retreat = { count: left.redTotal };
+      left.redTotal = left.redEntryRate = 0;
+      left.redEntryOpen = false;
+      emit?.("left", "retreat", state.retreat);
+      state.outcome = "victory";
+    }
     if (events) for (const event of events) onEvent(event);
     afterTick?.(dt);
   });
@@ -96,6 +147,10 @@ export function createDualFront(crossings, { onEvent, beforeTick, afterTick } = 
     state.lanes = null;
     state.outcome = null;
     nextSquadId = 1;
+    if (phalanx) {
+      state.phalanx = null;
+      state.retreat = null;
+    }
   }
 
   function reset(nextCrossings = definition) {
@@ -104,6 +159,7 @@ export function createDualFront(crossings, { onEvent, beforeTick, afterTick } = 
     clear();
     definition = nextCrossings;
     state.lanes = { left, right };
+    if (phalanx) state.phalanx = { phase: "locked", since: 0 };
   }
 
   function launchVolley(laneId, { multiplier, hits = 3, origin }) {
@@ -130,6 +186,11 @@ export function createDualFront(crossings, { onEvent, beforeTick, afterTick } = 
     onEvent?.({ ...squad, type: "launch", side: "blue", time: state.time });
   }
 
+  function unlockPhalanx() {
+    if (state.phalanx?.phase !== "locked" || state.outcome) return;
+    Object.assign(state.phalanx, { phase: "unlocked", since: state.time });
+  }
+
   reset();
-  return { state, clock, advance: clock.advance, launchVolley, reset, clear };
+  return { state, clock, advance: clock.advance, launchVolley, unlockPhalanx, reset, clear };
 }

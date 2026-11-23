@@ -75,7 +75,7 @@ For AI-assisted changes, keep simulation code independent of DOM and animation t
 
 ## Level 1 balance validation
 
-See the [combat model, tested outcomes, and gameplay recordings](docs/level-1-balance.md). Run `npm run simulate` for Level 1 or `node scripts/simulate-purrapult.js` for Level 2 at 30, 60, and 120 Hz. Chromium uses native touch drags in the playthrough tests. The browser diagnostics read a detached snapshot from `src/main.js`. CI retains the evidence in the `playwright-results` artifact.
+See the [combat model, tested outcomes, and gameplay recordings](docs/level-1-balance.md). Run `npm run simulate` for Level 1 or `node scripts/simulate-purrapult.js` for Level 2 at 30, 60, and 120 Hz. Run `node scripts/simulate-dual.js` for the eight Level 4 strategies and the [phalanx and command-camp validation](docs/level-4-balance.md). Chromium uses native touch drags in the playthrough tests. The browser diagnostics read a detached snapshot from `src/main.js`. CI retains the evidence in the `playwright-results` artifact.
 
 ## Roadmap and level design
 

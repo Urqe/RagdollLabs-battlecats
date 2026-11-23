@@ -14,7 +14,7 @@ SiegeDolls is a mobile-first arcade strategy game about miniature cats taking si
 
 ## Development status
 
-Level 1 is the playable regression baseline. Level 2 adds yarn-ball artillery, Level 3 adds the Meowmen, and Level 4 splits defense across two crossings. Every implemented level stays available from the menu. The five merged milestones established modular JavaScript and CI, deterministic aim strategies and browser playthroughs, escalating frontline pressure, a wider battlefield and short victory sequence, then combat motion and optional sound. [Level 1 design](levels/level-01.md) · [Balance, tests, and recordings](level-1-balance.md)
+Level 1 is the playable regression baseline. Level 2 adds yarn-ball artillery, Level 3 adds the Meowmen, and Level 4 turns two crossings into one asymmetric castle siege. Every implemented level stays available from the menu. The five merged milestones established modular JavaScript and CI, deterministic aim strategies and browser playthroughs, escalating frontline pressure, a wider battlefield and short victory sequence, then combat motion and optional sound. [Level 1 design](levels/level-01.md) · [Balance, tests, and recordings](level-1-balance.md)
 
 **Implemented** means playable. **Next** identifies the current implementation candidate. **Proposed** means a preliminary design. **Under review** flags a decision or missing evidence that needs attention. **Deferred** records an intentional postponement. Titles and mechanics for Levels 5–10 are provisional.
 
@@ -58,7 +58,8 @@ A candidate future special encounter could unlock a **Royal Armory** after costl
 3. **Milestone 8 · Battlefield impact and visual polish.** Faster Purrapult support and visible formation disruption join shared contact and reinforcement polish. Both levels retain their strategy outcomes. Check readability and enjoyment in a human session before choosing the next level. [Balance and motion evidence](purrapult-balance.md)
 4. **Milestone 9 · Army scale and combat fidelity.** Literal small encounters, shared reserve scaling and population-driven formation reactions are part of the level foundation. [Army scale and combat evidence](army-visual-scale.md)
 5. **Level 3 · The Meowmen.** Add unlockable ranged support.
-6. **Milestone 17 · A Tale of Two Tails.** Add independent lane combat, two-crossing cannon play, and a public Level 4 with dual victory flags. [Balance evidence](level-4-balance.md)
+6. **Milestone 17 · A Tale of Two Tails.** Release fixed-step lane combat and two-crossing cannon play. [Release archive](level-4-balance-m17.md)
+7. **Milestone 18 · Hold the Flank, Break the Horde.** One castle and one invasion. Buy room on the west bridge, deploy the Meowrtan shield wall, then send the ×999 surge through the eastern ravine and capture the red command camp. [Level design](levels/level-04.md) · [Measured balance](level-4-balance.md)
 
 Treat Levels 5–10 as candidates. Use playtest results from the support levels and the two crossings before planning mixed units or combined encounters.
 

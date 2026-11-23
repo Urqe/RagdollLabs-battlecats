@@ -41,7 +41,7 @@ simulation and event flow. Keep unit quantity relevant to engagement
 capacity and endurance, even with higher quality per cat. Gates should
 remain the source of reinforcements. The implemented levels use aggregate cat populations.
 
-## Milestone 17A · Headless dual-front simulation
+## Milestone 17A · Headless dual-front baseline
 
 [The dual-front coordinator](../src/dual-front.js) takes exactly two crossing
 definitions keyed by `left` and `right`. Each specifies `combat`, `objective`,
@@ -50,14 +50,14 @@ the existing combat and objective fields, with independent starting populations,
 reinforcement rates, growth and caps, march distances, cutoff points, and breach
 thresholds. Each crossing owns aggregate blue and red populations, a frontline,
 pending blue squads, red supply, and breach status. Balance and map geometry
-remain open for [Level 4](levels/level-04.md).
+were defined for the public release in Milestone 17C.
 
 The coordinator and the existing game share the [60 Hz clock](../src/battle-clock.js)
 and [lane calculations](../src/lane-combat.js). The coordinator advances left
 then right once per tick with a common timestamp. Each lane resolves marching
 arrivals in launch order, continuous red arrivals, casualties, territorial
 movement, and supply and breach checks. Enemy supply stays closed once cut.
-After both lanes finish, either breach causes defeat. Victory requires both
+In the baseline, after both lanes finish, either breach causes defeat. Victory requires both
 supply routes closed and both red populations at zero. Either result freezes
 the authoritative battle immediately.
 
@@ -85,7 +85,7 @@ battle. The shipped game keeps its single-front state, effect signatures, and
 outcome choreography. Milestone 17B can bind the coordinator to input and
 presentation once geometry and targeting are defined.
 
-## Milestone 17B · Playable dual-crossing fixture
+## Milestone 17B · Playable dual-crossing baseline
 
 The browser fixture uses the existing Canvas, pointer controls, battle shell,
 and animation loop. Its active clock is the coordinator's 60 Hz battle clock.
@@ -107,7 +107,7 @@ airborne cats per lane. Continuous red arrivals accumulate in a short bucket
 that drives the entrance animation. The fixture reuses replay, pause, and
 level navigation. The 17C release uses the same battlefield through the normal level selector.
 
-## Milestone 17C · Level 4 release
+## Milestone 17C · Historical Level 4 release
 
 `LEVEL_FOUR` registers `two-tails` as an implemented level. Its data owns
 the four gate footprints, opening cost, and both crossing definitions.
@@ -126,4 +126,34 @@ shared pause controls freeze both clocks through visibility changes and
 resume on a new wall-clock baseline. Leaving the level discards both lanes
 and the presentation timers.
 
-[Level 4 rules](levels/level-04.md) · [Deterministic balance evidence](level-4-balance.md)
+[Level 4 rules](levels/level-04.md) · [Symmetric release balance](level-4-balance-m17.md)
+
+## Milestone 18 · One castle siege
+
+[Level 4](levels/level-04.md) still uses the dual-front coordinator and fixed-step lane
+calculations. The shared projectile resolver recognizes the Level 4
+phalanx barricade as a target that consumes shots while locked. The
+last hit sets the coordinator's phalanx phase to unlocked. Marching
+and deploying advance on the same clock as combat and a west breach
+can still end either phase. Only secured switches west combat to the
+shield wall rule. The wall drives the contact line toward the bridge,
+stops enemy advancement and ordinary melee losses, and admits red
+arrivals into available space at the choke. That local hold keeps the
+red entry open. The right continues ordinary lane combat.
+
+The siege outcome checks both breaches first. When the east command
+camp is cut off and the east population reaches a permanent zero, the
+remaining west population transfers into an explicit retreat record.
+The battle freezes population changes and emits the retreat separately
+from casualty events. The outcome clock drives a single flag capture,
+the withdrawal, and the shield salute. Restart and level selection
+clear both the formation lifecycle and the retreat record.
+
+The renderer caches the map and draws one red total from disjoint lane
+populations. Bounded shared reserve ranks and lane contact formations
+represent that total. The Meowrtans are a fixed ten-sprite formation
+driven by authoritative phase and position. The east ×999 uses the
+same reinforcement squads with denser bounded presentation. The
+[balance tests](level-4-balance.md) cover eight pointer strategies and
+use frontline bounds to verify the west breach occurs before the
+earliest possible ordinary east victory.
