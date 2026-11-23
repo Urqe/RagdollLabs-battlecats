@@ -90,6 +90,8 @@ test("public playthrough opens both gates, captures both flags, and persists vic
   await pause(page).click();
   const frozen = await snapshot(page);
   const image = await canvasImage(page);
+  const redFlags = await supplyFlags(page, [166, 80, 67]);
+  for (const count of redFlags) expect(count).toBeGreaterThan(120);
   await page.clock.fastForward(60000);
   expect(await snapshot(page)).toEqual(frozen);
   expect(await canvasImage(page)).toBe(image);
@@ -99,18 +101,8 @@ test("public playthrough opens both gates, captures both flags, and persists vic
     next => next.victoryElapsed >= FLAG_CAPTURE_TIME + FLAG_RAISE_TIME, 2, 100);
   expect(flags.mode).toBe("victory");
   expect(flags.dual).toEqual(frozen.dual);
-  const bluePixels = await page.locator("#game").evaluate(canvas => {
-    const ctx = canvas.getContext("2d");
-    return [45, 241].map(x => {
-      const { data } = ctx.getImageData(x, 80, 44, 15);
-      let count = 0;
-      for (let i = 0; i < data.length; i += 4)
-        if (data[i] === 50 && data[i + 1] === 143 && data[i + 2] === 232) count++;
-      return count;
-    });
-  });
-  expect(bluePixels[0]).toBeGreaterThan(120);
-  expect(bluePixels[1]).toBeGreaterThan(120);
+  const raised = await supplyFlags(page, [50, 143, 232]);
+  for (const count of raised) expect(count).toBeGreaterThan(120);
   await expect(page.locator("#result")).toBeHidden();
   await page.clock.runFor(2500);
   await expect(page.getByRole("heading", { name: "The castle stands!" })).toBeVisible();
@@ -143,12 +135,26 @@ test("both neglect strategies show a pausable reaction naming the breached cross
   }
 });
 
+async function supplyFlags(page, color) {
+  return page.locator("#game").evaluate((canvas, rgb) => {
+    const ctx = canvas.getContext("2d");
+    // Both cloths start at their supply road centerlines, just below the HUD.
+    return [112, 308].map(x => {
+      const { data } = ctx.getImageData(x, 91, 36, 17);
+      let count = 0;
+      for (let i = 0; i < data.length; i += 4)
+        if (rgb.every((channel, j) => data[i + j] === channel)) count++;
+      return count;
+    });
+  }, color);
+}
+
 async function leadingCats(page) {
   return page.locator("#game").evaluate(canvas => {
     const ctx = canvas.getContext("2d");
-    // Sample above the original front and away from the flagpoles.
-    return [100, 296].map(x => {
-      const { data } = ctx.getImageData(x, 83, 55, 24);
+    // Sample the approach to each pole, on the opposite side from the cloth.
+    return [62, 258].map(x => {
+      const { data } = ctx.getImageData(x, 96, 46, 20);
       let count = 0;
       for (let i = 0; i < data.length; i += 4)
         if (data[i] < 100 && data[i + 1] > 100 && data[i + 2] > 180) count++;
@@ -173,7 +179,7 @@ test("restart and level selection cancel a paused two-flag celebration", async (
   await selectTwoTails(page);
   await page.evaluate(async () => (await import("/src/main.js")).secureCrossings(110));
   await page.clock.runFor(50);
-  // The remaining defenders must be visible inside the watchposts at cutoff.
+  // The remaining defenders must be visible at the supply points at cutoff.
   const defenders = await page.locator("#game").evaluate(canvas => {
     const ctx = canvas.getContext("2d");
     return [85, 281].map(x => {
@@ -189,9 +195,11 @@ test("restart and level selection cancel a paused two-flag celebration", async (
     await page.evaluate(async () => (await import("/src/main.js")).secureCrossings());
     await page.clock.runFor(50);
     const approaching = await leadingCats(page);
-    await page.clock.runFor(1350);
+    await page.clock.runFor(780);
+    expect((await snapshot(page)).victoryElapsed).toBeLessThan(FLAG_CAPTURE_TIME);
     const charged = await leadingCats(page);
     for (let lane = 0; lane < 2; lane++) expect(charged[lane]).toBeGreaterThan(approaching[lane] + 25);
+    for (const count of await supplyFlags(page, [50, 143, 232])) expect(count).toBe(0);
     expect((await snapshot(page)).mode).toBe("victory");
     await pause(page).click();
     await page.getByRole("dialog").getByRole("button", { name: action }).click();

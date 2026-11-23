@@ -7,6 +7,12 @@ All four implemented levels are immediately available.
 
 ## Hold both crossings
 
+Two red invasion routes lead from separate supply camps on the north bank.
+Their west and east bridges cross the same river. On the south bank, both
+roads open onto the approach to one blue castle, with a single curtain wall,
+central gatehouse and shared cannon courtyard. Each crossing keeps its own
+combat front, army counts, reinforcement gates and breach warning.
+
 The cannon slides horizontally and fires three kittens automatically every
 0.46 seconds. Aim at the inner ×20 gates for immediate reinforcements. An
 outer ×60 gate opens after its barricade takes 42 direct hits, or 14 clean
@@ -17,16 +23,18 @@ misses. The level has no support emplacements.
 The directional marks on each frontline show which way it is moving. When
 a crossing nears the castle, an amber warning marks the endangered side.
 The warning turns red in breach range and clears after the frontline pushes
-back far enough. A gate displays its barricade progress or **Open**. Supply
-flags and labels show which enemy entrances are secured.
+back far enough. A gate displays its barricade progress or **Open**. Each
+camp has one marked supply point. Its label reports the cutoff while its flag
+marks control of the camp.
 
 ## Win and lose
 
 Advance both lines to their enemy entrances to permanently cut supplies.
 Victory requires both entrances secured and zero red troops on both
 crossings. Combat freezes at that point. Leading blue ranks charge first,
-the following ranks close up, and each entrance raises its own blue flag.
-The victory result appears after the 3.2-second sequence.
+the following ranks close up, and each army reaches its camp's flagpole.
+Each red flag drops and a blue flag rises at the same pole. Both blue flags
+are up before the victory result appears at 3.2 seconds.
 
 If either red army reaches the castle, both crossings freeze. A
 0.85-second reaction highlights the breached side before the defeat
