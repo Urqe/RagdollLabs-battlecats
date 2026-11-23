@@ -1,6 +1,7 @@
 import { createAirborneCats } from "./airborne-cats.js";
 import { CROSSINGS, createDualFront } from "./dual-front.js";
-import { LEVEL_ONE } from "./levels.js";
+import { FLAG_CAPTURE_TIME } from "./army-movement.js";
+import { LEVEL_FOUR } from "./levels.js";
 import { fire, updateProjectiles } from "./projectiles.js";
 import { resetState } from "./state.js";
 
@@ -9,59 +10,20 @@ export const crossings = {
   right: { center: 308, edge: 218, width: 180, name: "EAST CROSSING" },
 };
 
-const gates = CROSSINGS.flatMap((laneId, i) => [
-  { laneId, x: i ? 254 : 166, width: 84, mult: 20, hitY: 556, open: true },
-  { laneId, x: i ? 352 : 68, width: 84, mult: 65, hitY: 556,
-    open: false, barricadeId: laneId },
-]);
-
-export const fixtureLevel = {
-  id: "dual-crossing-fixture",
-  number: 4,
-  title: "A Tale of Two Tails",
-  battlefield: { ...LEVEL_ONE.battlefield, minX: 30, maxX: 390, startX: 166,
-    shotInterval: 0.46, shotEndY: 548 },
-  combat: { projectileSpeed: 310 },
-  gates,
-  barricades: CROSSINGS.map(id => ({ id, hits: 15, hitY: 570 })),
-  support: null,
-};
-
-const objective = { reinforcementCutoff: 120, castleFront: 510 };
-const combat = {
-  ...LEVEL_ONE.combat,
-  minFront: 115,
-  maxFront: 520,
-  spawnY: 547,
-  blueAdvance: 37,
-  redAdvance: 25,
-  redPressurePerCat: 0.66,
-  redReinforcementGrowth: 2,
-  maxRedReinforcements: 125,
-  redLossPerBlue: 0.24,
-  blueContactLoss: 0.10,
-  reinforcementApproach: 72,
-};
-
-export const fixtureDefinitions = {
-  left: { combat: { ...combat, initialFront: 310, initialRed: 390, redReinforcements: 40 },
-    objective, marchSpeed: 175, initialBlue: 310 },
-  right: { combat: { ...combat, initialFront: 378, initialRed: 530, redReinforcements: 68 },
-    objective, marchSpeed: 175, initialBlue: 260 },
-};
-
 const ignore = () => {};
 const freshFeedback = () => ({
   direction: 0, reversedAt: -Infinity, redIntake: 0, redPulse: -Infinity,
   redPending: 0, clashAt: -Infinity, contact: -Infinity, launchAt: -Infinity,
   arrivalAt: -Infinity, cutoffAt: -Infinity, breachAt: -Infinity,
-  danger: false, dangerAt: -Infinity, blueLost: 0, redLost: 0,
+  danger: false, blueLost: 0, redLost: 0,
   flights: createAirborneCats(4),
 });
 
 export function createDualBattlefield({ state, onEnd = ignore, onEffect = ignore }) {
   const feedback = {};
-  const battle = createDualFront(fixtureDefinitions, { beforeTick: updateCannon, onEvent: receive, afterTick: updateFeedback });
+  const battle = createDualFront(LEVEL_FOUR.crossings, {
+    beforeTick: updateCannon, onEvent: receive, afterTick: updatePresentation,
+  });
 
   function receive(event) {
     const local = feedback[event.laneId];
@@ -102,7 +64,7 @@ export function createDualBattlefield({ state, onEnd = ignore, onEffect = ignore
     if (state.nextShot <= 0) {
       fire(state, ignore);
       onEffect("fire", state.t);
-      state.nextShot += fixtureLevel.battlefield.shotInterval;
+      state.nextShot += state.level.battlefield.shotInterval;
     }
     for (let i = 0; i < state.barricadeFlashes.length; i++)
       state.barricadeFlashes[i] = Math.max(0, state.barricadeFlashes[i] - dt);
@@ -138,16 +100,38 @@ export function createDualBattlefield({ state, onEnd = ignore, onEffect = ignore
         }
       }
       // Hysteresis keeps the alert from flashing repeatedly near the threshold.
-      const danger = lane.breached || (lane.front >= lane.objective.castleFront -
-        (local.danger ? 100 : 78) && local.direction > 0);
-      if (danger && !local.danger) local.dangerAt = time;
+      const danger = lane.breached || lane.front >= lane.objective.castleFront - 32 ||
+        (lane.front >= lane.objective.castleFront - (local.danger ? 92 : 78) &&
+          (local.danger || local.direction > 0));
       local.danger = danger;
     }
-    if (battle.state.outcome) {
-      state.mode = "end";
+  }
+
+  function updatePresentation(dt) {
+    if (state.mode === "playing") {
+      updateFeedback();
+      if (!battle.state.outcome) return;
       state.shots.length = 0;
       for (const id of CROSSINGS) feedback[id].flights.reset();
-      onEnd(battle.state.outcome === "victory");
+      state.mode = battle.state.outcome;
+      if (state.mode === "victory") onEffect("victory", state.t);
+      return;
+    }
+    if (state.mode !== "victory" && state.mode !== "defeat") return;
+    const won = state.mode === "victory";
+    const previous = state.victoryElapsed;
+    const duration = won ? state.level.combat.victoryDuration : state.level.defeatDuration;
+    const elapsed = Math.min(duration, (won ? previous : state.defeatElapsed) + dt);
+    if (won) {
+      state.victoryElapsed = elapsed;
+      if (previous < FLAG_CAPTURE_TIME && elapsed >= FLAG_CAPTURE_TIME)
+        onEffect("flagCapture", state.t + FLAG_CAPTURE_TIME);
+    } else {
+      state.defeatElapsed = elapsed;
+    }
+    if (elapsed === duration) {
+      state.mode = "end";
+      onEnd(won);
     }
   }
 
@@ -156,6 +140,7 @@ export function createDualBattlefield({ state, onEnd = ignore, onEffect = ignore
     state.shots.length = 0;
     state.dragId = null;
     state.mode = "menu";
+    delete state.defeatElapsed;
     state.recoil = 0;
     for (const id of CROSSINGS) feedback[id] = freshFeedback();
   }
@@ -163,7 +148,8 @@ export function createDualBattlefield({ state, onEnd = ignore, onEffect = ignore
   function reset() {
     clear();
     battle.reset();
-    resetState(state, fixtureLevel, "playing");
+    resetState(state, LEVEL_FOUR, "playing");
+    state.defeatElapsed = 0;
     state.nextShot = 0.15;
   }
 
@@ -172,7 +158,7 @@ export function createDualBattlefield({ state, onEnd = ignore, onEffect = ignore
     get paused() { return battle.clock.paused; },
     pause: battle.clock.pause, resume: battle.clock.resume,
     advance(dt) {
-      if (state.mode !== "playing") return;
+      if (state.mode === "menu" || state.mode === "end") return;
       battle.advance(dt);
     },
   };

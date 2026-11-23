@@ -64,8 +64,8 @@ test("melee reactions obey the event's casualty side and clear at battle boundar
 });
 
 for (const hz of [30, 60, 120]) {
-  test(`each level preserves the complete battle state with combat visuals at ${hz} Hz`, () => {
-    for (const level of LEVELS.filter(level => level.status === "implemented")) {
+  test(`each single-front level preserves the complete battle state with combat visuals at ${hz} Hz`, () => {
+    for (const level of LEVELS.filter(level => level.status === "implemented" && !level.crossings)) {
       const motion = createMotion();
       const baseline = createGame({ level, random: () => 0.5 });
       let knockback = false;
