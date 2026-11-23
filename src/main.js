@@ -1,5 +1,7 @@
 import { createBattleClock, createGame } from "./game.js";
 import { createRenderer } from "./render.js";
+import { createDualBattlefield, fixtureLevel } from "./dual-battlefield.js";
+import { createDualRenderer } from "./dual-render.js";
 import { createMotion } from "./motion.js";
 import { createSound } from "./sound.js";
 import { bindControls } from "./controls.js";
@@ -20,6 +22,19 @@ const game = createGame({
 });
 const state = game.state;
 const renderer = createRenderer(state, canvas, motion);
+const fixtureRequested = new URLSearchParams(location.search).get("fixture") === "dual-crossing";
+const fixture = fixtureRequested ? createDualBattlefield({
+  state, onEnd: end,
+  onEffect(kind, _time, value) {
+    if (kind === "multiply") sound.play(value === 20 ? "gate20" : "gate99");
+    else if (kind === "break") sound.play("gateUnlock");
+    else sound.play(kind);
+  },
+}) : null;
+const fixtureRenderer = fixture && createDualRenderer(state, canvas, fixture);
+const inFixture = () => state.level === fixtureLevel;
+const activeRenderer = () => inFixture() ? fixtureRenderer : renderer;
+const activeClock = () => inFixture() ? fixture : battleClock;
 const soundButtons = document.querySelectorAll("[data-sound]");
 let frame = null;
 let last = null;
@@ -67,7 +82,9 @@ function end(won) {
     ? "The castle stands!"
     : "The horde broke through";
   el("resultText").textContent = won
-    ? `Your cat army overwhelmed the invaders and cleared the battlefield. ${level.title} is won!`
+    ? (inFixture() ? "Both enemy supply routes are secured and the crossings are clear."
+      : `Your cat army overwhelmed the invaders and cleared the battlefield. ${level.title} is won!`)
+    : inFixture() ? `The ${fixture.state.lanes.left.breached ? "west" : "east"} crossing fell. Keep both crossings reinforced to hold the castle.`
     : "The enemy reached your castle before you could turn the tide. Reinforce the frontline between volleys at the barricades.";
   el("resultLevel").textContent = `Level ${level.number} · ${level.title}`;
 }
@@ -83,8 +100,8 @@ function battleActive() {
 }
 
 function pause() {
-  if (!battleActive() || battleClock.paused) return;
-  battleClock.pause();
+  if (!battleActive() || activeClock().paused) return;
+  activeClock().pause();
   if (frame !== null) cancelAnimationFrame(frame);
   frame = null;
   last = null;
@@ -105,8 +122,8 @@ function clearPause() {
 }
 
 function resume() {
-  if (!battleClock.paused || !battleActive() || document.hidden) return;
-  battleClock.resume();
+  if (!activeClock().paused || !battleActive() || document.hidden) return;
+  activeClock().resume();
   clearPause();
   el("pauseBattle").focus({ preventScroll: true });
   void sound.unlock();
@@ -114,7 +131,7 @@ function resume() {
 }
 
 function resetPause() {
-  if (battleClock.paused) sound.discard();
+  if (activeClock().paused) sound.discard();
   clearPause();
   battleClock.reset();
 }
@@ -143,28 +160,35 @@ function start(level = playableLevel(progress.selected)) {
   stopFrame();
   resetPause();
   void sound.unlock();
-  progress.selected = level.id;
-  saveProgress(progress);
   const changed = state.level !== level;
   motion.reset();
-  game.reset(level);
-  motion.step(0, 0, state.blueTotal, state.redEntryOpen, level, state);
-  if (changed) renderer.resize();
+  if (level === fixtureLevel) {
+    fixture.reset();
+  } else {
+    if (inFixture()) fixture.clear();
+    progress.selected = level.id;
+    saveProgress(progress);
+    game.reset(level);
+    motion.step(0, 0, state.blueTotal, state.redEntryOpen, level, state);
+  }
+  if (changed) activeRenderer().resize();
   el("menu").hidden = true;
   el("levels").hidden = true;
   el("result").hidden = true;
   el("battleNav").hidden = false;
-  el("hud").style.display = "flex";
-  buildBarrierHud();
-  updateHud();
-  renderer.draw();
+  el("hud").style.display = inFixture() ? "none" : "flex";
+  if (!inFixture()) {
+    buildBarrierHud();
+    updateHud();
+  }
+  activeRenderer().draw();
   last = performance.now();
   if (document.hidden) pause();
   else frame = requestAnimationFrame(loop);
 }
 
 function showMenu() {
-  const level = playableLevel(progress.selected);
+  const level = fixtureRequested ? fixtureLevel : playableLevel(progress.selected);
   el("menuLevel").textContent = `Level ${level.number} · ${level.title}`;
   const supportTip = el("artilleryTip");
   supportTip.hidden = !level.support;
@@ -179,7 +203,11 @@ function chooseLevel() {
   stopFrame();
   resetPause();
   motion.reset();
-  game.reset(state.level, "menu");
+  if (inFixture()) {
+    fixture.clear();
+    game.reset(playableLevel(progress.selected), "menu");
+    renderer.resize();
+  } else game.reset(state.level, "menu");
   el("hud").style.display = "none";
   el("banner").style.opacity = 0;
   el("battleNav").hidden = true;
@@ -261,14 +289,14 @@ const battleClock = createBattleClock((dt) => {
 function loop(now) {
   frame = null;
   if (document.hidden) pause();
-  if (battleClock.paused) return;
+  if (activeClock().paused) return;
   const wasPlaying = state.mode === "playing";
   // The first frame after resuming establishes a fresh wall-clock baseline.
-  if (last !== null) battleClock.advance((now - last) / 1000);
+  if (last !== null) activeClock().advance((now - last) / 1000);
   last = now;
   if (wasPlaying && state.mode === "victory") el("banner").style.opacity = 0;
-  if (battleActive()) updateHud();
-  renderer.draw();
+  if (battleActive() && !inFixture()) updateHud();
+  activeRenderer().draw();
   if (battleActive())
     frame = requestAnimationFrame(loop);
 }
@@ -280,7 +308,7 @@ for (const button of soundButtons) {
   });
 }
 updateSoundButtons();
-bindControls(state, canvas, document, () => battleClock.paused || document.hidden);
+bindControls(state, canvas, document, () => activeClock().paused || document.hidden);
 el("pauseBattle").addEventListener("click", pause);
 el("resumeBattle").addEventListener("click", resume);
 el("restartBattle").addEventListener("click", () => start(state.level));
@@ -292,19 +320,30 @@ document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape" || !battleActive()) return;
   event.preventDefault();
   if (event.repeat) return;
-  if (battleClock.paused) resume();
+  if (activeClock().paused) resume();
   else pause();
 });
-el("play").addEventListener("click", () => start());
+el("play").addEventListener("click", () => start(fixtureRequested ? fixtureLevel : undefined));
 el("replay").addEventListener("click", () => start(state.level));
 for (const id of ["chooseLevel", "battleLevels", "pausedLevels", "resultLevels"]) {
   el(id).addEventListener("click", chooseLevel);
 }
 el("levelsBack").addEventListener("click", showMenu);
-addEventListener("resize", renderer.resize);
+addEventListener("resize", () => activeRenderer().resize());
+if (fixtureRequested) {
+  const description = el("menuLevel").parentElement;
+  description.replaceChildren(el("menuLevel"), document.createElement("br"), "Development fixture");
+  const supportTip = el("artilleryTip");
+  supportTip.parentElement.replaceChildren(supportTip,
+    "Slide the cannon to reinforce either bridge. Amber gates unlock after you break their barricades. Hold both crossings and cut both red supply routes.");
+}
 showMenu();
 renderer.resize();
 
 export function getSnapshot() {
-  return structuredClone(state);
+  if (!inFixture()) return structuredClone(state);
+  const feedback = Object.fromEntries(Object.entries(fixture.feedback).map(
+    ([id, { flights, ...local }]) => [id, { ...local, airborne: flights.active }],
+  ));
+  return structuredClone({ ...state, dual: fixture.state, feedback });
 }

@@ -18,19 +18,57 @@ const palettes = [
   { light: "#fff4b4", face: "#96661f", dark: "#634c53", glow: "#ffdf6c" },
 ];
 
-export function createRenderer(state, canvas, motion = createMotion()) {
-  const ctx = canvas.getContext("2d");
-  const terrain = canvas.ownerDocument?.createElement("canvas");
-  if (terrain) terrain.width = 0;
-  const figures = createFigures(ctx, canvas.ownerDocument);
-  const pulses = new Float32Array(3);
-
+export function drawCannon(ctx, state) {
   function ellipse(x, y, w, h, color) {
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.ellipse(x, y, w, h, 0, 0, TAU);
     ctx.fill();
   }
+  const recoil = state.mode === "playing" ? state.recoil : 0;
+  const x = state.gunX;
+  ellipse(x + 5, 675, 36, 14, "#242a2e55");
+  ctx.save();
+  ctx.translate(x, 653 + recoil * 4);
+  polygon(ctx, "#37526b", [-23, -4, 19, -12, 30, 17, -19, 25]);
+  polygon(ctx, "#6683a0", [-23, -4, 19, -12, 21, 13, -18, 20]);
+  for (let side = -1; side <= 1; side += 2) {
+    ellipse(side * 23, 15, 10.5, 14, "#303340");
+    ellipse(side * 25, 16, 7.5, 10, "#677482");
+    ellipse(side * 25, 16, 3.6, 5, "#343e4d");
+  }
+  polygon(ctx, "#2f4a63", [-17, 9, -13, -43, 9, -47, 16, 5, 8, 15]);
+  polygon(ctx, "#739cb8", [-16, 5, -12, -45, 8, -47, 12, 4, 4, 10]);
+  polygon(ctx, "#b8d3dd", [-13, 0, -10, -43, -2, -45, -3, 6]);
+  ellipse(-1, -44, 13.2, 6.2, "#7b9eb1");
+  ellipse(-1, -45, 8.8, 4.2, "#283748");
+  ellipse(-1, -46, 5.1, 2.4, "#172437");
+  if (recoil > 0.68) {
+    const flare = (recoil - 0.68) * 27;
+    polygon(ctx, "#e4f9fbdc", [
+      -2,
+      -46 - flare * 1.8,
+      2,
+      -48 - flare * 0.78,
+      4 + flare,
+      -49,
+      3,
+      -45,
+      -4,
+      -44,
+      -6 - flare,
+      -48,
+    ]);
+  }
+  ctx.restore();
+}
+
+export function createRenderer(state, canvas, motion = createMotion()) {
+  const ctx = canvas.getContext("2d");
+  const terrain = canvas.ownerDocument?.createElement("canvas");
+  if (terrain) terrain.width = 0;
+  const figures = createFigures(ctx, canvas.ownerDocument);
+  const pulses = new Float32Array(3);
 
   function label(text, x, y, size, color, outline = "#242936") {
     ctx.font = `900 ${size}px system-ui`;
@@ -262,45 +300,6 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     );
   }
 
-  function cannon() {
-    const recoil = state.mode === "playing" ? state.recoil : 0;
-    const x = state.gunX;
-    ellipse(x + 5, 675, 36, 14, "#242a2e55");
-    ctx.save();
-    ctx.translate(x, 653 + recoil * 4);
-    polygon(ctx, "#37526b", [-23, -4, 19, -12, 30, 17, -19, 25]);
-    polygon(ctx, "#6683a0", [-23, -4, 19, -12, 21, 13, -18, 20]);
-    for (let side = -1; side <= 1; side += 2) {
-      ellipse(side * 23, 15, 10.5, 14, "#303340");
-      ellipse(side * 25, 16, 7.5, 10, "#677482");
-      ellipse(side * 25, 16, 3.6, 5, "#343e4d");
-    }
-    polygon(ctx, "#2f4a63", [-17, 9, -13, -43, 9, -47, 16, 5, 8, 15]);
-    polygon(ctx, "#739cb8", [-16, 5, -12, -45, 8, -47, 12, 4, 4, 10]);
-    polygon(ctx, "#b8d3dd", [-13, 0, -10, -43, -2, -45, -3, 6]);
-    ellipse(-1, -44, 13.2, 6.2, "#7b9eb1");
-    ellipse(-1, -45, 8.8, 4.2, "#283748");
-    ellipse(-1, -46, 5.1, 2.4, "#172437");
-    if (recoil > 0.68) {
-      const flare = (recoil - 0.68) * 27;
-      polygon(ctx, "#e4f9fbdc", [
-        -2,
-        -46 - flare * 1.8,
-        2,
-        -48 - flare * 0.78,
-        4 + flare,
-        -49,
-        3,
-        -45,
-        -4,
-        -44,
-        -6 - flare,
-        -48,
-      ]);
-    }
-    ctx.restore();
-  }
-
   function supplyFlags() {
     const y = state.level.objective.reinforcementCutoff;
     const color = state.redEntryOpen ? "#a5323c" : "#327cbf";
@@ -483,7 +482,7 @@ export function createRenderer(state, canvas, motion = createMotion()) {
       }
       ctx.globalAlpha = 1;
     }
-    cannon();
+    drawCannon(ctx, state);
     if (emplacement && !archerSupport && state.mode === "playing")
       drawArtilleryShot(ctx, state);
     drawCaptureFlag();
