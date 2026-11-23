@@ -1,5 +1,6 @@
 import { clamp } from "./config.js";
-export function bindControls(state, canvas, document) {
+export function bindControls(state, canvas, document, isPaused = () => false) {
+  const canAim = () => state.mode === "playing" && !isPaused();
   function aim(x) {
     const { minX, maxX } = state.level.battlefield;
     state.gunX = clamp(x, minX, maxX);
@@ -10,7 +11,7 @@ export function bindControls(state, canvas, document) {
   }
   canvas.addEventListener("pointerdown", (e) => {
     if (
-      state.mode !== "playing" ||
+      !canAim() ||
       state.dragId !== null ||
       e.pointerType === "mouse"
     )
@@ -21,7 +22,7 @@ export function bindControls(state, canvas, document) {
     canvas.setPointerCapture(e.pointerId);
   });
   canvas.addEventListener("pointermove", (e) => {
-    if (state.mode !== "playing") return;
+    if (!canAim()) return;
     if (e.pointerType === "mouse") {
       moveMouse(e.clientX);
       return;
@@ -42,7 +43,7 @@ export function bindControls(state, canvas, document) {
   canvas.addEventListener("pointercancel", release);
   canvas.addEventListener("lostpointercapture", release);
   document.addEventListener("keydown", (e) => {
-    if (state.mode !== "playing") return;
+    if (!canAim()) return;
     if (["ArrowLeft", "a", "A"].includes(e.key)) aim(state.gunX - 23);
     if (["ArrowRight", "d", "D"].includes(e.key)) aim(state.gunX + 23);
   });

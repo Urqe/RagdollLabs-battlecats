@@ -22,7 +22,7 @@ const state = game.state;
 const renderer = createRenderer(state, canvas, motion);
 const soundButtons = document.querySelectorAll("[data-sound]");
 let frame = null;
-let last = 0;
+let last = null;
 let barrierLabels = [];
 
 function onEffect(kind, time, value, front, redLoss, blueLoss) {
@@ -78,6 +78,47 @@ function stopFrame() {
   frame = null;
 }
 
+function battleActive() {
+  return state.mode === "playing" || state.mode === "victory";
+}
+
+function pause() {
+  if (!battleActive() || battleClock.paused) return;
+  battleClock.pause();
+  if (frame !== null) cancelAnimationFrame(frame);
+  frame = null;
+  last = null;
+  if (state.dragId !== null) {
+    const pointer = state.dragId;
+    state.dragId = null;
+    if (canvas.hasPointerCapture(pointer)) canvas.releasePointerCapture(pointer);
+  }
+  sound.suspend();
+  el("battleNav").inert = true;
+  el("pauseOverlay").hidden = false;
+  el("resumeBattle").focus({ preventScroll: true });
+}
+
+function clearPause() {
+  el("pauseOverlay").hidden = true;
+  el("battleNav").inert = false;
+}
+
+function resume() {
+  if (!battleClock.paused || !battleActive() || document.hidden) return;
+  battleClock.resume();
+  clearPause();
+  el("pauseBattle").focus({ preventScroll: true });
+  void sound.unlock();
+  frame = requestAnimationFrame(loop);
+}
+
+function resetPause() {
+  if (battleClock.paused) sound.discard();
+  clearPause();
+  battleClock.reset();
+}
+
 function buildBarrierHud() {
   const area = el("barrierHud");
   area.replaceChildren();
@@ -100,6 +141,7 @@ function buildBarrierHud() {
 
 function start(level = playableLevel(progress.selected)) {
   stopFrame();
+  resetPause();
   void sound.unlock();
   progress.selected = level.id;
   saveProgress(progress);
@@ -115,9 +157,10 @@ function start(level = playableLevel(progress.selected)) {
   el("hud").style.display = "flex";
   buildBarrierHud();
   updateHud();
-  battleClock.reset();
+  renderer.draw();
   last = performance.now();
-  frame = requestAnimationFrame(loop);
+  if (document.hidden) pause();
+  else frame = requestAnimationFrame(loop);
 }
 
 function showMenu() {
@@ -134,6 +177,7 @@ function showMenu() {
 
 function chooseLevel() {
   stopFrame();
+  resetPause();
   motion.reset();
   game.reset(state.level, "menu");
   el("hud").style.display = "none";
@@ -216,13 +260,16 @@ const battleClock = createBattleClock((dt) => {
 
 function loop(now) {
   frame = null;
+  if (document.hidden) pause();
+  if (battleClock.paused) return;
   const wasPlaying = state.mode === "playing";
-  battleClock.advance((now - last) / 1000);
+  // The first frame after resuming establishes a fresh wall-clock baseline.
+  if (last !== null) battleClock.advance((now - last) / 1000);
   last = now;
   if (wasPlaying && state.mode === "victory") el("banner").style.opacity = 0;
-  if (state.mode === "playing" || state.mode === "victory") updateHud();
+  if (battleActive()) updateHud();
   renderer.draw();
-  if (state.mode === "playing" || state.mode === "victory")
+  if (battleActive())
     frame = requestAnimationFrame(loop);
 }
 
@@ -233,10 +280,24 @@ for (const button of soundButtons) {
   });
 }
 updateSoundButtons();
-bindControls(state, canvas, document);
+bindControls(state, canvas, document, () => battleClock.paused || document.hidden);
+el("pauseBattle").addEventListener("click", pause);
+el("resumeBattle").addEventListener("click", resume);
+el("restartBattle").addEventListener("click", () => start(state.level));
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) pause();
+});
+addEventListener("pagehide", pause);
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || !battleActive()) return;
+  event.preventDefault();
+  if (event.repeat) return;
+  if (battleClock.paused) resume();
+  else pause();
+});
 el("play").addEventListener("click", () => start());
 el("replay").addEventListener("click", () => start(state.level));
-for (const id of ["chooseLevel", "battleLevels", "resultLevels"]) {
+for (const id of ["chooseLevel", "battleLevels", "pausedLevels", "resultLevels"]) {
   el(id).addEventListener("click", chooseLevel);
 }
 el("levelsBack").addEventListener("click", showMenu);
