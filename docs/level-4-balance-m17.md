@@ -1,7 +1,6 @@
 # Level 4 balance · Milestone 17 release archive
 
-Run `node scripts/simulate-dual.js` to replay the six aim strategies
-against the public Level 4 definition. Aim changes happen on matching
+This archive records the symmetric Level 4 release at commit `b2d7038`. Run `node scripts/simulate-dual.js` from that commit to replay these six strategies. Aim changes happen on matching
 one-second boundaries. Every reinforcement comes from an auto-fired
 projectile, a gate collision, and a march to the frontline. The same
 results are asserted at 30, 60, and 120 Hz render schedules.
