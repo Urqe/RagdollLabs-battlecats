@@ -4,11 +4,11 @@ import { CROSSINGS } from "../src/dual-front.js";
 import { createState } from "../src/state.js";
 import { dualAim, dualStrategies } from "../tests/helpers/dual-strategies.js";
 
-export function simulateDual(strategy, hz, { useSiege = true } = {}) {
+export function simulateDual(strategy, hz, { useSiege = true, connected = false, onEvent } = {}) {
   const state = createState();
   const unlocked = {};
   const battle = createDualBattlefield({
-    state,
+    state, connected, onEvent,
     onEffect(type, time) {
       if (type !== "break") return;
       for (const gate of state.gates) {
@@ -37,7 +37,8 @@ export function simulateDual(strategy, hz, { useSiege = true } = {}) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const connected = process.argv.includes("--connected");
   console.log(JSON.stringify([30, 60, 120].map(hz => ({
-    hz, strategies: dualStrategies.map(strategy => simulateDual(strategy, hz)),
+    hz, strategies: dualStrategies.map(strategy => simulateDual(strategy, hz, { connected })),
   })), null, 2));
 }

@@ -157,3 +157,84 @@ same reinforcement squads with denser bounded presentation. The
 [balance tests](level-4-balance.md) cover eight pointer strategies and
 use frontline bounds to verify the west breach occurs before the
 earliest possible ordinary east victory.
+
+## Milestone 19A · Connected siege simulation fixture
+
+Run `node scripts/simulate-dual.js --connected` for the connected model.
+The headless fixture opts in through `createDualBattlefield({ state, connected: true, onEvent })`.
+It uses the existing cannon and projectile resolver, including the six
+targets and their opening costs. The menu uses the released Milestone 18
+simulation and Canvas.
+
+[The connected siege coordinator](../src/connected-siege.js) uses two
+contested lanes on the existing 60 Hz clock. Logical waypoints join the
+castle entry, rear junction and branch approaches. The east's combat
+front supplies progress from the starting contact to the command cutoff.
+Routes outside active combat use leg distances and a fixed unit speed.
+Pending squads, active lane populations, west transfers and the flanking
+formation each own their blue troops. The Meowrtans are a separate
+capability with no ordinary blue population. Red arrivals use the released
+escalation curves. West admits them into available space at the wall and
+retains any force that was already larger than that space.
+
+The west remains vulnerable throughout the march and deployment. When
+secured, the wall takes its fixed hold position and the west infantry
+starts a 2.63-second withdrawal via the west rally and rear junction.
+West-bound squads already marching continue to the rally before starting
+their 2.25-second transfer. Later west gate hits launch genuine recruits
+through the castle entry to the east. All cohorts enter combat only on
+arrival. Shield impacts and spear thrusts occur at most once per 0.4 s.
+Every fifth impact can be a surge under high pressure. A shield impact's
+`repelled` and `intensity` describe nonlethal reactions. Use the
+`casualties` stream to count combat losses.
+
+Main breakthrough requires the secured wall, east supply cutoff and
+zero surviving east reds. It closes the shared red supply, then commits
+60% of the available east blue troops (rounded down) to the ridge pass
+and leaves the balance in the east. The flank takes about 4.88 seconds
+to reach the west rear. It exchanges casualties with the remaining reds
+using the shared casualty calculation and a larger rear frontage cap.
+A rout requires rear-inflicted losses of at least one quarter of the
+force present on flank arrival and a surviving blue flank at least
+twice the size of the remaining reds. Routed reds are recorded separately
+from casualties. Victory follows the rear battle once resistance reaches
+zero through casualties or a rout.
+
+### Event handoff for 19B
+
+| Event | Presentation data |
+| --- | --- |
+| `phalanxUnlocked`, `phalanxMarching`, `phalanxDeploying`, `phalanxSecured` | Phase and west front position |
+| `launch`, `arrival` | Squad identity, original gate lane, actual assignment, route and count for blue. Count and front for red. |
+| `infantryWithdrawal`, `transferProgress`, `transferArrival` | Stable cohort ID, count, route, departure time, leg, logical distance and normalized leg progress |
+| `shieldImpact`, `spearThrust` | Fixed west front and impact intensity. Shield impacts carry surge and repelled counts. Spear thrusts refer to the same red losses recorded by the accompanying casualty event. |
+| `mainBreakthrough` | East command waypoint, front and available infantry before flank assignment |
+| `encirclementStarted`, `encirclementProgress`, `encirclementArrival` | Flanking cohort and route data on departure, at the ridge pass and on arrival |
+| `rearAttack`, `enemyRouted`, `victory` | Rear waypoint, attack losses and remaining flank size, routed survivor count, and terminal victory |
+
+Each event has the simulation time and a lane ID. A route snapshot's
+`from` and `to` name the current leg. Between waypoint events, advance
+visual distance from the departure timestamp and configured speed.
+`launch` carries the initial route, leg, and distance. Blue transfer
+arrival uses `transferArrival` once. Tick events are delivered after
+combat and ownership are updated. Commands such as launch and unlock
+emit as they are resolved. Pause freezes all travel and combat. Reset
+and clear discard both lanes, outstanding cohorts and the flank.
+
+### Matched cannon replays
+
+| Strategy | Released result | Connected result | Connected main breakthrough |
+| --- | ---: | ---: | ---: |
+| Flank-first with ×999 | Win at 109.3 s | Win at 105.0 s | 96.3 s |
+| Mixed with ×999 | Win at 93.3 s | Win at 115.9 s | 99.3 s |
+| Mixed with ×99 after securing west | Win at 103.9 s | Win at 121.7 s | 105.2 s |
+
+The connected routes change when recruits reach each branch and when
+the aim strategy reacts to east pressure. In mixed, 1,758 ordinary west
+infantry depart and the west force is already above the wall's intake
+cap when the shields lock. The rear attack therefore has more reds to
+fight. It inflicts about 1,624 casualties before routing about 4,698
+survivors. The connected ×999 opening saves 5.9 s in the matched mixed
+comparison and roughly 10.7 s in flank-first. These replays use the
+existing gate economy and pre-deployment combat. Milestone 19C owns
+further balance work. [Released balance](level-4-balance.md)
