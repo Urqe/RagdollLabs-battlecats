@@ -21,7 +21,7 @@ test("red reserves add territorial pressure beyond their direct engagement limit
     const game = createGame();
     game.reset();
     Object.assign(game.state, { blueTotal: 1000, redTotal });
-    game.update(1 / 60);
+    for (let i = 0; i < 60; i++) game.update(1 / 60);
     assert.ok(game.state.blueTotal >= 0);
     assert.ok(game.state.redTotal >= 0);
     return game.state.front;

@@ -150,7 +150,7 @@ test("reinforcements move, render blue cats, then join combat at the front", () 
 test("controlling the supply entrance cuts reinforcements while the remaining horde still fights", () => {
   const game = fixture();
   const s = game.state;
-  s.front = LEVEL.reinforcementCutoff + 0.1;
+  s.front = LEVEL.reinforcementCutoff + 0.005;
   s.redTotal = 100;
   s.blueTotal = 1000;
   game.update(0.02);
@@ -277,7 +277,7 @@ test("castle breach causes defeat and restart resumes play", () => {
   const results = [],
     game = createGame({ onEnd: (won) => results.push(won) });
   game.reset();
-  game.state.front = 689.99;
+  game.state.front = LEVEL.castleFront;
   game.update(0.01);
   assert.equal(game.state.mode, "end");
   assert.deepEqual(results, [false]);

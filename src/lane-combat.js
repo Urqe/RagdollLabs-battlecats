@@ -1,11 +1,17 @@
 import { clamp } from "./config.js";
 
+// Linear for sparse ranks, with square-root growth once reserves dominate.
+export function effectiveStrength(population, frontage) {
+  return (population / (1 + Math.sqrt(1 + population / frontage))) * 2;
+}
+
 export function casualtyRates(blue, red, combat) {
   const contact = Math.min(blue, red);
   const engagedRed = Math.min(red, contact * combat.redEngagementRatio);
   return {
     red: Math.min(combat.maxRedLoss, blue * combat.redLossPerBlue),
-    blue: engagedRed * combat.blueLossPerRed + contact * combat.blueContactLoss,
+    blue: Math.min(combat.maxBlueLoss ?? Infinity,
+      engagedRed * combat.blueLossPerRed + contact * combat.blueContactLoss),
   };
 }
 
@@ -16,47 +22,36 @@ export function marchSquad(squad, front, combat, marchSpeed, dt) {
     squad.y <= front + combat.arrivalOffset;
 }
 
-function advanceFront(state, combat, dt) {
-  const blue = Math.min(state.blueTotal, combat.bluePressureCapacity ?? Infinity);
-  const red = state.redTotal * combat.redPressurePerCat;
-  const total = blue + red;
-  const momentum = total ? (red - blue) / total : 0;
-  const direction = Math.sign(momentum);
-  const stronger = Math.max(red, blue);
-  const weaker = Math.min(red, blue);
-  const relative = stronger ? weaker / stronger : 1;
-  const blueLeading = direction < 0;
-  const resistance = combat.maxRedLoss * combat.redPressurePerCat;
-  const contactLimit = blueLeading ? resistance : combat.maxRedLoss;
-  const commitment = blueLeading ? (combat.advanceFormationPressure ?? 0) : 0;
-  const committed = stronger >= Math.max(commitment, Math.max(160, contactLimit) * (blueLeading ? 2 : 4));
-  const prior = state.advanceDirection === direction ? state.advanceMode : "contested";
-  let mode = "contested";
-  if (committed && relative < (prior === "contested" ? 0.06 : 0.10) &&
-      weaker <= contactLimit * (prior === "contested" ? 0.24 : 0.36)) {
-    const marching = prior === "marching";
-    mode = relative < (marching ? 0.035 : 0.015) &&
-      weaker <= contactLimit * (marching ? 0.12 : 0.06) ? "marching" : "overwhelming";
-  }
-  state.advanceMode = mode;
-  state.advanceDirection = direction;
+function advanceFront(state, combat, dt, blueSupport) {
+  const blue = effectiveStrength(state.blueTotal, combat.frontage) + blueSupport;
+  const red = effectiveStrength(state.redTotal, combat.frontage) * combat.redPressurePerCat;
+  state.bluePressure = blue;
+  state.redPressure = red;
 
-  const pushScale = combat.blueFullAdvanceAt
-    ? clamp(state.blueTotal / combat.blueFullAdvanceAt, 0.45, 1)
-    : 1;
-  const speed = blueLeading ? combat.blueAdvance * pushScale : combat.redAdvance;
-  const boost = mode === "marching" ? 1.1 : mode === "overwhelming" ? 0.55 : 0;
-  const bonus = direction * speed * boost * (blueLeading ? 1 : 0.18);
-  const active = state.advanceBonus ?? 0;
-  state.advanceBonus = active + clamp(bonus - active, -18 * dt, 18 * dt);
-  // Contact pressure remains the base movement. The eased bonus cannot
-  // carry the front against the current pressure or move an empty front.
-  const extra = Math.sign(state.advanceBonus) === direction ? state.advanceBonus : 0;
-  state.front = clamp(state.front + (momentum * speed + extra) * dt,
-    combat.minFront, combat.maxFront);
+  const total = blue + red;
+  const advantage = total > 0 ? (red - blue) / total : 0;
+  const blueLeading = advantage < 0;
+  const strength = Math.abs(advantage);
+  const weaker = Math.min(blue, red);
+  const stronger = Math.max(blue, red);
+  const resistance = combat.marchResistance * (blueLeading ? combat.redPressurePerCat : 1);
+  const commitment = Math.min(6500, combat.frontage);
+  // Absolute contact and relative opposition both reduce free movement.
+  // A diffuse handful of defenders should not stop an established formation.
+  const freedom = strength ** 4 * stronger / (stronger + commitment) /
+    (1 + weaker / (resistance + stronger * 0.08));
+  state.advanceMode = freedom > 0.8 ? "marching" : freedom > 0.35 ? "overwhelming" : "contested";
+  const speed = blueLeading ? combat.blueAdvance : combat.redAdvance;
+  const target = advantage * speed * (1 + freedom * (blueLeading ? 1.1 : 0.2));
+  const velocity = state.frontVelocity ?? 0;
+  const nextVelocity = total > 0 ? velocity + clamp(target - velocity, -32 * dt, 32 * dt) : 0;
+  const next = clamp(state.front + nextVelocity * dt, combat.minFront, combat.maxFront);
+  state.frontVelocity = (next - state.front) / dt;
+  state.front = next;
 }
 
-export function advanceLaneCombat(state, combat, objective, time, dt) {
+export function advanceLaneCombat(state, combat, objective, time, dt, blueSupport = 0) {
+  const previousFront = state.front;
   // Taking the entrance cuts off new arrivals. The existing army stays in combat.
   const access = state.redEntryOpen
     ? clamp(
@@ -87,12 +82,12 @@ export function advanceLaneCombat(state, combat, objective, time, dt) {
   state.redTotal -= redLost;
   state.blueTotal -= blueLost;
 
-  advanceFront(state, combat, dt);
+  advanceFront(state, combat, dt, blueSupport);
 
   if (
     state.redEntryOpen &&
     state.blueTotal > 0 &&
-    state.front <= objective.reinforcementCutoff
+    Math.min(previousFront, state.front) <= objective.reinforcementCutoff
   ) {
     state.redEntryOpen = false;
     state.redEntryRate = 0;
