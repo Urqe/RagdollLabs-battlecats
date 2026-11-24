@@ -1,0 +1,226 @@
+{
+  "chromium": {
+    "bothFronts": {
+      "checkpoint": 9,
+      "phase": "twoFronts",
+      "phalanx": "locked",
+      "samples": 95,
+      "frame": [
+        16.7,
+        16.7
+      ],
+      "draw": [
+        1.2,
+        1.7
+      ],
+      "peaks": {
+        "figures": 580,
+        "reserveSilhouettes": 379,
+        "flights": 16,
+        "cohorts": 6,
+        "transferCohorts": 0,
+        "flankCohorts": 0
+      }
+    },
+    "pushing": {
+      "checkpoint": 61,
+      "phase": "twoFronts",
+      "phalanx": "pushing",
+      "samples": 95,
+      "frame": [
+        16.7,
+        16.7
+      ],
+      "draw": [
+        1.2,
+        1.5
+      ],
+      "peaks": {
+        "figures": 606,
+        "reserveSilhouettes": 1280,
+        "flights": 16,
+        "cohorts": 12,
+        "transferCohorts": 0,
+        "flankCohorts": 0
+      }
+    },
+    "shieldWall": {
+      "checkpoint": 67,
+      "phase": "rightOffensive",
+      "phalanx": "secured",
+      "samples": 94,
+      "frame": [
+        16.7,
+        16.7
+      ],
+      "draw": [
+        1.2,
+        1.6
+      ],
+      "peaks": {
+        "figures": 420,
+        "reserveSilhouettes": 1265,
+        "flights": 16,
+        "cohorts": 10,
+        "transferCohorts": 4,
+        "flankCohorts": 0
+      }
+    },
+    "breakthrough": {
+      "checkpoint": 94,
+      "phase": "rightOffensive",
+      "phalanx": "secured",
+      "samples": 95,
+      "frame": [
+        16.7,
+        16.8
+      ],
+      "draw": [
+        1.2,
+        1.6
+      ],
+      "peaks": {
+        "figures": 442,
+        "reserveSilhouettes": 2384,
+        "flights": 16,
+        "cohorts": 15,
+        "transferCohorts": 0,
+        "flankCohorts": 0
+      }
+    },
+    "encirclement": {
+      "checkpoint": 103,
+      "phase": "encirclement",
+      "phalanx": "secured",
+      "samples": 94,
+      "frame": [
+        16.7,
+        16.8
+      ],
+      "draw": [
+        1.3,
+        1.7
+      ],
+      "peaks": {
+        "figures": 447,
+        "reserveSilhouettes": 2916,
+        "flights": 16,
+        "cohorts": 15,
+        "transferCohorts": 0,
+        "flankCohorts": 1
+      }
+    }
+  },
+  "webkit": {
+    "bothFronts": {
+      "checkpoint": 9,
+      "phase": "twoFronts",
+      "phalanx": "locked",
+      "samples": 65,
+      "frame": [
+        16,
+        17
+      ],
+      "draw": [
+        1,
+        2
+      ],
+      "peaks": {
+        "figures": 580,
+        "reserveSilhouettes": 387,
+        "flights": 16,
+        "cohorts": 6,
+        "transferCohorts": 0,
+        "flankCohorts": 0
+      }
+    },
+    "pushing": {
+      "checkpoint": 61,
+      "phase": "twoFronts",
+      "phalanx": "pushing",
+      "samples": 97,
+      "frame": [
+        16,
+        17
+      ],
+      "draw": [
+        1,
+        2
+      ],
+      "peaks": {
+        "figures": 606,
+        "reserveSilhouettes": 1280,
+        "flights": 16,
+        "cohorts": 12,
+        "transferCohorts": 0,
+        "flankCohorts": 0
+      }
+    },
+    "shieldWall": {
+      "checkpoint": 67,
+      "phase": "rightOffensive",
+      "phalanx": "secured",
+      "samples": 96,
+      "frame": [
+        16,
+        17
+      ],
+      "draw": [
+        1,
+        1
+      ],
+      "peaks": {
+        "figures": 420,
+        "reserveSilhouettes": 1265,
+        "flights": 16,
+        "cohorts": 10,
+        "transferCohorts": 4,
+        "flankCohorts": 0
+      }
+    },
+    "breakthrough": {
+      "checkpoint": 94,
+      "phase": "rightOffensive",
+      "phalanx": "secured",
+      "samples": 97,
+      "frame": [
+        16,
+        17
+      ],
+      "draw": [
+        1,
+        1
+      ],
+      "peaks": {
+        "figures": 442,
+        "reserveSilhouettes": 2384,
+        "flights": 16,
+        "cohorts": 15,
+        "transferCohorts": 0,
+        "flankCohorts": 0
+      }
+    },
+    "encirclement": {
+      "checkpoint": 103,
+      "phase": "encirclement",
+      "phalanx": "secured",
+      "samples": 95,
+      "frame": [
+        16,
+        17
+      ],
+      "draw": [
+        1,
+        1
+      ],
+      "peaks": {
+        "figures": 447,
+        "reserveSilhouettes": 2916,
+        "flights": 16,
+        "cohorts": 15,
+        "transferCohorts": 0,
+        "flankCohorts": 1
+      }
+    }
+  }
+}
