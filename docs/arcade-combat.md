@@ -22,7 +22,7 @@ For `p` active cats and frontage parameter `F`, pressure is `2p / (1 + sqrt(1 + 
 
 Melee deaths use aggregate contact and engagement limits. Blue attack production grows with blue population up to the lane's red casualty rate cap. Red attacks use the smaller contact population and its engagement ratio, with a separate blue casualty rate cap. At the open east entrance, red exposure also limits how quickly fresh defenders can be killed. Each step clamps losses to the actual opposing population. Reserves sustain pressure as the front takes losses. Artillery and arrows keep their own impact damage path.
 
-Signed advantage is the pressure difference divided by the sum. Balanced pressure tends toward a stationary front, and an advantage moves the line toward the weaker side. The free-movement bonus rises smoothly with absolute strength and pressure advantage and falls with opposition. The mode names describe ranges of that bonus for diagnostics. Speed eases toward the target with a 32-unit/s² acceleration limit. Castle and terrain bounds stop motion at their physical limits. The east cutoff requires blue presence at the actual entrance. With approximately four red arrivals/s and a 300,000-cat force starting at y=240, the new model reaches the entrance in about 12 s at sustained speed of 10.3 units/s. The previous committed-army fixture took about 10 s. Ordinary east advance is 5.1 units/s.
+Signed advantage is the pressure difference divided by the sum. Balanced pressure tends toward a stationary front, and an advantage moves the line toward the weaker side. The free-movement bonus rises smoothly with absolute strength and pressure advantage and falls with opposition. The mode names describe ranges of that bonus for diagnostics. Speed eases toward the target with a 32-unit/s² acceleration limit. Castle and terrain bounds stop motion at their physical limits. The shared corridor stops just short of the flag, leaving the last stretch for the victory charge. The east cutoff requires blue presence at the actual entrance. With approximately four red arrivals/s and a 300,000-cat force starting at y=240, the new model reaches the entrance in about 12 s at sustained speed of 10.3 units/s. The previous committed-army fixture took about 10 s. Ordinary east advance is 5.1 units/s.
 
 ## Level 4
 
@@ -36,9 +36,9 @@ All values below use a fixed 60 Hz simulation. Rendering at 30, 60 or 120 Hz pro
 
 | Level and policy | Outcome and seconds before → after | Blue arrivals | Blue casualties | Red melee casualties | Supply cutoff (s) | Support damage |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| 1 · Balanced C | Win 92.97 → 87.75 | 359,826 → 299,886 | 197,015 → 180,358 | 153,432 → 129,397 | 89.98 → 82.13 | — |
-| 2 · Artillery first | Win 83.30 → 80.52 | 195,531 → 162,564 | 78,288 → 74,487 | 78,881 → 65,785 | 82.37 → 77.67 | 64,178 → 62,538 |
-| 3 · Balanced | Win 90.75 → 84.65 | 395,013 → 320,088 | 200,061 → 191,746 | 165,397 → 139,887 | 90.75 → 80.93 | 42,513 → 36,600 |
+| 1 · Balanced C | Win 92.97 → 87.75 | 359,826 → 302,883 | 197,015 → 180,358 | 153,432 → 129,397 | 89.98 → 82.13 | — |
+| 2 · Artillery first | Win 83.30 → 80.78 | 195,531 → 165,561 | 78,288 → 74,592 | 78,881 → 66,972 | 82.37 → 77.67 | 64,178 → 61,352 |
+| 3 · Balanced | Win 90.75 → 84.65 | 395,013 → 323,085 | 200,061 → 191,746 | 165,397 → 139,887 | 90.75 → 80.93 | 42,513 → 36,600 |
 
 | Level 4 policy | Outcome and seconds before → after | Blue arrivals | Blue casualties | Red casualties | East cutoff (s) | Deploy / lock / secure (s) | Final flank maneuver (s) |
 | --- | --- | ---: | ---: | ---: | ---: | --- | ---: |

@@ -31,7 +31,8 @@ const combat = Object.freeze({
   reinforcementApproach: 3,
   combatEffectInterval: 0.12,
   victoryDuration: 2.4,
-  minFront: 25,
+  // Leave room for the victory charge to reach the flag after the melee.
+  minFront: objective.flagY + 12,
   maxFront: 712,
   minMarchTime: 0.25,
   arrivalOffset: 17,
