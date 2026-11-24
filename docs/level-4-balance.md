@@ -113,3 +113,35 @@ and Level 2–3 strategy scripts provide the previous-level comparisons.
 The physical iPhone and first-time-player experience remain unverified.
 
 [Full balance data and event hashes](https://github.com/Urqe/RagdollLabs-battlecats/blob/5a2ca95cb3d7e1da3612729954f9723f7e3b5c37/balance.json)
+
+## Milestone 20 matched replays
+
+Barricade costs remain 30 / 132 / 30 / 90 in west ×99, phalanx, east ×99
+and east ×999 order. While east reinforcements have access, red losses
+are bounded by three times the current red population per second, in
+addition to the existing blue attack and lane caps. This leaves living
+defenders available for contact when a small incoming stream meets a much
+larger blue army. Supply cutoff restores the finite cleanup rule.
+
+March and deployment remain 2.4 s and 1.15 s. The new locked push advances
+at 30 battlefield units/s. Shelling the wall barricade immediately still
+fails, and ordinary infantry cannot hold the west indefinitely. The
+sustained starter-fed rush still wins, taking over 25 s longer than the
+adaptive policy. The east ×99-only finish remains possible and slower.
+
+Here are the changed outcomes by elapsed time, in simulation seconds.
+Win/loss and breached fronts match 19C across all 17 policies. The current
+fixed-step event digests match at 30, 60 and 120 Hz.
+
+| Policy | 19C | Milestone 20 |
+| --- | ---: | ---: |
+| Double upgrade | Win 126.7 | Win 132.4 |
+| Adaptive | Win 104.9 | Win 108.6 |
+| Flank first | Win 107.7 | Win 113.4 |
+| No ×999 | Win 144.0 | Win 151.3 |
+| Skip east ×99 | Defeat 70.7 | Defeat 54.3 |
+| Adaptive seven | Win 108.2 | Win 112.6 |
+| Adaptive imperfect | Win 128.4 | Win 136.4 |
+| Sustained starter rush | Win 133.7 | Win 133.8 |
+
+Reproduce with `node scripts/simulate-dual.js`.

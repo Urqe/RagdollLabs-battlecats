@@ -195,3 +195,102 @@ frame p95 was during deployment. Draw p95s were at most 3.8 ms
 and 3 ms respectively. The probe provides a lower-contention
 comparison for the public-path measurements above.
 [Isolated phase samples](https://github.com/Urqe/RagdollLabs-battlecats/blob/milestone-19c-recordings/isolated-renderer.json)
+
+## Milestone 20 · Diagnosing the empty east front
+
+In the public 19C baseline `f0bcd3c`, the adaptive-seven replay first
+showed an empty east front at 27.933 s. The east had 2,152 blue, its
+frontline was on the field at y=323.03, and supply was still admitting
+120.01 red cats/s. At 60 simulation ticks/s that is about two red cats
+per tick. East could deal up to 235 red losses/s, and the previous
+casualty calculation could kill the entire arrival on the same tick.
+The renderer therefore received zero living east reds. The
+starter-only even-alternation replay first showed the same failure at
+14.383 s at y=333.67 while receiving 80.71 red/s. It never unlocked ×999.
+In adaptive-seven the east reinforcement rate eventually exceeded the
+absolute loss ceiling as the battle clock advanced, allowing the horde
+to accumulate again near the time the larger gate opened.
+
+East casualties now also respect the live defender limit while supply
+is open. In the matched replay, the minimum during pre-×999
+reinforcement was 38.8 living east reds in adaptive-seven and 26.3
+in even-alternation. The separate no-×999 victory run also kept living
+defenders while the intake was positive. The regression exercises the real cannon replay, verifies
+positive living red counts during supply, and checks actual soldier and
+reserve draw coordinates at starter, ×99 and ×999 strengths. When
+supply closes and the living count reaches zero the standing formation
+clears. Airborne casualties can briefly finish their animations.
+
+The shield wall and its opponents sample the same authoritative position
+during the push. The deck and abutments frame the stationary formation
+at y=308. Level 1 rank lag and pressure compression now carry through
+to the deeper rows of the connected formations. Stable per-slot offsets
+vary row edges and stagger movement. At the rear seam, formation depth
+stops at its own side of contact. Part of the west horde's existing
+draw budget faces the flanking army so both sides have visible contact
+ranks, with no increase to the west horde's field or reserve caps. The wider, bounded flank column keeps
+its files spread around the northern turn so the detachment is readable
+as it approaches.
+
+### Public gameplay and portrait performance
+
+The five videos use the normal Level 4 selector and cannon input at
+390 × 844. The final uninterrupted Chromium run won at 107.1 simulation
+seconds. It includes the result screen and runs for 135 seconds
+in the recording. The WebKit public run used the adaptive-seven
+policy with recording disabled and won at 112.6 simulation seconds.
+Both ran on a shared host with other browser work active.
+
+| Phase | Chromium frame p50 / p95 (ms) | Chromium Canvas p50 / p95 (ms) | WebKit frame p50 / p95 (ms) | WebKit Canvas p50 / p95 (ms) |
+| --- | ---: | ---: | ---: | ---: |
+| Both fronts engaged | 33.3 / 83.3 | 1.2 / 14.8 | 107 / 216 | 1 / 12 |
+| Phalanx pushing | 33.4 / 100 | 1.8 / 28.4 | 106 / 165 | 1 / 10 |
+| Shield wall secured | 16.8 / 83.3 | 1.2 / 8.8 | 96 / 147 | 1 / 6 |
+| East breakthrough | 33.4 / 83.4 | 1.5 / 21.9 | 70 / 111 | 1 / 5 |
+| Encirclement | 33.4 / 83.3 | 1.3 / 24 | 74 / 113 | 1 / 6 |
+
+| Phase | Detailed soldiers | Reserve silhouettes | Airborne effects | Moving cohorts | Withdrawal cohorts | Flank cohorts |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Both fronts engaged | 622 | 504 | 16 | 15 | 0 | 0 |
+| Phalanx pushing | 623 | 1,329 | 16 | 15 | 0 | 0 |
+| Shield wall secured | 444 | 1,718 | 16 | 16 | 10 | 0 |
+| East breakthrough | 443 | 2,404 | 16 | 15 | 0 | 0 |
+| Encirclement | 447 | 2,867 | 16 | 16 | 0 | 1 |
+
+Counts are independent maxima from the two public runs. The flank
+count includes the in-contact detachment. The WebKit public run
+predates the final split of the west draw budget across its two
+fronts. The isolated phase probe uses the final renderer in both
+engines. These measurements are browser emulation on a Linux host.
+Physical iPhone performance remains unverified.
+
+To capture and profile the public route, run the development server,
+then run `node scripts/capture-connected-siege.js`. Set
+`SIEGE_CAPTURE_POLICY=double-upgrade` for the recorded tactic,
+`SIEGE_BROWSER=webkit SIEGE_PROFILE_ONLY=1` for the unrecorded WebKit
+profile, or `SIEGE_TOUCH=1` for Chromium touch input.
+
+The unrecorded isolated probe used the final renderer at 390 × 844.
+It prepared each adaptive-seven checkpoint on the fixed clock, warmed
+up for 350 ms and sampled the next 1.55 s of live Canvas frames after
+the other browser jobs ended.
+
+| Phase | Chromium frame p50 / p95 (ms) | Chromium Canvas p50 / p95 (ms) | WebKit frame p50 / p95 (ms) | WebKit Canvas p50 / p95 (ms) |
+| --- | ---: | ---: | ---: | ---: |
+| Both fronts engaged | 16.7 / 16.7 | 1.2 / 1.7 | 16 / 17 | 1 / 2 |
+| Phalanx pushing | 16.7 / 16.7 | 1.2 / 1.5 | 16 / 17 | 1 / 2 |
+| Shield wall secured | 16.7 / 16.7 | 1.2 / 1.6 | 16 / 17 | 1 / 1 |
+| East breakthrough | 16.7 / 16.8 | 1.2 / 1.6 | 16 / 17 | 1 / 1 |
+| Encirclement | 16.7 / 16.8 | 1.3 / 1.7 | 16 / 17 | 1 / 1 |
+
+| Video | Gameplay |
+| --- | --- |
+| [A · East continuity](https://github.com/Urqe/RagdollLabs-battlecats/raw/bff7d97b106b7eebbbde3365835280be07709942/a-right-continuity.webm) | Living red contact through ×20 and ×99 |
+| [B · Shield wall](https://github.com/Urqe/RagdollLabs-battlecats/raw/bff7d97b106b7eebbbde3365835280be07709942/b-phalanx-push.webm) | Release, march, deployment and push to the bridge |
+| [C · Two-front combat](https://github.com/Urqe/RagdollLabs-battlecats/raw/bff7d97b106b7eebbbde3365835280be07709942/c-two-front-combat.webm) | Shield impacts and simultaneous east fighting |
+| [D · Encirclement](https://github.com/Urqe/RagdollLabs-battlecats/raw/bff7d97b106b7eebbbde3365835280be07709942/d-encirclement.webm) | Departure, rear contact, advance and rout |
+| [E · Full run](https://github.com/Urqe/RagdollLabs-battlecats/raw/bff7d97b106b7eebbbde3365835280be07709942/level-4-full.webm) | Uninterrupted victory with HUD and result |
+
+[Chromium public metrics](https://github.com/Urqe/RagdollLabs-battlecats/raw/bff7d97b106b7eebbbde3365835280be07709942/chromium-public.json) ·
+[WebKit public metrics](https://github.com/Urqe/RagdollLabs-battlecats/raw/bff7d97b106b7eebbbde3365835280be07709942/webkit-public.json) ·
+[Isolated final renderer metrics](https://github.com/Urqe/RagdollLabs-battlecats/raw/bff7d97b106b7eebbbde3365835280be07709942/isolated-renderer.json)

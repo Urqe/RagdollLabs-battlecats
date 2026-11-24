@@ -271,3 +271,25 @@ pools. It owns cannon timing and defeat warnings. The connected
 presentation interpolates troop motion from the same owned cohorts and
 publishes bounded draw statistics for the public-path recording script.
 [Release balance and invariants](level-4-balance.md) · [Recordings and measurements](level-4-presentation.md)
+
+## Milestone 20 · Authoritative contact
+
+West movement adds a pushing phase after deployment. During the push
+`left.front` moves toward 308 at up to 30 units/s and shield pulses use
+that same position. Ordinary infantry remains in lane ownership until
+the wall reaches 308. At that tick its surviving population moves into
+the withdrawal cohort. Cannon squads already on their way west finish
+their leg under the existing transfer rule.
+
+The flank owns 60% of the right lane's standing infantry at departure.
+Its northern route ends at y=173. A distinct rear frontline advances
+toward the west hold in proportion to the red population removed, with
+a speed cap of 16 units/s and a 28-unit minimum span between the two
+west contact lines. Rear attack and casualty events carry the rear
+front position. The red field and the flank occupy opposite sides of
+that line.
+
+The HUD sums both standing blue lanes, their cannon squads, the transfer
+cohorts and the flank once each. Both living red lane populations are
+summed directly. Routed survivors leave the fighting population, and
+shield impact effects never enter either counter.

@@ -155,7 +155,7 @@ button:active {
   width: 95%;
 }
 #banner.siege-cue {
-  top: 6%;
+  top: max(57px, calc(env(safe-area-inset-top) + 47px));
   color: #ffe5af;
   font-size: 13px;
 }
@@ -325,4 +325,30 @@ button:active {
   border-color: #ff927f;
   background: #5b2922f5;
   color: #fff3e9;
+}
+
+
+#hud.siege-hud {
+  width: min(100vw, calc((100dvh - max(98px, 88px + 2 * env(safe-area-inset-bottom))) * 0.55263));
+}
+
+#hud.siege-hud > :not(#siegeHud) {
+  display: none;
+}
+
+#siegeHud {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+#siegeHud .stat {
+  padding: 4px 5px;
+}
+
+.siege-status {
+  display: grid;
+  place-content: center;
+  gap: 2px;
 }

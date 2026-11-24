@@ -38,7 +38,11 @@ export function advanceLaneCombat(state, combat, objective, time, dt) {
   const blue = state.blueTotal;
   const red = state.redTotal;
   const rates = casualtyRates(blue, red, combat);
-  const redLost = Math.min(red, rates.red * dt);
+  // With a live supply line, arriving defenders need time to reach melee.
+  const redLossRate = state.redEntryOpen && combat.redLossPerDefender !== undefined
+    ? Math.min(rates.red, red * combat.redLossPerDefender)
+    : rates.red;
+  const redLost = Math.min(red, redLossRate * dt);
   const blueLost = Math.min(blue, rates.blue * dt);
   state.redTotal -= redLost;
   state.blueTotal -= blueLost;

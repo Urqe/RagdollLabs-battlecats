@@ -13,6 +13,8 @@ export const siegeRoutes = Object.freeze({
   encirclement: [["eastCommand", "ridgePass", 36], ["ridgePass", "westRear", 42]],
 });
 
+export const westRearEntry = 173;
+
 export const connectedSiegeRules = Object.freeze({
   marchSpeed: 16,
   impactInterval: 0.4,
@@ -57,6 +59,7 @@ export function createConnectedSiege(state, wall, rules) {
       phase: "twoFronts",
       transfers: [],
       flank: null,
+      rearFront: westRearEntry,
       nextImpact: 0,
       impacts: 0,
       breakthrough: false,
@@ -85,13 +88,10 @@ export function createConnectedSiege(state, wall, rules) {
 
   function secure(left, emit) {
     state.siege.phase = "rightOffensive";
-    const previousFront = left.front;
-    left.front = wall.holdFront;
-    emit?.("left", "frontline", { previousFront, front: left.front });
     if (left.blueTotal > 0) {
       const count = left.blueTotal;
       left.blueTotal = 0;
-      transfer({ id: "west-infantry", count }, "withdrawal", emit, previousFront);
+      transfer({ id: "west-infantry", count }, "withdrawal", emit, left.front);
     }
   }
 
@@ -165,6 +165,7 @@ export function createConnectedSiege(state, wall, rules) {
       if (!count) return;
       right.blueTotal -= count;
       siege.phase = "flanking";
+      siege.rearFront = westRearEntry;
       siege.flank = startRoute({ id: "flank", count }, "encirclement", time);
       emit?.("right", "encirclementStarted", position(siege.flank));
       return;
@@ -183,6 +184,9 @@ export function createConnectedSiege(state, wall, rules) {
       return;
     }
 
+    const cleared = 1 - left.redTotal / Math.max(1, siege.rearInitialRed);
+    const target = westRearEntry + Math.max(0, cleared) * (left.front - westRearEntry - 28);
+    siege.rearFront = Math.min(target, siege.rearFront + rules.marchSpeed * dt);
     if (time < siege.nextRearAttack) return;
     siege.nextRearAttack = time + rules.impactInterval;
     // The open rear allows more frontage than the bridge, but both losses
@@ -195,7 +199,7 @@ export function createConnectedSiege(state, wall, rules) {
     left.redTotal -= redLost;
     flank.count -= blueLost;
     siege.rearRedLost += redLost;
-    const contact = { waypoint: "westRear", front: left.front, redLost, blueLost };
+    const contact = { waypoint: "westRear", front: siege.rearFront, redLost, blueLost };
     if (redLost > 0 || blueLost > 0) {
       emit?.("left", "rearAttack", { ...contact, id: flank.id, count: flank.count });
       emit?.("left", "casualties", contact);
@@ -217,4 +221,22 @@ export function createConnectedSiege(state, wall, rules) {
   }
 
   return { reset, routeVolley, secure, march, advanceTransfers, hold, advanceOffensive };
+}
+
+export function siegePopulation({ lanes: { left, right }, siege }) {
+  let blue = left.blueTotal + right.blueTotal + (siege.flank?.count ?? 0);
+  for (const cohorts of [left.squads, right.squads, siege.transfers])
+    for (const { count } of cohorts) blue += count;
+  return { blue, red: left.redTotal + right.redTotal };
+}
+
+export function siegeStatus({ lanes: { left, right }, phalanx, siege, outcome }) {
+  const west = left.breached ? "LEFT — BREACHED"
+    : phalanx.phase === "secured" ? "LEFT — SECURED"
+    : phalanx.phase === "locked" ? "LEFT — CONTESTED" : "LEFT — PHALANX DEPLOYING";
+  const east = right.breached ? "RIGHT — BREACHED"
+    : outcome === "victory" ? "VICTORY"
+    : siege.phase === "encirclement" ? "ENCIRCLEMENT"
+    : siege.breakthrough ? "RIGHT — BREAKTHROUGH" : "RIGHT — CONTESTED";
+  return { west, east };
 }

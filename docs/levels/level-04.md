@@ -42,3 +42,17 @@ the existing victory clock.
 
 A breach at either crossing ends the battle. Pause holds both combat
 and marching. Restart builds a fresh siege. [Balance and strategy results](../level-4-balance.md) · [Presentation and recordings](../level-4-presentation.md) · [Roadmap](../roadmap.md)
+
+## Combat continuity
+
+The army HUD follows surviving ordinary infantry across both fronts, cannon
+marches, west-to-east withdrawals and the flanking detachment. The fixed
+Meowrtan formation has no ordinary infantry count. Tactical status marks the
+west as secured only when the shield wall reaches the bridge by the stairs.
+
+The wall marches and deploys while ordinary infantry holds the line. After
+shield lock the wall advances with the red contact line, absorbs attacks and
+then holds the bridge. Ordinary infantry withdraws east once the bridge is
+secured. When the main horde breaks, 60% of the standing east infantry
+takes the northern route. The rest holds east while the detachment presses
+into the red rear as resistance falls.

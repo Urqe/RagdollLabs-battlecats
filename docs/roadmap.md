@@ -62,6 +62,8 @@ A candidate future special encounter could unlock a **Royal Armory** after costl
 7. **Milestone 18 · Hold the Flank, Break the Horde.** One castle and one invasion. Buy room on the west bridge, deploy the Meowrtan shield wall, then send the ×999 surge through the eastern ravine and capture the red command camp. [Historical balance](level-4-balance-m18.md)
 8. **Milestone 19 · The Two-Front Siege.** Connect the west and east through one battlefield. Deliberate investments in the two ×99 gates and the shield wall buy time to redeploy, break the main army and strike the remaining reds from behind. [Level design](levels/level-04.md) · [Release balance](level-4-balance.md) · [Presentation](level-4-presentation.md)
 
+9. **Milestone 20 · Combat continuity and battlefield polish.** Keep the east horde visible during reinforcement, restore army and tactical status, and give the shield push and the rear attack authoritative contact lines. [Presentation evidence](level-4-presentation.md#milestone-20--diagnosing-the-empty-east-front)
+
 Treat Levels 5–10 as candidates. Use playtest results from the support levels and the two crossings before planning mixed units or combined encounters.
 
 ## Open questions and review
