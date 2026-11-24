@@ -85,13 +85,16 @@ function single(level, strategy, aim) {
   game.reset();
   const { state } = game;
   const { combat, objective } = level;
+  let cutoff;
   const clock = createBattleClock(dt => {
     const { blueTotal, redTotal, front, redEntryOpen } = state;
+    const previousTime = state.t;
     const before = w.arrived;
     const support = w.support;
     state.gunX = aim(state);
     game.update(dt);
-    if (state.t === w.t) return;
+    if (state.t === previousTime) return;
+    if (!state.redEntryOpen) cutoff ??= state.t;
     const access = redEntryOpen ? Math.max(0, Math.min(1,
       (front - objective.reinforcementCutoff) / combat.reinforcementApproach)) : 0;
     const intake = access * Math.min(combat.maxRedReinforcements,
@@ -101,12 +104,8 @@ function single(level, strategy, aim) {
   });
   const samples = [];
   w = windowFor(state);
-  let cutoff;
   for (let second = 0; second < 200 && state.mode === "playing"; second++) {
-    for (let i = 0; i < hz && state.mode === "playing"; i++) {
-      clock.advance(1 / hz);
-      if (!state.redEntryOpen) cutoff ??= state.t;
-    }
+    for (let i = 0; i < hz && state.mode === "playing"; i++) clock.advance(1 / hz);
     const elapsed = state.t - w.t;
     samples.push(sample(state, combat, objective,
       { ...w, blueLoss: w.blueLoss / elapsed, redLoss: w.redLoss / elapsed }, state.t));
