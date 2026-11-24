@@ -1,6 +1,6 @@
 # SiegeDolls Milestone 22 evidence
 
-The matched baseline is `d5e281c`. The replay and profile source is `779c10b` on the Milestone 22 implementation branch. Timings in the touch recordings vary with aim and the browser's live frame schedule.
+The matched baseline is `d5e281c`. The final replay source is `257bf80` on the Milestone 22 implementation branch. The Canvas profiles sample earlier combat checkpoints unaffected by the final flag staging change. Timings in the touch recordings vary with aim and the browser's live frame schedule.
 
 | Clip | Sequence |
 | --- | --- |
