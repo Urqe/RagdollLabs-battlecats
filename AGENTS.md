@@ -8,25 +8,36 @@ SiegeDolls is a mobile-first, one-finger Canvas arcade strategy game. The horizo
 
 The **simulation owns** populations, arrivals, casualties, pressure, frontline, artillery damage, and victory/defeat. The renderer may interpolate and dramatize these events but must not create combat-effective troops, fictional losses, teleporting reinforcements, or invisible enemies. Large armies use bounded representative sprites—not per-cat combat agents.
 
+## Core gameplay vision — The Playable Advertisement
+
+SiegeDolls delivers the spectacular army-multiplication fantasy advertised by casual mobile games such as Top Lords, with Mob Control as a useful mechanical reference. Build the **playable arcade battle shown in the ads**, not unrelated base-building, 4X, alliance, or resource-grinding systems.
+
+**Core loop: Fire → Multiply → Reinforce → Overwhelm → Breakthrough → Victory.**
+
+- **Numerical superiority must matter.** More active cats should normally mean greater fighting effectiveness and understandable battlefield progress, with smooth, terrain-sensitive diminishing returns rather than unexplained hard ceilings.
+- **Major reinforcements must feel rewarding.** A large wave should visibly strengthen the formation: slow a retreat, stabilize the line, push the enemy back, or trigger a breakthrough.
+- **Armies are living formations.** Fill useful frontage and side gaps, replace front-rank casualties from behind, and integrate reinforcements without teleporting or rigid block motion.
+- **Readability before realism.** A player should recognize which army is winning, and why, by watching the battlefield—not by knowing hidden equations or counters.
+- **Spectacular breakthroughs.** Overwhelming armies surge forward against negligible opposition; trickle reinforcements should not indefinitely halt a vastly superior force.
+- **One-finger control, meaningful choices.** Keep decisions about cannon aim, multipliers, upgrades, and battlefield priorities; avoid additional micromanagement.
+- **Special units add strategic opportunity.** Purrapult, Meowmen, Meowrtans, and future mechanics should create satisfying trade-offs, not compensate for unintuitive ordinary combat.
+
+**Product priorities:** satisfying player feedback → readable cause and effect → organic army movement → simple tactical choices → deterministic, mobile-safe implementation → mathematical realism.
+
+The authoritative simulation still owns troops, damage, reinforcement ownership, pressure, frontline movement and outcomes. The renderer may dramatize but must not fabricate effective troops, kills or territorial changes. **Explicitly authorized gameplay redesigns may change authoritative mechanics and balance** when necessary to achieve the arcade experience; presentation-only work may not. When balance is intentionally changed, revise tests and record matched before/after outcomes rather than preserving a frustrating old result.
+
+Do not add base-building, 4X systems, alliances, hero inventories, equipment grinding, monetization, or unrelated progression without explicit scope.
+
 ## Combat presentation — Operation Flying Fur
 
 **Combat outcomes are deterministic. Combat presentation is gloriously exaggerated.** SiegeDolls should look like joyful, chaotic slapstick warfare: flying, spinning, bouncing and stumbling miniature cats, rapid arrow storms, and spectacular Purrapult knockbacks. Prioritize readable cause and effect and satisfying visual payoff—not realism.
 
-- **Never change authoritative outcomes for spectacle.** Visual effects must not modify populations, casualties, reinforcements, damage, frontline position, supply cutoff, balance, or win/loss. Visual reactions follow authoritative clash, archer-impact, and artillery-impact events. Do not synthesize combat damage or invisible tactical advantages.
+- **Presentation-only effects never change authoritative outcomes.** Visual effects must not modify populations, casualties, reinforcements, damage, frontline position, supply cutoff, balance, or win/loss. Visual reactions follow authoritative clash, archer-impact, and artillery-impact events. Do not synthesize combat damage or invisible tactical advantages.
 - **Distinguish knockout from knockback.** A casualty may tumble and retire; a nonlethal reaction must visibly recover or return to formation without adding a soldier. Temporary flying representatives are not extra units, and presentation must not imply a permanent gap or territorial push that the simulation did not produce.
 - **Distinct rhythms:** melee is continuous close-range slapstick with frequent small recoils and occasional dramatic launches; Purrapult impacts are infrequent, broad and explosive, sending multiple cats flying; Meowmen deliver rapid, widespread arrow volleys and repeated localized disruptions. Exaggerate motion, spatial spread and apparent activity, not authoritative kill counts.
 - **Event-driven, not a second simulation.** Seed and animate bounded representative effects from real events; deterministic visual variation is preferred. Interpolate trajectories for presentation only. Scale effect strength with actual event intensity where sensible, while allowing nonlethal reactions. A miss must never depict a casualty.
 - **Shared, lightweight effects.** Prefer one small reusable presentation primitive for airborne cats (velocity, gravity, spin, bounce, landing/retirement) over separate physics engines for melee, arrows and artillery. Do not simulate individual combatants or per-arrow collision physics.
 - **Mobile readability and performance first.** Cap simultaneously active sprites, particles, embedded arrows and their lifetimes; prioritize major impacts when saturated. Avoid hiding the frontline, gates, cannon aim or danger warnings. Clear all transient effects on restart, level switch, victory and defeat. Tune budgets using mobile-emulated checks and physical iPhone playtests, not assumed device performance.
-
-### Planned visual passes (not authorization to implement together)
-
-1. **15A — Cartoon Combat Physics:** bounded shared airborne-cat presentation and melee reactions.
-2. **15B — Purrapult Mayhem:** radial knockback, tumbling cats, impact waves and temporary gaps.
-3. **15C — Meowmen Arrow Storm:** sustained visually staggered volleys, distributed impacts, recoil and brief embedded arrows.
-4. **15D — Integration and Mobile Polish:** combined-effects readability, performance and cleanup.
-
-Implement **only the requested pass** in each PR. Keep the existing game logic intact; avoid a sweeping visual rewrite. For each pass, use focused event/lifecycle tests, relevant existing gameplay regressions, and one short portrait recording demonstrating the visual effect.
 
 ## Where to look
 
@@ -40,8 +51,8 @@ Inspect only the files relevant to the task first. Read more when a dependency r
 
 ## Task scope and implementation
 
-- One primary behavior or defect per PR. Prefer 2–4 production files where reasonable; split unrelated work instead of bundling it.
-- Begin with a reproducible failure and specific acceptance criteria. Identify whether the root cause is simulation, presentation, or both before changing code.
+- Prefer focused PRs, normally one primary behavior or defect. Explicitly authorized cross-cutting gameplay redesigns may modify multiple shared systems when they serve one clear product objective and carry matched balance/regression evidence.
+- Begin with a reproducible failure or observable gameplay shortcoming and specific acceptance criteria. Identify whether the root cause is simulation, presentation, or both before changing code.
 - Prefer small changes to existing systems over parallel state machines, speculative abstractions, and broad refactors.
 - Preserve stable representative slots, reinforcement handoffs, casualty continuity, mobile input, and victory choreography when touched.
 - Maintain deterministic behavior across 30/60/120 Hz. When a task deliberately changes balance, record before/after outcomes rather than asserting old results are unchanged.
