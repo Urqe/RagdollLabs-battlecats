@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createDualBattlefield } from "../src/dual-battlefield.js";
-import { frontlineGeometry } from "../src/dual-render.js";
 import { LEVEL_FOUR } from "../src/levels.js";
 import { simulateDual } from "../scripts/simulate-dual.js";
 import { dualStrategies } from "./helpers/dual-strategies.js";
@@ -20,9 +19,17 @@ function run(fixture, seconds, hz = 60) {
   for (let frame = 0; frame < seconds * hz; frame++) fixture.advance(1 / hz);
 }
 
-function until(fixture, condition, limit = 15) {
+function until(fixture, condition, limit = 30) {
   for (let i = 0; i < limit * 60 && !condition(); i++) fixture.advance(tick);
   assert.ok(condition(), "condition was reached before the tick limit");
+}
+
+function starterCover(fixture, state) {
+  state.gunX = state.gates[2].x;
+  run(fixture, 5);
+  state.gunX = state.gates[3].x;
+  run(fixture, 3);
+  state.gunX = state.gates[0].x;
 }
 
 test("in-flight shots at the center gap feed both crossings independently", () => {
@@ -57,7 +64,7 @@ test("each upgrade consumes its own barricade hits and routes its exact multipli
 test("wood, marching and deploying expose the west before the shield wall locks", () => {
   const { fixture, state, left } = start();
   const [gate] = state.gates;
-  state.gunX = gate.x;
+  starterCover(fixture, state);
   until(fixture, () => state.work[0] === LEVEL_FOUR.barricades[0].hits - 3);
   assert.equal(gate.open, false);
   assert.equal(fixture.state.phalanx.phase, "locked");
@@ -97,8 +104,9 @@ test("wood, marching and deploying expose the west before the shield wall locks"
   assert.equal(left.blueTotal, blue);
   assert.equal(left.breached, false);
   assert.equal(left.redEntryOpen, true);
-  assert.equal(left.redEntryRate, 0);
-  assert.equal(left.redTotal, LEVEL_FOUR.phalanx.queueCapacity);
+  const capacity = LEVEL_FOUR.phalanx.queueCapacity;
+  assert.ok(left.redTotal <= capacity && left.redTotal > capacity - 4);
+  assert.equal(left.blueTotal, 0);
   assert.equal(left.squads.length, 0);
   assert.equal(fixture.state.outcome, null);
 
@@ -114,7 +122,7 @@ test("wood, marching and deploying expose the west before the shield wall locks"
 
 test("the west can still breach during deployment", () => {
   const { fixture, state, left } = start();
-  state.gunX = state.gates[0].x;
+  starterCover(fixture, state);
   until(fixture, () => fixture.state.phalanx.phase === "deploying");
   Object.assign(left, { front: left.objective.castleFront - 0.01, blueTotal: 0 });
   fixture.advance(tick);
@@ -124,25 +132,23 @@ test("the west can still breach during deployment", () => {
 });
 
 test("frontlines, arrivals, casualty effects and danger stay local", () => {
-  const { fixture, left, right } = start();
-  run(fixture, 22);
-  const west = frontlineGeometry(left);
-  const east = frontlineGeometry(right);
-  assert.ok(west.x + west.width < east.x);
-  assert.ok(west.y < east.y);
+  const events = [];
+  const { fixture, left, right } = start({ onEvent: event => events.push(event) });
+  until(fixture, () => fixture.feedback.right.danger);
+  assert.ok(left.front < right.front);
   assert.equal(fixture.feedback.left.danger, false);
   assert.equal(fixture.feedback.right.danger, true);
   assert.equal(fixture.feedback.right.arrivalAt, -Infinity);
   assert.ok(fixture.feedback.left.arrivalAt > 0);
-  for (const [id, local] of Object.entries(fixture.feedback)) {
-    assert.ok(local.flights.active.length <= 4);
-    for (const flight of local.flights.active)
-      assert.equal(flight.x < 210, id === "left");
+  for (const laneId of ["left", "right"]) {
+    assert.ok(events.some(event => event.laneId === laneId && event.type === "casualties"));
+    assert.ok(events.some(event => event.laneId === laneId && event.type === "frontline"));
   }
 });
 
 test("both crossings can warn simultaneously and either can end the battle", () => {
-  const { fixture, state, left, right } = start();
+  const events = [];
+  const { fixture, state, left, right } = start({ onEvent: event => events.push(event) });
   left.front = right.front = 442;
   left.blueTotal = right.blueTotal = 0;
   run(fixture, 0.1);
@@ -152,6 +158,7 @@ test("both crossings can warn simultaneously and either can end the battle", () 
   assert.ok(left.breached && right.breached);
   assert.equal(state.mode, "defeat");
   const frozen = structuredClone(fixture.state);
+  const eventCount = events.length;
   fixture.pause();
   run(fixture, 3);
   assert.equal(state.defeatElapsed, 0);
@@ -160,41 +167,63 @@ test("both crossings can warn simultaneously and either can end the battle", () 
   assert.equal(state.mode, "end");
   assert.deepEqual(fixture.state, frozen);
   assert.equal(state.shots.length, 0);
-  assert.equal(fixture.feedback.left.flights.active.length + fixture.feedback.right.flights.active.length, 0);
+  assert.equal(events.length, eventCount);
 });
 
-test("the eight strategies agree at 30, 60 and 120 Hz", () => {
+test("release strategies preserve all outcomes and authoritative events at 30, 60 and 120 Hz", () => {
   const baseline = dualStrategies.map(strategy => simulateDual(strategy, 60));
   for (const hz of [30, 120])
     assert.deepEqual(dualStrategies.map(strategy => simulateDual(strategy, hz)), baseline);
+  const byName = Object.fromEntries(baseline.map(outcome => [outcome.strategy, outcome]));
   assert.deepEqual(baseline.slice(0, 6).map(result => result.breached),
-    [["right"], ["left"], ["left"], ["left"], ["left"], ["right"]]);
+    [["right"], ["left"], ["left"], ["left"], ["left"], ["left"]]);
   assert.ok(baseline.slice(0, 6).every(result => result.outcome === "defeat"));
-  assert.ok(baseline[4].unlocked.siege > 0 && baseline[4].securedAt === null);
-  assert.ok(baseline[5].securedAt > 0 && baseline[5].supplyCutoffAt === null);
-  for (const win of baseline.slice(6)) {
-    assert.equal(win.outcome, "victory");
-    assert.ok(win.duration >= 60 && win.duration <= 110);
-    assert.ok(win.unlocked.phalanx < win.securedAt);
-    assert.ok(win.securedAt < win.supplyCutoffAt);
-    assert.ok(win.retreated > 0);
-    const smallerPush = simulateDual(win.strategy, 60, { useSiege: false });
-    assert.equal(smallerPush.outcome, "victory");
-    assert.equal(smallerPush.securedAt, win.securedAt);
-    assert.ok(smallerPush.duration - win.duration > 8, "×999 repays the opening time");
+  assert.ok(byName["east-siege-first"].unlocked.siege > 0 && byName["east-siege-first"].securedAt === null);
+  const rush = byName["phalanx-rush"];
+  assert.equal(rush.securedAt, null);
+  assert.equal(rush.unlocked.left, undefined);
+  assert.deepEqual(byName["starter-fed-rush"].breached, ["left"]);
+  const sustained = byName["sustained-starter-rush"];
+  assert.equal(sustained.outcome, "victory");
+  assert.equal(sustained.unlocked.left, undefined);
+  assert.ok(sustained.duration > byName.adaptive.duration + 25);
+  assert.ok(sustained.withdrawal < 10);
+  for (const strategy of ["double-upgrade", "adaptive", "flank-first", "adaptive-seven", "adaptive-imperfect"]) {
+    const win = byName[strategy];
+    assert.equal(win.outcome, "victory", strategy);
+    assert.ok(win.duration >= 95 && win.duration <= 150, strategy);
+    assert.ok(win.unlocked.left < win.unlocked.phalanx);
+    assert.ok(win.unlocked.phalanx < win.deployingAt && win.deployingAt < win.securedAt);
+    assert.ok(win.securedAt < win.supplyCutoffAt && win.supplyCutoffAt <= win.breakthroughAt);
+    assert.ok(win.encirclementDuration > 7 && win.transferred >= win.withdrawal && win.withdrawal > 300);
+    assert.ok(win.retreated > 0 && win.redCasualties > win.retreated);
   }
+  const both = byName["double-upgrade"];
+  assert.ok(both.unlocked.right < both.unlocked.phalanx);
+  assert.ok(byName["flank-first"].unlocked.right > byName["flank-first"].securedAt);
+  const plain = byName["no-siege"];
+  assert.equal(plain.outcome, "victory");
+  assert.equal(plain.unlocked.siege, undefined);
+  assert.equal(plain.securedAt, both.securedAt);
+  assert.ok(plain.breakthroughAt - both.breakthroughAt > 10, "×999 repays the opening time");
+  const noWest = byName["skip-west99"];
+  assert.equal(noWest.unlocked.left, undefined);
+  assert.ok(noWest.outcome === "defeat" || noWest.duration - both.duration > 25);
+  assert.ok(both.withdrawal > noWest.withdrawal * 4, "west ×99 preserves the redeploying infantry");
+  const noEast = byName["skip-east99"];
+  assert.equal(noEast.unlocked.right, undefined);
+  assert.deepEqual(noEast.breached, ["right"]);
+  assert.deepEqual(byName["no-phalanx"].breached, ["left"]);
 });
 
-test("even the best possible ordinary west defense breaches before the earliest east cutoff", () => {
-  const { left, right } = LEVEL_FOUR.crossings;
-  const { combat: west, objective } = left;
+test("even an impossible maximum-pressure west army eventually loses without the shield wall", () => {
+  const { combat: west, objective } = LEVEL_FOUR.crossings.left;
   assert.ok(west.minFront >= objective.reinforcementCutoff + west.reinforcementApproach,
     "west red arrivals have full access at every reachable ordinary frontline");
-  const earliestCutoff = (right.combat.initialFront - right.objective.reinforcementCutoff) /
-    right.combat.blueAdvance;
+  assert.ok(west.maxRedReinforcements > west.maxRedLoss && west.redAdvance > 0);
   let front = west.initialFront;
   let red = west.initialRed;
-  for (let i = 1; i * tick < earliestCutoff; i++) {
+  for (let i = 1; i * tick <= 79; i++) {
     // Relax all cannon, travel and blue loss limits. Assume the west always
     // has maximum pressure and inflicts maximum possible red casualties.
     red = Math.max(0, red + (Math.min(west.maxRedReinforcements,
@@ -208,16 +237,21 @@ test("even the best possible ordinary west defense breaches before the earliest 
   assert.ok(front >= objective.castleFront);
 });
 
-test("permanent east cutoff and clearing the main army cause retreat, followed by one flag capture", () => {
+test("east cutoff and flank combat cause a conserved retreat, followed by one flag capture", () => {
   const events = [];
+  let redLost = 0;
+  let tracking = false;
   const { fixture, state, left, right } = start({
+    onEvent(event) {
+      if (tracking && event.type === "casualties" && event.laneId === "left") redLost += event.redLost;
+    },
     onEnd: won => events.push(won),
     onEffect: kind => { if (kind === "victory" || kind === "flagCapture") events.push(kind); },
   });
-  state.gunX = state.gates[0].x;
+  starterCover(fixture, state);
   until(fixture, () => fixture.state.phalanx.phase === "secured");
   events.length = 0;
-  Object.assign(right, { redTotal: 0, blueTotal: 3000 });
+  Object.assign(right, { redTotal: 0, blueTotal: 10000 });
   run(fixture, 0.1);
   assert.equal(fixture.state.outcome, null);
   assert.equal(right.redTotal, 0);
@@ -228,12 +262,17 @@ test("permanent east cutoff and clearing the main army cause retreat, followed b
   assert.ok(right.redTotal > 0);
   assert.equal(fixture.state.outcome, null);
   left.redTotal = LEVEL_FOUR.phalanx.queueCapacity + 400;
-  const survivors = left.redTotal;
-  until(fixture, () => fixture.state.outcome === "victory");
+  const before = left.redTotal;
+  tracking = true;
+  until(fixture, () => fixture.state.siege.phase === "flanking");
+  assert.ok(left.redTotal > 0);
+  assert.equal(fixture.state.outcome, null);
+  until(fixture, () => fixture.state.outcome === "victory", 45);
   assert.equal(state.mode, "victory");
   assert.equal(left.redTotal, 0);
   assert.equal(left.redEntryOpen, false);
-  assert.equal(fixture.state.retreat.count, survivors);
+  assert.ok(fixture.state.retreat.count > 0 && fixture.state.retreat.count < before);
+  assert.ok(Math.abs(fixture.state.retreat.count + redLost - before) < 1e-6);
   assert.equal(fixture.state.phalanx.phase, "secured");
   const combat = structuredClone(fixture.state);
   run(fixture, 0.5);

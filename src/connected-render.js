@@ -502,7 +502,9 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     terrain, draw, reset, receive, snapshot,
     frame() {
       return { ...metrics, time: state.t, mode: state.mode, phalanx: renderState.phase,
-        phase: battle.state.siege.phase, siege: state.gates[5].open };
+        phase: battle.state.siege.phase, siege: state.gates[5].open,
+        west99: state.gates[1].open, east99: state.gates[4].open,
+        transfers: renderState.transfers };
     },
     recordDraw(ms) { metrics.drawMs = ms; },
   };

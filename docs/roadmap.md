@@ -25,7 +25,7 @@ Level 1 is the playable regression baseline. Level 2 adds yarn-ball artillery, L
 | 1 | [The Last Stand](levels/level-01.md) | Implemented | Multipliers, direct-hit barricades, and escalating pressure provide the shared baseline. |
 | 2 | [The Purrapult](levels/level-02.md) | Implemented | Unlock a yarn-ball catapult. Shared level definitions, direct-hit wood, and simulation-owned artillery are in place. |
 | 3 | [The Meowmen](levels/level-03.md) | Implemented | Unlock cat archers for steady ranged support. |
-| 4 | [A Tale of Two Tails](levels/level-04.md) | Implemented | Reinforce two bottlenecks with one cannon, secure the west with the Meowrtan Phalanx, then capture the red command camp in the east. |
+| 4 | [A Tale of Two Tails](levels/level-04.md) | Implemented | Reinforce two bottlenecks with one cannon, secure the west with the Meowrtan Phalanx, redeploy its infantry through the rear junction, and encircle the remaining horde after breaking through in the east. |
 | 5 | [The Pawtorians](levels/level-05.md) | Proposed | Armored red cats make shot timing and support choice matter. Needs a readable mixed horde and distinct damage interactions. |
 | 6 | [The Clawlossus](levels/level-06.md) | Proposed | A siege tower gives the player a moving target for concentrated damage. Builds on direct-hit targets and clear enemy threat states. |
 | 7 | [The Cavalpurry](levels/level-07.md) | Proposed | Mounted blue cats charge periodically. Depends on a readable support windup and clear frontline impact. |
@@ -59,7 +59,8 @@ A candidate future special encounter could unlock a **Royal Armory** after costl
 4. **Milestone 9 · Army scale and combat fidelity.** Literal small encounters, shared reserve scaling and population-driven formation reactions are part of the level foundation. [Army scale and combat evidence](army-visual-scale.md)
 5. **Level 3 · The Meowmen.** Add unlockable ranged support.
 6. **Milestone 17 · A Tale of Two Tails.** Release fixed-step lane combat and two-crossing cannon play. [Release archive](level-4-balance-m17.md)
-7. **Milestone 18 · Hold the Flank, Break the Horde.** One castle and one invasion. Buy room on the west bridge, deploy the Meowrtan shield wall, then send the ×999 surge through the eastern ravine and capture the red command camp. [Level design](levels/level-04.md) · [Measured balance](level-4-balance.md)
+7. **Milestone 18 · Hold the Flank, Break the Horde.** One castle and one invasion. Buy room on the west bridge, deploy the Meowrtan shield wall, then send the ×999 surge through the eastern ravine and capture the red command camp. [Historical balance](level-4-balance-m18.md)
+8. **Milestone 19 · The Two-Front Siege.** Connect the west and east through one battlefield. Deliberate investments in the two ×99 gates and the shield wall buy time to redeploy, break the main army and strike the remaining reds from behind. [Level design](levels/level-04.md) · [Release balance](level-4-balance.md) · [Presentation](level-4-presentation.md)
 
 Treat Levels 5–10 as candidates. Use playtest results from the support levels and the two crossings before planning mixed units or combined encounters.
 

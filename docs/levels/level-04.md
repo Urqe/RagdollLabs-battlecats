@@ -1,30 +1,44 @@
 # Level 4 · A Tale of Two Tails
 
-[Roadmap](../roadmap.md) · [Balance and validation](../level-4-balance.md)
+Choose **A Tale of Two Tails** from the menu. One red horde advances out
+of a shared northern field. The narrow west bridge and wide east approach
+join at the castle apron. Slide one cannon to reinforce both crossings.
+It fires three kittens every 0.46 seconds.
 
-Choose **A Tale of Two Tails** from the level menu. One red horde fills the northern staging grounds. The west bridge and the east ravine meet again on the castle apron. Both passages share one castle and one sliding cannon.
+## Hold both crossings
 
-## Hold the flank
-
-The cannon fires three kittens every 0.46 seconds. Each shot follows its own launch position. The two ×20 gates start open, and a shot hitting closed wood is spent on the barricade. The gate labels show the progress of each barricade.
-
-| Target | Direct hits | Result |
+| Target | Direct hits | Clean volley |
 | --- | ---: | --- |
-| West ×20 | 0 | 60 kittens from a clean volley |
-| West ×99 | 24 | 297 kittens from a clean volley |
-| Meowrtan Phalanx | 36 | Releases the shield formation |
-| East ×20 | 0 | 60 kittens from a clean volley |
-| East ×99 | 27 | 297 kittens from a clean volley |
-| East ×999 | 72 | 2,997 kittens from a clean volley |
+| West Meowrtan Phalanx | 132 | Releases the shield formation |
+| West ×99 | 30 | 297 infantry |
+| West ×20 | 0 | 60 infantry |
+| East ×20 | 0 | 60 infantry |
+| East ×99 | 30 | 297 infantry |
+| East ×999 | 90 | 2,997 infantry |
 
-The west frontage limits how many ordinary blue troops can contribute to pushing the line. Its capacity meter fills as blue troops arrive. The west ×99 can rally the defense and buy time to break the phalanx barricade while the horde's arrivals grow. Split early fire between the passages and watch the arrows and castle warnings.
+Spend volleys on closed wood to open a target. A shot spent on a
+barricade yields no infantry. Keep feeding the crossings through the
+starter gates, then use each ×99 to build enough reserves to make time
+for the phalanx. The upgrades can be damaged in any order. Watch the
+retreating contact lines and the castle warning while working on wood.
 
-The phalanx starts **locked**. The last hit leaves it **unlocked**, then the Meowrtans begin **marching** for 2.4 seconds. They spend another 1.15 seconds **deploying**, while ordinary fighting and the risk of a breach continue. When the shields lock, the flank becomes **secured**. The wall pushes the contact line back toward the bridge and then holds its ground. Red troops already present stay visibly opposed to the shields, and further arrivals queue only up to the available space. Blue troops behind the shields take no further melee losses.
+The west bridge limits ordinary blue frontage, while red intake grows
+continuously. The Meowrtans march for 2.4 seconds and deploy for another
+1.15 seconds. The west can still breach until the shields lock.
 
 ## Break the horde
 
-Aim the full cannon at the east once the Meowrtans are holding. Either east upgrade can be opened independently of the phalanx. The ×999 sends dense marching waves down the approach, giving the main blue army the numbers to sustain a faster push through the ravine.
+Once secured, the Meowrtans hold the bridge and keep fighting. Surviving
+west infantry disengages and marches through the rear junction to join
+the east. West-bound volleys already in motion reach the rally first.
+New west volleys travel from the castle junction directly to the east.
 
-Moving the east line to the red command camp cuts supply permanently. Victory occurs once the east force is also cleared. Remaining west reds retreat as survivors, and the Meowrtans salute in position while the east blue ranks charge and raise the flag. The overlay follows after 3.2 seconds. A temporary red count of zero with supply still open leaves the battle running.
+Use ×99 to hold the east during upgrades or to build a slower offensive.
+The ×999 surge builds a much deeper reserve and can drive the east army
+toward the command camp. Clearing that force sends part of the blue army
+around the ridge to attack the remaining west reds from behind.
+Victory follows the rear battle and rout. The blue flag and result use
+the existing victory clock.
 
-A breach at either castle approach ends the battle. The 0.85-second defeat reaction names the failed crossing. Pause freezes deployment and outcome presentation, and restart rebuilds the whole siege.
+A breach at either crossing ends the battle. Pause holds both combat
+and marching. Restart builds a fresh siege. [Balance and strategy results](../level-4-balance.md) · [Presentation and recordings](../level-4-presentation.md) · [Roadmap](../roadmap.md)

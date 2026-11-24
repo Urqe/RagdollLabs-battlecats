@@ -1,65 +1,36 @@
-import { createAirborneCats } from "./airborne-cats.js";
-import { connectedSiegeRules } from "./connected-siege.js";
 import { CROSSINGS, createDualFront } from "./dual-front.js";
 import { FLAG_CAPTURE_TIME } from "./army-movement.js";
 import { LEVEL_FOUR } from "./levels.js";
 import { fire, updateProjectiles } from "./projectiles.js";
 import { resetState } from "./state.js";
 
-export const crossings = {
-  left: { center: 112, edge: 22, width: 180 },
-  right: { center: 308, edge: 218, width: 180 },
-};
-
 const ignore = () => {};
 const freshFeedback = () => ({
-  direction: 0, reversedAt: -Infinity, redIntake: 0, redPulse: -Infinity,
-  redPending: 0, clashAt: -Infinity, contact: -Infinity, launchAt: -Infinity,
-  arrivalAt: -Infinity, cutoffAt: -Infinity, breachAt: -Infinity,
-  danger: false, blueLost: 0, redLost: 0,
-  flights: createAirborneCats(4),
+  direction: 0, arrivalAt: -Infinity, cutoffAt: -Infinity, danger: false,
 });
 
-// The connected model is an opt-in headless fixture until its renderer is ready.
-export function createDualBattlefield({
-  state, onEnd = ignore, onEffect = ignore, connected = false, onEvent,
-}) {
+export function createDualBattlefield({ state, onEnd = ignore, onEffect = ignore, onEvent }) {
   const feedback = {};
   const battle = createDualFront(LEVEL_FOUR.crossings, {
     beforeTick: updateCannon, onEvent: receive, afterTick: updatePresentation,
     phalanx: LEVEL_FOUR.phalanx,
-    connectedRules: connected ? connectedSiegeRules : undefined,
   });
 
   function receive(event) {
     onEvent?.(event, battle.state);
     const local = feedback[event.laneId];
     switch (event.type) {
-      case "launch":
-        local.launchAt = event.time;
-        break;
       case "arrival":
         if (event.side === "blue") local.arrivalAt = event.time;
-        else local.redPending += event.count;
         break;
-      case "casualties":
-        local.redLost += event.redLost;
-        local.blueLost += event.blueLost;
+      case "transferArrival":
+        local.arrivalAt = event.time;
         break;
-      case "clash":
-        local.contact = event.time;
+      case "frontline":
+        local.direction = Math.sign(event.front - event.previousFront);
         break;
-      case "frontline": {
-        const direction = Math.sign(event.front - event.previousFront);
-        if (local.direction && local.direction !== direction) local.reversedAt = event.time;
-        local.direction = direction;
-        break;
-      }
       case "supplyCutoff":
         local.cutoffAt = event.time;
-        break;
-      case "breach":
-        local.breachAt = event.time;
         break;
     }
   }
@@ -86,29 +57,10 @@ export function createDualBattlefield({
   }
 
   function updateFeedback() {
-    const { time, lanes } = battle.state;
+    const { lanes } = battle.state;
     for (const id of CROSSINGS) {
       const lane = lanes[id];
       const local = feedback[id];
-      const { center } = crossings[id];
-      local.flights.step(time);
-      if (time - local.redPulse >= 0.34) {
-        local.redPulse = time;
-        local.redIntake = local.redPending;
-        local.redPending = 0;
-      }
-      if (time - local.clashAt >= 0.24 && (local.blueLost || local.redLost)) {
-        local.clashAt = time;
-        for (const red of [false, true]) {
-          const key = red ? "redLost" : "blueLost";
-          if (local[key] < 1) continue;
-          const side = red ? 1 : -1;
-          local.flights.launch({ at: time, x: center + Math.sin(time * 19) * 38,
-            y: lane.front - side * 6, vx: side * 40, vy: -side * 31,
-            lift: 65, spin: side * 8, bounce: 0.23, red, defeated: true });
-          local[key] %= 1;
-        }
-      }
       // Hysteresis keeps the alert from flashing repeatedly near the threshold.
       const danger = lane.breached || lane.front >= lane.objective.castleFront - 32 ||
         (lane.front >= lane.objective.castleFront - (local.danger ? 92 : 78) &&
@@ -122,7 +74,6 @@ export function createDualBattlefield({
       updateFeedback();
       if (!battle.state.outcome) return;
       state.shots.length = 0;
-      for (const id of CROSSINGS) feedback[id].flights.reset();
       state.mode = battle.state.outcome;
       if (state.mode === "victory") onEffect("victory", state.t);
       return;

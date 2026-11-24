@@ -25,7 +25,7 @@ test("the presentation leaves connected outcomes and events identical at all ren
     const ctx = new Proxy({}, { get: () => noOp });
     const figures = { soldier: noOp, reserveStamp: noOp, airborne: noOp };
     let visual;
-    const sim = createDualBattlefield({ state, connected: true, onEvent(event, battle) {
+    const sim = createDualBattlefield({ state, onEvent(event, battle) {
       events.push(event);
       visual.receive(event, battle);
     } });
@@ -33,8 +33,8 @@ test("the presentation leaves connected outcomes and events identical at all ren
     visual = createConnectedPresentation(ctx, figures, state, sim);
     const { lanes, phalanx } = sim.state;
     let mostCohorts = 0, mostFlights = 0;
-    for (let second = 0; second < 125 && !sim.state.outcome; second++) {
-      state.gunX = dualAim("mixed", second, lanes, state.gates, phalanx);
+    for (let second = 0; second < 160 && !sim.state.outcome; second++) {
+      state.gunX = dualAim("adaptive-seven", second, lanes, state.gates, phalanx);
       for (let frame = 0; frame < hz && !sim.state.outcome; frame++) {
         sim.advance(1 / hz);
         visual.draw();

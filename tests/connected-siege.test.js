@@ -41,7 +41,8 @@ test("both fronts fight until the phalanx locks and the shield wall keeps fighti
   const { left, right } = sim.state.lanes;
   assert.equal(sim.state.phalanx.phase, "locked");
   sim.step();
-  assert.ok(left.blueTotal < 330 && right.blueTotal < 540);
+  assert.ok(left.blueTotal < LEVEL_FOUR.crossings.left.initialBlue);
+  assert.ok(right.blueTotal < LEVEL_FOUR.crossings.right.initialBlue);
   sim.unlockPhalanx();
   sim.unlockPhalanx();
   sim.step();
@@ -81,7 +82,7 @@ test("the exposed left crossing can breach during marching or deployment", () =>
       initialBlue: 0 };
     const sim = fixture({ left, phalanx: { marchTime } });
     sim.unlockPhalanx();
-    sim.step(3);
+    sim.step(4);
     assert.equal(sim.state.outcome, "defeat");
     assert.equal(sim.state.phalanx.phase, expected);
     assert.equal(sim.state.lanes.left.breached, true);
@@ -100,7 +101,7 @@ test("left infantry and cannon squads redeploy once through the junction on the 
   const [infantry] = sim.state.siege.transfers;
   assert.equal(infantry.route, "withdrawal");
   assert.equal(infantry.leg, 0);
-  checkClose(infantry.count, 330 - sim.events.filter(event =>
+  checkClose(infantry.count, LEVEL_FOUR.crossings.left.initialBlue - sim.events.filter(event =>
     event.laneId === "left" && event.type === "casualties")
     .reduce((sum, event) => sum + event.blueLost, 0));
   assert.equal(left.squads[0], pending);
@@ -114,9 +115,12 @@ test("left infantry and cannon squads redeploy once through the junction on the 
   sim.clock.resume();
 
   sim.launchVolley("left", { multiplier: 20 });
+  sim.launchVolley("left", { multiplier: 99 });
   sim.launchVolley("right", { multiplier: 999 });
-  const [redirect, siege] = right.squads;
-  assert.deepEqual([redirect.gateLane, redirect.route], ["left", "eastEntry"]);
+  const [redirect, redirect99, siege] = right.squads;
+  for (const squad of [redirect, redirect99])
+    assert.deepEqual([squad.gateLane, squad.route], ["left", "eastEntry"]);
+  assert.equal(redirect99.count, 297);
   assert.equal(siege.count, 2997);
   while (sim.events.filter(event => event.type === "transferArrival").length < 2) {
     const population = bluePopulation(sim.state);
@@ -135,7 +139,7 @@ test("left infantry and cannon squads redeploy once through the junction on the 
   assert.ok(arrivals[0].time - arrivals[0].departedAt >= 2.24);
   assert.ok(sim.events.some(event => event.type === "transferProgress" && event.from === "rearJunction"));
   assert.deepEqual(sim.events.filter(event => event.type === "arrival" && event.side === "blue")
-    .map(event => [event.id, event.laneId]), [[redirect.id, "right"], [siege.id, "right"]]);
+    .map(event => [event.id, event.laneId]), [[redirect.id, "right"], [redirect99.id, "right"], [siege.id, "right"]]);
   assert.equal(left.squads.length, 0);
   assert.equal(sim.state.siege.transfers.length, 0);
 });
@@ -171,12 +175,15 @@ test("victory requires a secured wall and a cleared main army", () => {
   assert.equal(sim.state.lanes.right.redEntryOpen, false);
   assert.equal(sim.state.lanes.right.redTotal, 0);
   assert.equal(sim.state.outcome, null);
+  assert.equal(sim.state.lanes.left.redEntryOpen, true);
   assert.equal(sim.state.siege.flank, null);
 
-  const result = simulateDual("phalanx-rush", 60, { connected: true });
-  assert.equal(result.outcome, "defeat");
-  assert.ok(result.securedAt > 0);
-  assert.equal(result.supplyCutoffAt, null);
+  const wallOnly = fixture();
+  wallOnly.unlockPhalanx();
+  wallOnly.step(2200);
+  assert.equal(wallOnly.state.phalanx.phase, "secured");
+  assert.equal(wallOnly.state.outcome, "defeat");
+  assert.ok(wallOnly.state.lanes.right.breached && wallOnly.state.lanes.right.redEntryOpen);
 });
 
 test("a real cannon replay conserves troops through breakthrough, flank movement and rout", () => {
@@ -184,7 +191,7 @@ test("a real cannon replay conserves troops through breakthrough, flank movement
     const events = [];
     let final;
     let checkedAt;
-    const result = simulateDual("mixed", hz, { connected: true, onEvent(event, state) {
+    const result = simulateDual("adaptive-seven", hz, { onEvent(event, state) {
       events.push(event);
       if (checkedAt !== event.time && event.type !== "launch" && event.type !== "phalanxUnlocked") {
         checkedAt = event.time;
@@ -205,7 +212,7 @@ test("a real cannon replay conserves troops through breakthrough, flank movement
   assert.deepEqual(run(30), baseline);
   assert.deepEqual(run(120), baseline);
   assert.equal(result.outcome, "victory");
-  assert.ok(result.duration >= 70 && result.duration <= 120);
+  assert.ok(result.duration >= 100 && result.duration <= 150);
 
   const names = ["phalanxSecured", "infantryWithdrawal", "transferArrival", "supplyCutoff",
     "mainBreakthrough", "encirclementStarted", "encirclementArrival", "rearAttack",
