@@ -1,0 +1,1190 @@
+[
+  {
+    "hz": 30,
+    "strategies": [
+      {
+        "strategy": "west-camping",
+        "outcome": "defeat",
+        "duration": 29.0166666666663,
+        "breached": [
+          "right"
+        ],
+        "unlocked": {},
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 2444.988713222359,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 2970.6478053204173,
+        "retreated": 0,
+        "furthest": {
+          "left": 335,
+          "right": 510.1124966085519
+        },
+        "eventDigest": "d7216cb58375200b48a6fcd5bf23ff167b950e553cec215eef777db6cbfc601a"
+      },
+      {
+        "strategy": "east-camping",
+        "outcome": "defeat",
+        "duration": 26.549999999999773,
+        "breached": [
+          "left"
+        ],
+        "unlocked": {},
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 3702.6744540416425,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 3126.860381017165,
+        "retreated": 0,
+        "furthest": {
+          "left": 510.12324844205796,
+          "right": 350
+        },
+        "eventDigest": "e0ebe47677b6f23e53a15f7d2dcf688f1d36437f4cdc1f2fea37f25f538301ad"
+      },
+      {
+        "strategy": "even-alternation",
+        "outcome": "defeat",
+        "duration": 64.56666666666429,
+        "breached": [
+          "left"
+        ],
+        "unlocked": {},
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 4499.811156616853,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 13724.556567660331,
+        "retreated": 0,
+        "furthest": {
+          "left": 510.1339242705686,
+          "right": 350
+        },
+        "eventDigest": "24fe135fb15144f2fde21436468c8a568970771144f251952ce49c8682f234ec"
+      },
+      {
+        "strategy": "phalanx-rush",
+        "outcome": "defeat",
+        "duration": 191.65000000004466,
+        "breached": [
+          "right"
+        ],
+        "unlocked": {
+          "phalanx": 18.216666666666914
+        },
+        "deployingAt": 20.65000000000011,
+        "securedAt": 21.81666666666671,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 1118.6888443496946,
+        "withdrawal": 4.775480953574295,
+        "transferred": 4.775480953574295,
+        "redCasualties": 38871.42606649345,
+        "retreated": 0,
+        "furthest": {
+          "left": 463.93479903949344,
+          "right": 510.08664793462265
+        },
+        "eventDigest": "840dfd948f59f8416aed0e4e208f133446229b893556e9e50e689345dc4342b9"
+      },
+      {
+        "strategy": "west-only",
+        "outcome": "defeat",
+        "duration": 29.083333333332963,
+        "breached": [
+          "right"
+        ],
+        "unlocked": {
+          "left": 4.416666666666656,
+          "phalanx": 23.283333333333292
+        },
+        "deployingAt": 25.716666666666487,
+        "securedAt": 26.883333333333088,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 3160.718670121988,
+        "withdrawal": 787.5412884471954,
+        "transferred": 0,
+        "redCasualties": 1735.7908005789855,
+        "retreated": 0,
+        "furthest": {
+          "left": 443.30512435939494,
+          "right": 510.0461729565548
+        },
+        "eventDigest": "6426f278c4951a167892e956b09088cf3e36103a216166d0b2324d85dbbb6391"
+      },
+      {
+        "strategy": "east-siege-first",
+        "outcome": "defeat",
+        "duration": 26.549999999999773,
+        "breached": [
+          "left"
+        ],
+        "unlocked": {
+          "siege": 13.616666666666923
+        },
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 83736.4470171497,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 3126.860381017165,
+        "retreated": 0,
+        "furthest": {
+          "left": 510.12324844205796,
+          "right": 389.76333166526996
+        },
+        "eventDigest": "ed8fc94f0815e0d8baae41b786340d9013b8da13b11f3e4c37ad4e19c2df966f"
+      },
+      {
+        "strategy": "double-upgrade",
+        "outcome": "victory",
+        "duration": 141.0333333333377,
+        "breached": [],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 20.983333333333423,
+          "phalanx": 57.783333333331335,
+          "siege": 75.71666666666366
+        },
+        "deployingAt": 60.21666666666453,
+        "securedAt": 61.38333333333113,
+        "supplyCutoffAt": 117.94999999999459,
+        "breakthroughAt": 122.93333333332764,
+        "encirclementDuration": 18.10000000001007,
+        "survivingBlue": 413429.53615339857,
+        "withdrawal": 2417.2254896839518,
+        "transferred": 3308.2254896839518,
+        "redCasualties": 30074.619581000254,
+        "retreated": 5523.738968735952,
+        "furthest": {
+          "left": 408.0978133644127,
+          "right": 428.9076826490229
+        },
+        "eventDigest": "0a718ef4c7d6dd192579a57a1c66d5d2808faf1d7fc400452ad4bc027b213ec9"
+      },
+      {
+        "strategy": "adaptive",
+        "outcome": "victory",
+        "duration": 131.5833333333302,
+        "breached": [],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 20.983333333333423,
+          "phalanx": 59.616666666664564,
+          "siege": 77.54999999999688
+        },
+        "deployingAt": 62.04999999999776,
+        "securedAt": 63.21666666666436,
+        "supplyCutoffAt": 108.28333333332847,
+        "breakthroughAt": 111.83333333332827,
+        "encirclementDuration": 19.75000000000192,
+        "survivingBlue": 344321.9177382339,
+        "withdrawal": 2132.6451523585147,
+        "transferred": 3023.6451523585147,
+        "redCasualties": 27667.983247969118,
+        "retreated": 6035.613508555109,
+        "furthest": {
+          "left": 433.2738417298019,
+          "right": 397.24495935978325
+        },
+        "eventDigest": "41e554eb6f529017d3072ba2de7ef9dae63a1043db005fd1a255151edda53fe8"
+      },
+      {
+        "strategy": "flank-first",
+        "outcome": "victory",
+        "duration": 96.23333333332916,
+        "breached": [],
+        "unlocked": {
+          "left": 13.616666666666923,
+          "phalanx": 43.04999999999884,
+          "right": 51.3333333333317,
+          "siege": 65.59999999999756
+        },
+        "deployingAt": 45.483333333332034,
+        "securedAt": 46.649999999998634,
+        "supplyCutoffAt": 82.58333333332993,
+        "breakthroughAt": 82.58333333332993,
+        "encirclementDuration": 13.649999999999224,
+        "survivingBlue": 195997.53611527974,
+        "withdrawal": 707.1070652157423,
+        "transferred": 707.1070652157423,
+        "redCasualties": 17466.668579830843,
+        "retreated": 3590.583489573125,
+        "furthest": {
+          "left": 504.6797821463429,
+          "right": 350
+        },
+        "eventDigest": "c06082797ca43fe8d0174f00b75ede36d7d097119333548a1f363aacec621b28"
+      },
+      {
+        "strategy": "no-siege",
+        "outcome": "victory",
+        "duration": 152.51666666668018,
+        "breached": [],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 20.983333333333423,
+          "phalanx": 57.783333333331335
+        },
+        "deployingAt": 60.21666666666453,
+        "securedAt": 61.38333333333113,
+        "supplyCutoffAt": 127.99999999999402,
+        "breakthroughAt": 134.41666666666578,
+        "encirclementDuration": 18.100000000014404,
+        "survivingBlue": 47534.74203623419,
+        "withdrawal": 2417.2254896839518,
+        "transferred": 3308.2254896839518,
+        "redCasualties": 32865.50075159594,
+        "retreated": 5430.938968735957,
+        "furthest": {
+          "left": 408.0978133644127,
+          "right": 428.9076826490229
+        },
+        "eventDigest": "52a8f66186d4a31e706a37d42126fc5bb8ea4aa7d66f059881ef9f0bc2140886"
+      },
+      {
+        "strategy": "skip-west99",
+        "outcome": "victory",
+        "duration": 189.63333333337638,
+        "breached": [],
+        "unlocked": {
+          "right": 15.000000000000325,
+          "phalanx": 52.249999999998316,
+          "siege": 81.69999999999665
+        },
+        "deployingAt": 54.68333333333151,
+        "securedAt": 55.84999999999811,
+        "supplyCutoffAt": 151.60000000001278,
+        "breakthroughAt": 174.3333333333642,
+        "encirclementDuration": 15.300000000012176,
+        "survivingBlue": 664837.7976315927,
+        "withdrawal": 325.63098905757795,
+        "transferred": 505.63098905757795,
+        "redCasualties": 38412.06765386905,
+        "retreated": 4240.105952253463,
+        "furthest": {
+          "left": 449.2044907174015,
+          "right": 483.350828534605
+        },
+        "eventDigest": "43cdef1c3a94f86851734995d62b896a75f74726f5736657d2530837e48e90cd"
+      },
+      {
+        "strategy": "skip-east99",
+        "outcome": "defeat",
+        "duration": 49.999999999998444,
+        "breached": [
+          "right"
+        ],
+        "unlocked": {
+          "left": 11.316666666666809
+        },
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 765.1774412714211,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 6755.234805324887,
+        "retreated": 0,
+        "furthest": {
+          "left": 347.0969913469937,
+          "right": 510.0009272066507
+        },
+        "eventDigest": "2d4efc50a838098e48dcd661e694296306749ac722c82023b79f199fd77d80a7"
+      },
+      {
+        "strategy": "no-phalanx",
+        "outcome": "defeat",
+        "duration": 74.39999999999706,
+        "breached": [
+          "left"
+        ],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 20.983333333333423
+        },
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 16480.383743704482,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 17138.672697930033,
+        "retreated": 0,
+        "furthest": {
+          "left": 510.0391238521628,
+          "right": 374.5245510486494
+        },
+        "eventDigest": "7bf501ab17ebae91b9dff183475532525a682a42c561580ae59541ae67d333fa"
+      },
+      {
+        "strategy": "adaptive-seven",
+        "outcome": "victory",
+        "duration": 113.93333333332815,
+        "breached": [],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 18.216666666666914,
+          "phalanx": 53.183333333331596,
+          "siege": 70.64999999999728
+        },
+        "deployingAt": 55.61666666666479,
+        "securedAt": 56.78333333333139,
+        "supplyCutoffAt": 95.68333333332919,
+        "breakthroughAt": 97.36666666666243,
+        "encirclementDuration": 16.566666666665725,
+        "survivingBlue": 277569.2410521804,
+        "withdrawal": 1982.2624517341708,
+        "transferred": 2873.262451734171,
+        "redCasualties": 23191.65413006424,
+        "retreated": 4698.300713620604,
+        "furthest": {
+          "left": 404.0001544636162,
+          "right": 361.1172383565629
+        },
+        "eventDigest": "32f5ba310655887e72e7b5efa716cb35814621d75767cf306e6f496b1ce6c4c6"
+      },
+      {
+        "strategy": "adaptive-imperfect",
+        "outcome": "victory",
+        "duration": 117.28333333332796,
+        "breached": [],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 19.13333333333353,
+          "phalanx": 55.483333333331466,
+          "siege": 74.79999999999704
+        },
+        "deployingAt": 57.91666666666466,
+        "securedAt": 59.08333333333126,
+        "supplyCutoffAt": 97.51666666666242,
+        "breakthroughAt": 99.4666666666623,
+        "encirclementDuration": 17.816666666665654,
+        "survivingBlue": 273408.04348867957,
+        "withdrawal": 1712.908157816113,
+        "transferred": 2603.908157816113,
+        "redCasualties": 24042.780381639343,
+        "retreated": 5173.682193022117,
+        "furthest": {
+          "left": 417.5955682171546,
+          "right": 361.2388350426815
+        },
+        "eventDigest": "e3eddcebb58c1228fe20dafefa4474a021c7cf3a531c3e9528fae86a97d38d86"
+      }
+    ]
+  },
+  {
+    "hz": 60,
+    "strategies": [
+      {
+        "strategy": "west-camping",
+        "outcome": "defeat",
+        "duration": 29.0166666666663,
+        "breached": [
+          "right"
+        ],
+        "unlocked": {},
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 2444.988713222359,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 2970.6478053204173,
+        "retreated": 0,
+        "furthest": {
+          "left": 335,
+          "right": 510.1124966085519
+        },
+        "eventDigest": "d7216cb58375200b48a6fcd5bf23ff167b950e553cec215eef777db6cbfc601a"
+      },
+      {
+        "strategy": "east-camping",
+        "outcome": "defeat",
+        "duration": 26.549999999999773,
+        "breached": [
+          "left"
+        ],
+        "unlocked": {},
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 3702.6744540416425,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 3126.860381017165,
+        "retreated": 0,
+        "furthest": {
+          "left": 510.12324844205796,
+          "right": 350
+        },
+        "eventDigest": "e0ebe47677b6f23e53a15f7d2dcf688f1d36437f4cdc1f2fea37f25f538301ad"
+      },
+      {
+        "strategy": "even-alternation",
+        "outcome": "defeat",
+        "duration": 64.56666666666429,
+        "breached": [
+          "left"
+        ],
+        "unlocked": {},
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 4499.811156616853,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 13724.556567660331,
+        "retreated": 0,
+        "furthest": {
+          "left": 510.1339242705686,
+          "right": 350
+        },
+        "eventDigest": "24fe135fb15144f2fde21436468c8a568970771144f251952ce49c8682f234ec"
+      },
+      {
+        "strategy": "phalanx-rush",
+        "outcome": "defeat",
+        "duration": 191.65000000004466,
+        "breached": [
+          "right"
+        ],
+        "unlocked": {
+          "phalanx": 18.216666666666914
+        },
+        "deployingAt": 20.65000000000011,
+        "securedAt": 21.81666666666671,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 1118.6888443496946,
+        "withdrawal": 4.775480953574295,
+        "transferred": 4.775480953574295,
+        "redCasualties": 38871.42606649345,
+        "retreated": 0,
+        "furthest": {
+          "left": 463.93479903949344,
+          "right": 510.08664793462265
+        },
+        "eventDigest": "840dfd948f59f8416aed0e4e208f133446229b893556e9e50e689345dc4342b9"
+      },
+      {
+        "strategy": "west-only",
+        "outcome": "defeat",
+        "duration": 29.083333333332963,
+        "breached": [
+          "right"
+        ],
+        "unlocked": {
+          "left": 4.416666666666656,
+          "phalanx": 23.283333333333292
+        },
+        "deployingAt": 25.716666666666487,
+        "securedAt": 26.883333333333088,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 3160.718670121988,
+        "withdrawal": 787.5412884471954,
+        "transferred": 0,
+        "redCasualties": 1735.7908005789855,
+        "retreated": 0,
+        "furthest": {
+          "left": 443.30512435939494,
+          "right": 510.0461729565548
+        },
+        "eventDigest": "6426f278c4951a167892e956b09088cf3e36103a216166d0b2324d85dbbb6391"
+      },
+      {
+        "strategy": "east-siege-first",
+        "outcome": "defeat",
+        "duration": 26.549999999999773,
+        "breached": [
+          "left"
+        ],
+        "unlocked": {
+          "siege": 13.616666666666923
+        },
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 83736.4470171497,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 3126.860381017165,
+        "retreated": 0,
+        "furthest": {
+          "left": 510.12324844205796,
+          "right": 389.76333166526996
+        },
+        "eventDigest": "ed8fc94f0815e0d8baae41b786340d9013b8da13b11f3e4c37ad4e19c2df966f"
+      },
+      {
+        "strategy": "double-upgrade",
+        "outcome": "victory",
+        "duration": 141.0333333333377,
+        "breached": [],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 20.983333333333423,
+          "phalanx": 57.783333333331335,
+          "siege": 75.71666666666366
+        },
+        "deployingAt": 60.21666666666453,
+        "securedAt": 61.38333333333113,
+        "supplyCutoffAt": 117.94999999999459,
+        "breakthroughAt": 122.93333333332764,
+        "encirclementDuration": 18.10000000001007,
+        "survivingBlue": 413429.53615339857,
+        "withdrawal": 2417.2254896839518,
+        "transferred": 3308.2254896839518,
+        "redCasualties": 30074.619581000254,
+        "retreated": 5523.738968735952,
+        "furthest": {
+          "left": 408.0978133644127,
+          "right": 428.9076826490229
+        },
+        "eventDigest": "0a718ef4c7d6dd192579a57a1c66d5d2808faf1d7fc400452ad4bc027b213ec9"
+      },
+      {
+        "strategy": "adaptive",
+        "outcome": "victory",
+        "duration": 131.5833333333302,
+        "breached": [],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 20.983333333333423,
+          "phalanx": 59.616666666664564,
+          "siege": 77.54999999999688
+        },
+        "deployingAt": 62.04999999999776,
+        "securedAt": 63.21666666666436,
+        "supplyCutoffAt": 108.28333333332847,
+        "breakthroughAt": 111.83333333332827,
+        "encirclementDuration": 19.75000000000192,
+        "survivingBlue": 344321.9177382339,
+        "withdrawal": 2132.6451523585147,
+        "transferred": 3023.6451523585147,
+        "redCasualties": 27667.983247969118,
+        "retreated": 6035.613508555109,
+        "furthest": {
+          "left": 433.2738417298019,
+          "right": 397.24495935978325
+        },
+        "eventDigest": "41e554eb6f529017d3072ba2de7ef9dae63a1043db005fd1a255151edda53fe8"
+      },
+      {
+        "strategy": "flank-first",
+        "outcome": "victory",
+        "duration": 96.23333333332916,
+        "breached": [],
+        "unlocked": {
+          "left": 13.616666666666923,
+          "phalanx": 43.04999999999884,
+          "right": 51.3333333333317,
+          "siege": 65.59999999999756
+        },
+        "deployingAt": 45.483333333332034,
+        "securedAt": 46.649999999998634,
+        "supplyCutoffAt": 82.58333333332993,
+        "breakthroughAt": 82.58333333332993,
+        "encirclementDuration": 13.649999999999224,
+        "survivingBlue": 195997.53611527974,
+        "withdrawal": 707.1070652157423,
+        "transferred": 707.1070652157423,
+        "redCasualties": 17466.668579830843,
+        "retreated": 3590.583489573125,
+        "furthest": {
+          "left": 504.6797821463429,
+          "right": 350
+        },
+        "eventDigest": "c06082797ca43fe8d0174f00b75ede36d7d097119333548a1f363aacec621b28"
+      },
+      {
+        "strategy": "no-siege",
+        "outcome": "victory",
+        "duration": 152.51666666668018,
+        "breached": [],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 20.983333333333423,
+          "phalanx": 57.783333333331335
+        },
+        "deployingAt": 60.21666666666453,
+        "securedAt": 61.38333333333113,
+        "supplyCutoffAt": 127.99999999999402,
+        "breakthroughAt": 134.41666666666578,
+        "encirclementDuration": 18.100000000014404,
+        "survivingBlue": 47534.74203623419,
+        "withdrawal": 2417.2254896839518,
+        "transferred": 3308.2254896839518,
+        "redCasualties": 32865.50075159594,
+        "retreated": 5430.938968735957,
+        "furthest": {
+          "left": 408.0978133644127,
+          "right": 428.9076826490229
+        },
+        "eventDigest": "52a8f66186d4a31e706a37d42126fc5bb8ea4aa7d66f059881ef9f0bc2140886"
+      },
+      {
+        "strategy": "skip-west99",
+        "outcome": "victory",
+        "duration": 189.63333333337638,
+        "breached": [],
+        "unlocked": {
+          "right": 15.000000000000325,
+          "phalanx": 52.249999999998316,
+          "siege": 81.69999999999665
+        },
+        "deployingAt": 54.68333333333151,
+        "securedAt": 55.84999999999811,
+        "supplyCutoffAt": 151.60000000001278,
+        "breakthroughAt": 174.3333333333642,
+        "encirclementDuration": 15.300000000012176,
+        "survivingBlue": 664837.7976315927,
+        "withdrawal": 325.63098905757795,
+        "transferred": 505.63098905757795,
+        "redCasualties": 38412.06765386905,
+        "retreated": 4240.105952253463,
+        "furthest": {
+          "left": 449.2044907174015,
+          "right": 483.350828534605
+        },
+        "eventDigest": "43cdef1c3a94f86851734995d62b896a75f74726f5736657d2530837e48e90cd"
+      },
+      {
+        "strategy": "skip-east99",
+        "outcome": "defeat",
+        "duration": 49.999999999998444,
+        "breached": [
+          "right"
+        ],
+        "unlocked": {
+          "left": 11.316666666666809
+        },
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 765.1774412714211,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 6755.234805324887,
+        "retreated": 0,
+        "furthest": {
+          "left": 347.0969913469937,
+          "right": 510.0009272066507
+        },
+        "eventDigest": "2d4efc50a838098e48dcd661e694296306749ac722c82023b79f199fd77d80a7"
+      },
+      {
+        "strategy": "no-phalanx",
+        "outcome": "defeat",
+        "duration": 74.39999999999706,
+        "breached": [
+          "left"
+        ],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 20.983333333333423
+        },
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 16480.383743704482,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 17138.672697930033,
+        "retreated": 0,
+        "furthest": {
+          "left": 510.0391238521628,
+          "right": 374.5245510486494
+        },
+        "eventDigest": "7bf501ab17ebae91b9dff183475532525a682a42c561580ae59541ae67d333fa"
+      },
+      {
+        "strategy": "adaptive-seven",
+        "outcome": "victory",
+        "duration": 113.93333333332815,
+        "breached": [],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 18.216666666666914,
+          "phalanx": 53.183333333331596,
+          "siege": 70.64999999999728
+        },
+        "deployingAt": 55.61666666666479,
+        "securedAt": 56.78333333333139,
+        "supplyCutoffAt": 95.68333333332919,
+        "breakthroughAt": 97.36666666666243,
+        "encirclementDuration": 16.566666666665725,
+        "survivingBlue": 277569.2410521804,
+        "withdrawal": 1982.2624517341708,
+        "transferred": 2873.262451734171,
+        "redCasualties": 23191.65413006424,
+        "retreated": 4698.300713620604,
+        "furthest": {
+          "left": 404.0001544636162,
+          "right": 361.1172383565629
+        },
+        "eventDigest": "32f5ba310655887e72e7b5efa716cb35814621d75767cf306e6f496b1ce6c4c6"
+      },
+      {
+        "strategy": "adaptive-imperfect",
+        "outcome": "victory",
+        "duration": 117.28333333332796,
+        "breached": [],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 19.13333333333353,
+          "phalanx": 55.483333333331466,
+          "siege": 74.79999999999704
+        },
+        "deployingAt": 57.91666666666466,
+        "securedAt": 59.08333333333126,
+        "supplyCutoffAt": 97.51666666666242,
+        "breakthroughAt": 99.4666666666623,
+        "encirclementDuration": 17.816666666665654,
+        "survivingBlue": 273408.04348867957,
+        "withdrawal": 1712.908157816113,
+        "transferred": 2603.908157816113,
+        "redCasualties": 24042.780381639343,
+        "retreated": 5173.682193022117,
+        "furthest": {
+          "left": 417.5955682171546,
+          "right": 361.2388350426815
+        },
+        "eventDigest": "e3eddcebb58c1228fe20dafefa4474a021c7cf3a531c3e9528fae86a97d38d86"
+      }
+    ]
+  },
+  {
+    "hz": 120,
+    "strategies": [
+      {
+        "strategy": "west-camping",
+        "outcome": "defeat",
+        "duration": 29.0166666666663,
+        "breached": [
+          "right"
+        ],
+        "unlocked": {},
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 2444.988713222359,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 2970.6478053204173,
+        "retreated": 0,
+        "furthest": {
+          "left": 335,
+          "right": 510.1124966085519
+        },
+        "eventDigest": "d7216cb58375200b48a6fcd5bf23ff167b950e553cec215eef777db6cbfc601a"
+      },
+      {
+        "strategy": "east-camping",
+        "outcome": "defeat",
+        "duration": 26.549999999999773,
+        "breached": [
+          "left"
+        ],
+        "unlocked": {},
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 3702.6744540416425,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 3126.860381017165,
+        "retreated": 0,
+        "furthest": {
+          "left": 510.12324844205796,
+          "right": 350
+        },
+        "eventDigest": "e0ebe47677b6f23e53a15f7d2dcf688f1d36437f4cdc1f2fea37f25f538301ad"
+      },
+      {
+        "strategy": "even-alternation",
+        "outcome": "defeat",
+        "duration": 64.56666666666429,
+        "breached": [
+          "left"
+        ],
+        "unlocked": {},
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 4499.811156616853,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 13724.556567660331,
+        "retreated": 0,
+        "furthest": {
+          "left": 510.1339242705686,
+          "right": 350
+        },
+        "eventDigest": "24fe135fb15144f2fde21436468c8a568970771144f251952ce49c8682f234ec"
+      },
+      {
+        "strategy": "phalanx-rush",
+        "outcome": "defeat",
+        "duration": 191.65000000004466,
+        "breached": [
+          "right"
+        ],
+        "unlocked": {
+          "phalanx": 18.216666666666914
+        },
+        "deployingAt": 20.65000000000011,
+        "securedAt": 21.81666666666671,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 1118.6888443496946,
+        "withdrawal": 4.775480953574295,
+        "transferred": 4.775480953574295,
+        "redCasualties": 38871.42606649345,
+        "retreated": 0,
+        "furthest": {
+          "left": 463.93479903949344,
+          "right": 510.08664793462265
+        },
+        "eventDigest": "840dfd948f59f8416aed0e4e208f133446229b893556e9e50e689345dc4342b9"
+      },
+      {
+        "strategy": "west-only",
+        "outcome": "defeat",
+        "duration": 29.083333333332963,
+        "breached": [
+          "right"
+        ],
+        "unlocked": {
+          "left": 4.416666666666656,
+          "phalanx": 23.283333333333292
+        },
+        "deployingAt": 25.716666666666487,
+        "securedAt": 26.883333333333088,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 3160.718670121988,
+        "withdrawal": 787.5412884471954,
+        "transferred": 0,
+        "redCasualties": 1735.7908005789855,
+        "retreated": 0,
+        "furthest": {
+          "left": 443.30512435939494,
+          "right": 510.0461729565548
+        },
+        "eventDigest": "6426f278c4951a167892e956b09088cf3e36103a216166d0b2324d85dbbb6391"
+      },
+      {
+        "strategy": "east-siege-first",
+        "outcome": "defeat",
+        "duration": 26.549999999999773,
+        "breached": [
+          "left"
+        ],
+        "unlocked": {
+          "siege": 13.616666666666923
+        },
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 83736.4470171497,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 3126.860381017165,
+        "retreated": 0,
+        "furthest": {
+          "left": 510.12324844205796,
+          "right": 389.76333166526996
+        },
+        "eventDigest": "ed8fc94f0815e0d8baae41b786340d9013b8da13b11f3e4c37ad4e19c2df966f"
+      },
+      {
+        "strategy": "double-upgrade",
+        "outcome": "victory",
+        "duration": 141.0333333333377,
+        "breached": [],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 20.983333333333423,
+          "phalanx": 57.783333333331335,
+          "siege": 75.71666666666366
+        },
+        "deployingAt": 60.21666666666453,
+        "securedAt": 61.38333333333113,
+        "supplyCutoffAt": 117.94999999999459,
+        "breakthroughAt": 122.93333333332764,
+        "encirclementDuration": 18.10000000001007,
+        "survivingBlue": 413429.53615339857,
+        "withdrawal": 2417.2254896839518,
+        "transferred": 3308.2254896839518,
+        "redCasualties": 30074.619581000254,
+        "retreated": 5523.738968735952,
+        "furthest": {
+          "left": 408.0978133644127,
+          "right": 428.9076826490229
+        },
+        "eventDigest": "0a718ef4c7d6dd192579a57a1c66d5d2808faf1d7fc400452ad4bc027b213ec9"
+      },
+      {
+        "strategy": "adaptive",
+        "outcome": "victory",
+        "duration": 131.5833333333302,
+        "breached": [],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 20.983333333333423,
+          "phalanx": 59.616666666664564,
+          "siege": 77.54999999999688
+        },
+        "deployingAt": 62.04999999999776,
+        "securedAt": 63.21666666666436,
+        "supplyCutoffAt": 108.28333333332847,
+        "breakthroughAt": 111.83333333332827,
+        "encirclementDuration": 19.75000000000192,
+        "survivingBlue": 344321.9177382339,
+        "withdrawal": 2132.6451523585147,
+        "transferred": 3023.6451523585147,
+        "redCasualties": 27667.983247969118,
+        "retreated": 6035.613508555109,
+        "furthest": {
+          "left": 433.2738417298019,
+          "right": 397.24495935978325
+        },
+        "eventDigest": "41e554eb6f529017d3072ba2de7ef9dae63a1043db005fd1a255151edda53fe8"
+      },
+      {
+        "strategy": "flank-first",
+        "outcome": "victory",
+        "duration": 96.23333333332916,
+        "breached": [],
+        "unlocked": {
+          "left": 13.616666666666923,
+          "phalanx": 43.04999999999884,
+          "right": 51.3333333333317,
+          "siege": 65.59999999999756
+        },
+        "deployingAt": 45.483333333332034,
+        "securedAt": 46.649999999998634,
+        "supplyCutoffAt": 82.58333333332993,
+        "breakthroughAt": 82.58333333332993,
+        "encirclementDuration": 13.649999999999224,
+        "survivingBlue": 195997.53611527974,
+        "withdrawal": 707.1070652157423,
+        "transferred": 707.1070652157423,
+        "redCasualties": 17466.668579830843,
+        "retreated": 3590.583489573125,
+        "furthest": {
+          "left": 504.6797821463429,
+          "right": 350
+        },
+        "eventDigest": "c06082797ca43fe8d0174f00b75ede36d7d097119333548a1f363aacec621b28"
+      },
+      {
+        "strategy": "no-siege",
+        "outcome": "victory",
+        "duration": 152.51666666668018,
+        "breached": [],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 20.983333333333423,
+          "phalanx": 57.783333333331335
+        },
+        "deployingAt": 60.21666666666453,
+        "securedAt": 61.38333333333113,
+        "supplyCutoffAt": 127.99999999999402,
+        "breakthroughAt": 134.41666666666578,
+        "encirclementDuration": 18.100000000014404,
+        "survivingBlue": 47534.74203623419,
+        "withdrawal": 2417.2254896839518,
+        "transferred": 3308.2254896839518,
+        "redCasualties": 32865.50075159594,
+        "retreated": 5430.938968735957,
+        "furthest": {
+          "left": 408.0978133644127,
+          "right": 428.9076826490229
+        },
+        "eventDigest": "52a8f66186d4a31e706a37d42126fc5bb8ea4aa7d66f059881ef9f0bc2140886"
+      },
+      {
+        "strategy": "skip-west99",
+        "outcome": "victory",
+        "duration": 189.63333333337638,
+        "breached": [],
+        "unlocked": {
+          "right": 15.000000000000325,
+          "phalanx": 52.249999999998316,
+          "siege": 81.69999999999665
+        },
+        "deployingAt": 54.68333333333151,
+        "securedAt": 55.84999999999811,
+        "supplyCutoffAt": 151.60000000001278,
+        "breakthroughAt": 174.3333333333642,
+        "encirclementDuration": 15.300000000012176,
+        "survivingBlue": 664837.7976315927,
+        "withdrawal": 325.63098905757795,
+        "transferred": 505.63098905757795,
+        "redCasualties": 38412.06765386905,
+        "retreated": 4240.105952253463,
+        "furthest": {
+          "left": 449.2044907174015,
+          "right": 483.350828534605
+        },
+        "eventDigest": "43cdef1c3a94f86851734995d62b896a75f74726f5736657d2530837e48e90cd"
+      },
+      {
+        "strategy": "skip-east99",
+        "outcome": "defeat",
+        "duration": 49.999999999998444,
+        "breached": [
+          "right"
+        ],
+        "unlocked": {
+          "left": 11.316666666666809
+        },
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 765.1774412714211,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 6755.234805324887,
+        "retreated": 0,
+        "furthest": {
+          "left": 347.0969913469937,
+          "right": 510.0009272066507
+        },
+        "eventDigest": "2d4efc50a838098e48dcd661e694296306749ac722c82023b79f199fd77d80a7"
+      },
+      {
+        "strategy": "no-phalanx",
+        "outcome": "defeat",
+        "duration": 74.39999999999706,
+        "breached": [
+          "left"
+        ],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 20.983333333333423
+        },
+        "deployingAt": null,
+        "securedAt": null,
+        "supplyCutoffAt": null,
+        "breakthroughAt": null,
+        "encirclementDuration": null,
+        "survivingBlue": 16480.383743704482,
+        "withdrawal": 0,
+        "transferred": 0,
+        "redCasualties": 17138.672697930033,
+        "retreated": 0,
+        "furthest": {
+          "left": 510.0391238521628,
+          "right": 374.5245510486494
+        },
+        "eventDigest": "7bf501ab17ebae91b9dff183475532525a682a42c561580ae59541ae67d333fa"
+      },
+      {
+        "strategy": "adaptive-seven",
+        "outcome": "victory",
+        "duration": 113.93333333332815,
+        "breached": [],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 18.216666666666914,
+          "phalanx": 53.183333333331596,
+          "siege": 70.64999999999728
+        },
+        "deployingAt": 55.61666666666479,
+        "securedAt": 56.78333333333139,
+        "supplyCutoffAt": 95.68333333332919,
+        "breakthroughAt": 97.36666666666243,
+        "encirclementDuration": 16.566666666665725,
+        "survivingBlue": 277569.2410521804,
+        "withdrawal": 1982.2624517341708,
+        "transferred": 2873.262451734171,
+        "redCasualties": 23191.65413006424,
+        "retreated": 4698.300713620604,
+        "furthest": {
+          "left": 404.0001544636162,
+          "right": 361.1172383565629
+        },
+        "eventDigest": "32f5ba310655887e72e7b5efa716cb35814621d75767cf306e6f496b1ce6c4c6"
+      },
+      {
+        "strategy": "adaptive-imperfect",
+        "outcome": "victory",
+        "duration": 117.28333333332796,
+        "breached": [],
+        "unlocked": {
+          "left": 11.316666666666809,
+          "right": 19.13333333333353,
+          "phalanx": 55.483333333331466,
+          "siege": 74.79999999999704
+        },
+        "deployingAt": 57.91666666666466,
+        "securedAt": 59.08333333333126,
+        "supplyCutoffAt": 97.51666666666242,
+        "breakthroughAt": 99.4666666666623,
+        "encirclementDuration": 17.816666666665654,
+        "survivingBlue": 273408.04348867957,
+        "withdrawal": 1712.908157816113,
+        "transferred": 2603.908157816113,
+        "redCasualties": 24042.780381639343,
+        "retreated": 5173.682193022117,
+        "furthest": {
+          "left": 417.5955682171546,
+          "right": 361.2388350426815
+        },
+        "eventDigest": "e3eddcebb58c1228fe20dafefa4474a021c7cf3a531c3e9528fae86a97d38d86"
+      }
+    ]
+  }
+]
