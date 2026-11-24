@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createHash } from "node:crypto";
 import { createDualFront } from "../src/dual-front.js";
 import { createBattleClock, createGame } from "../src/game.js";
 import { LEVEL_ONE, LEVEL_TWO, LEVEL_THREE } from "../src/levels.js";
@@ -225,7 +226,7 @@ test("30, 60 and 120 Hz rendering produce identical state and event streams", ()
   assert.deepEqual(run(120), baseline);
 });
 
-test("shipped levels match representative fixed-step outcomes from main at 4131fc1", () => {
+test("shipped levels match representative fixed-step outcomes after the advance change", () => {
   const scenarios = [
     {
       level: LEVEL_ONE, createAim: () => () => LEVEL_ONE.gates[0].x,
@@ -233,20 +234,25 @@ test("shipped levels match representative fixed-step outcomes from main at 4131f
     },
     {
       level: LEVEL_TWO, createAim: () => purrapultAim("artillery-first", LEVEL_TWO),
-      won: true, resolvedTick: 4998, endTick: 5143, blue: 120240, red: 0, damage: 64178,
+      won: true, resolvedTick: 4998, endTick: 5143, blue: 117243, red: 0, damage: 64178,
     },
     {
       level: LEVEL_THREE, createAim: () => meowmenAim("balanced"),
-      won: true, resolvedTick: 5519, endTick: 5664, blue: 206929, red: 0, damage: 42513,
+      won: true, resolvedTick: 5445, endTick: 5590, blue: 194952, red: 0, damage: 42513,
     },
   ];
   for (const { level, createAim, ...expected } of scenarios) {
+    let fixedStepEvents;
     for (const hz of [30, 60, 120]) {
       let ticks = 0;
       let resolvedTick;
       let won;
       const aim = createAim();
-      const game = createGame({ level, random: () => 0.5, onEnd: (value) => { won = value; } });
+      const events = createHash("sha256");
+      const game = createGame({
+        level, random: () => 0.5, onEnd: (value) => { won = value; },
+        onEffect: (...event) => events.update(JSON.stringify(event) + "\n"),
+      });
       const clock = createBattleClock((dt) => {
         if (won !== undefined) return;
         ticks++;
@@ -262,6 +268,9 @@ test("shipped levels match representative fixed-step outcomes from main at 4131f
         red: Math.round(redTotal), damage: Math.round(support?.damage ?? 0),
       }, expected, `${level.title} at ${hz} Hz`);
       assert.equal(redEntryOpen, !expected.won);
+      const ordered = events.digest("hex");
+      fixedStepEvents ??= ordered;
+      assert.equal(ordered, fixedStepEvents, `${level.title} events at ${hz} Hz`);
     }
   }
 });
