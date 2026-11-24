@@ -19,7 +19,7 @@ export function receivingY(rawY, rear, front, entryY) {
     ? distance
     : distance >= -shoulder
       ? shoulder * ((distance + shoulder) / (2 * shoulder)) ** 2
-      : (distance + shoulder) * 0.37;
+      : 0;
   const lower = Math.min(front + 9, dock - 5);
   return Math.max(lower, dock + carried);
 }

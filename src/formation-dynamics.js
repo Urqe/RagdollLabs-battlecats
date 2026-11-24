@@ -120,3 +120,12 @@ export function exchangeOffset(exchange, time, x, row, red) {
 export function exchangeSeam(exchange, time, x) {
   return exchangeOffset(exchange, time, x, 0, !exchange.red) * 0.72;
 }
+
+
+// Losses in one file draw successive ranks forward with a short delay.
+export function rankReplenishment(age, row, distance, strength = 1) {
+  if (row < 1 || row > 12 || distance >= 28) return 0;
+  const phase = (age - row * 0.024) / 0.34;
+  if (phase <= 0 || phase >= 1) return 0;
+  return Math.sin(Math.PI * phase) * (1 - distance / 28) * (8 - row * 0.52) * strength;
+}

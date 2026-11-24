@@ -293,3 +293,12 @@ The HUD sums both standing blue lanes, their cannon squads, the transfer
 cohorts and the flank once each. Both living red lane populations are
 summed directly. Routed survivors leave the fighting population, and
 shield impact effects never enter either counter.
+
+## Milestone 21 · Army movement and receiving
+
+The shared lane update owns contested pressure, overwhelming advancement
+and unopposed marching. Its eased movement bonus follows the fixed battle
+clock. Support damage, supply and victory remain separate. Each renderer
+places a rear receiver using its visible rank budget. Bounded visual
+handoffs and replenishment pulses follow existing events without changing
+troop ownership. [Movement, formation and validation details](living-armies.md)

@@ -4,6 +4,7 @@ import { createGame } from "../src/game.js";
 import { createState } from "../src/state.js";
 import { createFigures } from "../src/figures.js";
 import { LEVEL_ONE, LEVEL_TWO } from "../src/levels.js";
+import { fieldColumn, fieldRow, fieldSpacing } from "../src/army-visual.js";
 import { createMotion } from "../src/motion.js";
 import {
   FLAG_CAPTURE_TIME, mergeProgress, receivingY, victoryAdvance, victoryWaveVisibility,
@@ -53,6 +54,17 @@ test("the march eases into the receiving edge without crossing the live front", 
   }
   assert.equal(mergeProgress(0), 0);
   assert.equal(mergeProgress(0.34), 1);
+});
+
+test("frontage grows before rear depth and remains bounded by the throat", () => {
+  assert.deepEqual(Array.from({ length: 9 }, (_, slot) => fieldRow(slot)), Array(9).fill(0));
+  const shoulder = Math.max(...Array.from({ length: 9 }, (_, slot) => Math.abs(fieldColumn(slot))));
+  assert.equal(shoulder, 4);
+  assert.ok(shoulder * fieldSpacing(120, 0, 140, 12.5) >
+    shoulder * fieldSpacing(120, 0, 18, 12.5));
+  for (const count of [18, 60, 140, 232]) {
+    assert.ok(shoulder * fieldSpacing(25, 0, count, 12.5) <= 25);
+  }
 });
 
 test("a small volley draws continuously at the arrival frame and gives each claimed slot one owner", () => {

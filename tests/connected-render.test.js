@@ -32,7 +32,7 @@ test("the presentation leaves connected outcomes and events identical at all ren
     sim.reset();
     visual = createConnectedPresentation(ctx, figures, state, sim);
     const { lanes, phalanx } = sim.state;
-    let mostCohorts = 0, mostFlights = 0;
+    let mostCohorts = 0, mostFlights = 0, mostJoins = 0;
     for (let second = 0; second < 160 && !sim.state.outcome; second++) {
       state.gunX = dualAim("adaptive-seven", second, lanes, state.gates, phalanx);
       for (let frame = 0; frame < hz && !sim.state.outcome; frame++) {
@@ -41,11 +41,15 @@ test("the presentation leaves connected outcomes and events identical at all ren
         const metrics = visual.frame();
         mostCohorts = Math.max(mostCohorts, metrics.cohorts);
         mostFlights = Math.max(mostFlights, metrics.flights);
+        mostJoins = Math.max(mostJoins, metrics.joins);
       }
     }
     assert.equal(sim.state.outcome, "victory");
     assert.ok(mostCohorts > 10 && mostCohorts < 36);
     assert.ok(mostFlights >= 8 && mostFlights <= 24);
+    assert.ok(mostJoins > 0 && mostJoins <= 12);
+    visual.reset();
+    assert.equal(visual.frame().joins, 0);
     return { state: sim.state, events };
   }
 
@@ -105,4 +109,26 @@ test("east reinforcements survive and render before ×999, then clear at real de
   }
   assert.deepEqual([sawTwenty, sawNinetyNine, sawSiege, sawCleared, sawRearContact],
     [true, true, true, true, true]);
+});
+
+
+test("west reinforcement finishes at the occupied rear shoulder beside the ridge", () => {
+  const anchors = {
+    rearJunction: [209, 478], westRally: [99, 397], westBend: [135, 436], westReceiver: [91, 350],
+  };
+  const cohort = { route: "westEntry", leg: 1, distance: 0 };
+  const point = {};
+  let previousY = anchors.rearJunction[1];
+  for (let i = 0; i <= 140; i++) {
+    cohort.distance = i / 10;
+    routePoint(cohort, 0, anchors, point);
+    assert.ok(point.y <= previousY && previousY - point.y < 2);
+    if (point.y < 421) assert.ok(point.x < 135);
+    previousY = point.y;
+  }
+  assert.deepEqual([point.x, point.y], anchors.westReceiver);
+  cohort.dock = [...anchors.westReceiver];
+  anchors.westReceiver[1] -= 10;
+  routePoint(cohort, 0, anchors, point);
+  assert.deepEqual([point.x, point.y], cohort.dock);
 });

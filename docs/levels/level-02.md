@@ -36,3 +36,7 @@ Can players tell where to aim to free the crew and why unlocking it matters? Whi
 ## Revision history
 
 Milestone 6 selected automatic fire for the first prototype. Milestone 7 implemented it, added free level selection, and established simulated balance and browser evidence. Milestone 8 shortened the reload, reduced the per-hit cap and added impact reactions driven by resolved losses. Human playtesting is next. [Playtest log](../playtest-log.md)
+
+## Army movement
+
+Infantry uses the shared rear-first receiving and advance rules. The Purrapult retains its damage and independently moves the red line on impact. [Milestone 21](../living-armies.md)
