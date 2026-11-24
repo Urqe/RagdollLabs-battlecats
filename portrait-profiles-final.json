@@ -1,0 +1,746 @@
+{
+  "chromium": {
+    "baseline": {
+      "early": {
+        "checkpoint": {
+          "time": 3.016666666666661,
+          "blue": 298.60490490752414,
+          "red": 2807.993168644453,
+          "front": 373.73974804814094,
+          "phase": "twoFronts"
+        },
+        "samples": 103,
+        "frameMs": [
+          16.7,
+          16.8
+        ],
+        "drawMs": [
+          1.3,
+          5.1
+        ],
+        "peaks": {
+          "figures": 503,
+          "reserveSilhouettes": 306,
+          "flights": 6,
+          "cohorts": 15,
+          "joins": 9,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "growing": {
+        "checkpoint": {
+          "time": 19.28333333333352,
+          "blue": 1200.5727410179331,
+          "red": 10671.20691522421,
+          "front": 398.09430901504703,
+          "phase": "twoFronts"
+        },
+        "samples": 109,
+        "frameMs": [
+          16.7,
+          16.8
+        ],
+        "drawMs": [
+          1.6,
+          5.5
+        ],
+        "peaks": {
+          "figures": 635,
+          "reserveSilhouettes": 678,
+          "flights": 6,
+          "cohorts": 15,
+          "joins": 9,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "surge": {
+        "checkpoint": {
+          "time": 57.38333333333136,
+          "blue": 4249.29948368198,
+          "red": 58302.05561174783,
+          "front": 483.55649422216777,
+          "phase": "twoFronts"
+        },
+        "samples": 102,
+        "frameMs": [
+          16.7,
+          33.3
+        ],
+        "drawMs": [
+          1.9,
+          5.5
+        ],
+        "peaks": {
+          "figures": 666,
+          "reserveSilhouettes": 1380,
+          "flights": 7,
+          "cohorts": 6,
+          "joins": 12,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "advance": {
+        "checkpoint": {
+          "time": 61.366666666664464,
+          "blue": 189451.0588256561,
+          "red": 0,
+          "front": 279.91148352164055,
+          "phase": "twoFronts"
+        },
+        "samples": 100,
+        "frameMs": [
+          16.7,
+          33.3
+        ],
+        "drawMs": [
+          1.7,
+          7
+        ],
+        "peaks": {
+          "figures": 917,
+          "reserveSilhouettes": 1356,
+          "flights": 0,
+          "cohorts": 27,
+          "joins": 12,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "redeployment": {
+        "checkpoint": {
+          "time": 56.149999999998094,
+          "blue": 0,
+          "phase": "rightOffensive"
+        },
+        "samples": 94,
+        "frameMs": [
+          16.7,
+          33.4
+        ],
+        "drawMs": [
+          1.7,
+          6.2
+        ],
+        "peaks": {
+          "figures": 538,
+          "reserveSilhouettes": 1717,
+          "flights": 16,
+          "cohorts": 16,
+          "joins": 0,
+          "transferCohorts": 10,
+          "flankCohorts": 0
+        }
+      },
+      "phalanx": {
+        "checkpoint": {
+          "time": 60.666666666664504,
+          "blue": 0,
+          "phase": "rightOffensive"
+        },
+        "samples": 107,
+        "frameMs": [
+          16.7,
+          16.8
+        ],
+        "drawMs": [
+          1.4,
+          3.7
+        ],
+        "peaks": {
+          "figures": 443,
+          "reserveSilhouettes": 1148,
+          "flights": 16,
+          "cohorts": 0,
+          "joins": 0,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "rear": {
+        "checkpoint": {
+          "time": 126.38333333332744,
+          "blue": 0,
+          "phase": "encirclement"
+        },
+        "samples": 110,
+        "frameMs": [
+          16.7,
+          16.7
+        ],
+        "drawMs": [
+          1.5,
+          3.7
+        ],
+        "peaks": {
+          "figures": 447,
+          "reserveSilhouettes": 2848,
+          "flights": 16,
+          "cohorts": 15,
+          "joins": 0,
+          "transferCohorts": 0,
+          "flankCohorts": 1
+        }
+      }
+    },
+    "milestone": {
+      "early": {
+        "checkpoint": {
+          "time": 3.016666666666661,
+          "blue": 298.60490490752414,
+          "red": 2807.993168644453,
+          "front": 373.73974804814094,
+          "phase": "twoFronts"
+        },
+        "samples": 112,
+        "frameMs": [
+          16.7,
+          16.8
+        ],
+        "drawMs": [
+          1.4,
+          4.1
+        ],
+        "peaks": {
+          "figures": 510,
+          "reserveSilhouettes": 312,
+          "flights": 6,
+          "cohorts": 18,
+          "joins": 9,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "growing": {
+        "checkpoint": {
+          "time": 19.28333333333352,
+          "blue": 1200.5727410179331,
+          "red": 10671.20691522421,
+          "front": 398.09430901504703,
+          "phase": "twoFronts"
+        },
+        "samples": 111,
+        "frameMs": [
+          16.7,
+          16.8
+        ],
+        "drawMs": [
+          1.5,
+          3.6
+        ],
+        "peaks": {
+          "figures": 633,
+          "reserveSilhouettes": 678,
+          "flights": 6,
+          "cohorts": 15,
+          "joins": 9,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "surge": {
+        "checkpoint": {
+          "time": 57.38333333333136,
+          "blue": 4249.29948368198,
+          "red": 58302.05561174783,
+          "front": 483.55649422216777,
+          "phase": "twoFronts"
+        },
+        "samples": 112,
+        "frameMs": [
+          16.7,
+          16.8
+        ],
+        "drawMs": [
+          1.8,
+          4
+        ],
+        "peaks": {
+          "figures": 668,
+          "reserveSilhouettes": 1422,
+          "flights": 7,
+          "cohorts": 6,
+          "joins": 12,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "advance": {
+        "checkpoint": {
+          "time": 56.89999999999805,
+          "blue": 141527.4478145301,
+          "red": 0,
+          "front": 279.7243230172221,
+          "phase": "twoFronts"
+        },
+        "samples": 113,
+        "frameMs": [
+          16.7,
+          16.7
+        ],
+        "drawMs": [
+          2,
+          3.9
+        ],
+        "peaks": {
+          "figures": 990,
+          "reserveSilhouettes": 1260,
+          "flights": 0,
+          "cohorts": 33,
+          "joins": 12,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "redeployment": {
+        "checkpoint": {
+          "time": 56.149999999998094,
+          "blue": 0,
+          "phase": "rightOffensive"
+        },
+        "samples": 110,
+        "frameMs": [
+          16.7,
+          16.7
+        ],
+        "drawMs": [
+          1.7,
+          4.1
+        ],
+        "peaks": {
+          "figures": 538,
+          "reserveSilhouettes": 1717,
+          "flights": 16,
+          "cohorts": 16,
+          "joins": 0,
+          "transferCohorts": 10,
+          "flankCohorts": 0
+        }
+      },
+      "phalanx": {
+        "checkpoint": {
+          "time": 60.666666666664504,
+          "blue": 0,
+          "phase": "rightOffensive"
+        },
+        "samples": 107,
+        "frameMs": [
+          16.7,
+          16.8
+        ],
+        "drawMs": [
+          1.1,
+          4.9
+        ],
+        "peaks": {
+          "figures": 443,
+          "reserveSilhouettes": 1148,
+          "flights": 16,
+          "cohorts": 0,
+          "joins": 0,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "rear": {
+        "checkpoint": {
+          "time": 126.38333333332744,
+          "blue": 0,
+          "phase": "encirclement"
+        },
+        "samples": 90,
+        "frameMs": [
+          16.7,
+          33.4
+        ],
+        "drawMs": [
+          1.5,
+          6.1
+        ],
+        "peaks": {
+          "figures": 447,
+          "reserveSilhouettes": 2851,
+          "flights": 16,
+          "cohorts": 15,
+          "joins": 3,
+          "transferCohorts": 0,
+          "flankCohorts": 1
+        }
+      }
+    }
+  },
+  "webkit": {
+    "baseline": {
+      "early": {
+        "checkpoint": {
+          "time": 3.016666666666661,
+          "blue": 298.60490490752414,
+          "red": 2807.993168644453,
+          "front": 373.73974804814094,
+          "phase": "twoFronts"
+        },
+        "samples": 7,
+        "frameMs": [
+          68,
+          75
+        ],
+        "drawMs": [
+          5,
+          8
+        ],
+        "peaks": {
+          "figures": 455,
+          "reserveSilhouettes": 258,
+          "flights": 4,
+          "cohorts": 15,
+          "joins": 6,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "growing": {
+        "checkpoint": {
+          "time": 19.28333333333352,
+          "blue": 1200.5727410179331,
+          "red": 10671.20691522421,
+          "front": 398.09430901504703,
+          "phase": "twoFronts"
+        },
+        "samples": 34,
+        "frameMs": [
+          54,
+          84
+        ],
+        "drawMs": [
+          2,
+          5
+        ],
+        "peaks": {
+          "figures": 647,
+          "reserveSilhouettes": 576,
+          "flights": 5,
+          "cohorts": 12,
+          "joins": 9,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "surge": {
+        "checkpoint": {
+          "time": 57.38333333333136,
+          "blue": 4249.29948368198,
+          "red": 58302.05561174783,
+          "front": 483.55649422216777,
+          "phase": "twoFronts"
+        },
+        "samples": 36,
+        "frameMs": [
+          60,
+          75
+        ],
+        "drawMs": [
+          1,
+          3
+        ],
+        "peaks": {
+          "figures": 639,
+          "reserveSilhouettes": 1164,
+          "flights": 6,
+          "cohorts": 6,
+          "joins": 9,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "advance": {
+        "checkpoint": {
+          "time": 61.366666666664464,
+          "blue": 189451.0588256561,
+          "red": 0,
+          "front": 279.91148352164055,
+          "phase": "twoFronts"
+        },
+        "samples": 38,
+        "frameMs": [
+          54,
+          77
+        ],
+        "drawMs": [
+          2,
+          4
+        ],
+        "peaks": {
+          "figures": 884,
+          "reserveSilhouettes": 1338,
+          "flights": 0,
+          "cohorts": 27,
+          "joins": 12,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "redeployment": {
+        "checkpoint": {
+          "time": 56.149999999998094,
+          "blue": 0,
+          "phase": "rightOffensive"
+        },
+        "samples": 38,
+        "frameMs": [
+          45,
+          87
+        ],
+        "drawMs": [
+          2,
+          4
+        ],
+        "peaks": {
+          "figures": 515,
+          "reserveSilhouettes": 1241,
+          "flights": 16,
+          "cohorts": 13,
+          "joins": 0,
+          "transferCohorts": 4,
+          "flankCohorts": 0
+        }
+      },
+      "phalanx": {
+        "checkpoint": {
+          "time": 60.666666666664504,
+          "blue": 0,
+          "phase": "rightOffensive"
+        },
+        "samples": 39,
+        "frameMs": [
+          43,
+          80
+        ],
+        "drawMs": [
+          1,
+          4
+        ],
+        "peaks": {
+          "figures": 443,
+          "reserveSilhouettes": 1149,
+          "flights": 16,
+          "cohorts": 0,
+          "joins": 0,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "rear": {
+        "checkpoint": {
+          "time": 126.38333333332744,
+          "blue": 0,
+          "phase": "encirclement"
+        },
+        "samples": 41,
+        "frameMs": [
+          46,
+          75
+        ],
+        "drawMs": [
+          2,
+          5
+        ],
+        "peaks": {
+          "figures": 445,
+          "reserveSilhouettes": 2848,
+          "flights": 16,
+          "cohorts": 15,
+          "joins": 0,
+          "transferCohorts": 0,
+          "flankCohorts": 1
+        }
+      }
+    },
+    "milestone": {
+      "early": {
+        "checkpoint": {
+          "time": 3.016666666666661,
+          "blue": 298.60490490752414,
+          "red": 2807.993168644453,
+          "front": 373.73974804814094,
+          "phase": "twoFronts"
+        },
+        "samples": 50,
+        "frameMs": [
+          29,
+          68
+        ],
+        "drawMs": [
+          1,
+          2
+        ],
+        "peaks": {
+          "figures": 486,
+          "reserveSilhouettes": 288,
+          "flights": 6,
+          "cohorts": 15,
+          "joins": 9,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "growing": {
+        "checkpoint": {
+          "time": 19.28333333333352,
+          "blue": 1200.5727410179331,
+          "red": 10671.20691522421,
+          "front": 398.09430901504703,
+          "phase": "twoFronts"
+        },
+        "samples": 34,
+        "frameMs": [
+          52,
+          92
+        ],
+        "drawMs": [
+          2,
+          5
+        ],
+        "peaks": {
+          "figures": 647,
+          "reserveSilhouettes": 576,
+          "flights": 5,
+          "cohorts": 12,
+          "joins": 9,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "surge": {
+        "checkpoint": {
+          "time": 57.38333333333136,
+          "blue": 4249.29948368198,
+          "red": 58302.05561174783,
+          "front": 483.55649422216777,
+          "phase": "twoFronts"
+        },
+        "samples": 36,
+        "frameMs": [
+          61,
+          78
+        ],
+        "drawMs": [
+          2,
+          4
+        ],
+        "peaks": {
+          "figures": 645,
+          "reserveSilhouettes": 1164,
+          "flights": 6,
+          "cohorts": 6,
+          "joins": 9,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "advance": {
+        "checkpoint": {
+          "time": 56.89999999999805,
+          "blue": 141527.4478145301,
+          "red": 0,
+          "front": 279.7243230172221,
+          "phase": "twoFronts"
+        },
+        "samples": 37,
+        "frameMs": [
+          58,
+          71
+        ],
+        "drawMs": [
+          2,
+          8
+        ],
+        "peaks": {
+          "figures": 885,
+          "reserveSilhouettes": 1230,
+          "flights": 0,
+          "cohorts": 27,
+          "joins": 12,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "redeployment": {
+        "checkpoint": {
+          "time": 56.149999999998094,
+          "blue": 0,
+          "phase": "rightOffensive"
+        },
+        "samples": 34,
+        "frameMs": [
+          55,
+          82
+        ],
+        "drawMs": [
+          2,
+          6
+        ],
+        "peaks": {
+          "figures": 515,
+          "reserveSilhouettes": 1241,
+          "flights": 16,
+          "cohorts": 13,
+          "joins": 0,
+          "transferCohorts": 4,
+          "flankCohorts": 0
+        }
+      },
+      "phalanx": {
+        "checkpoint": {
+          "time": 60.666666666664504,
+          "blue": 0,
+          "phase": "rightOffensive"
+        },
+        "samples": 39,
+        "frameMs": [
+          41,
+          78
+        ],
+        "drawMs": [
+          1,
+          2
+        ],
+        "peaks": {
+          "figures": 443,
+          "reserveSilhouettes": 1149,
+          "flights": 16,
+          "cohorts": 0,
+          "joins": 0,
+          "transferCohorts": 0,
+          "flankCohorts": 0
+        }
+      },
+      "rear": {
+        "checkpoint": {
+          "time": 126.38333333332744,
+          "blue": 0,
+          "phase": "encirclement"
+        },
+        "samples": 43,
+        "frameMs": [
+          35,
+          67
+        ],
+        "drawMs": [
+          2,
+          4
+        ],
+        "peaks": {
+          "figures": 445,
+          "reserveSilhouettes": 2851,
+          "flights": 16,
+          "cohorts": 15,
+          "joins": 3,
+          "transferCohorts": 0,
+          "flankCohorts": 1
+        }
+      }
+    }
+  }
+}
