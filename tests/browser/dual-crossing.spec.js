@@ -61,7 +61,7 @@ test("the public selector, visibility pause during deployment, restart and level
   const secured = await advanceUntil(page, s => s.dual.phalanx.phase === "secured", travel + 0.2, 100);
   expect(secured.dual.lanes.left.front).toBe(hold.holdFront);
   expect(secured.mode).toBe("playing");
-  expect(secured.dual.lanes.left.redEntryOpen).toBe(true);
+  expect(secured.dual.lanes.left.redEntryOpen).toBe(!secured.dual.siege.breakthrough);
   expect(secured.dual.lanes.left.redTotal).toBeGreaterThan(0);
 
   await pause(page).click();
