@@ -1,0 +1,118 @@
+{
+  "chromium": [
+    {
+      "name": "initial",
+      "start": 8,
+      "frames": 176,
+      "frameP50": 16.7,
+      "frameP95": 16.8,
+      "drawP50": 1.2,
+      "drawP95": 1.8,
+      "figures": 592,
+      "stamps": 89,
+      "represented": 1103,
+      "flights": 16,
+      "cohorts": 3
+    },
+    {
+      "name": "shield",
+      "start": 36,
+      "frames": 181,
+      "frameP50": 16.7,
+      "frameP95": 16.7,
+      "drawP50": 1,
+      "drawP95": 1.5,
+      "figures": 422,
+      "stamps": 167,
+      "represented": 1413,
+      "flights": 16,
+      "cohorts": 15
+    },
+    {
+      "name": "surge",
+      "start": 51,
+      "frames": 181,
+      "frameP50": 16.7,
+      "frameP95": 16.7,
+      "drawP50": 1,
+      "drawP95": 1.3,
+      "figures": 302,
+      "stamps": 376,
+      "represented": 2561,
+      "flights": 16,
+      "cohorts": 15
+    },
+    {
+      "name": "encirclement",
+      "start": 102,
+      "frames": 271,
+      "frameP50": 16.7,
+      "frameP95": 16.8,
+      "drawP50": 1.3,
+      "drawP95": 1.8,
+      "figures": 447,
+      "stamps": 472,
+      "represented": 3282,
+      "flights": 16,
+      "cohorts": 16
+    }
+  ],
+  "webkit": [
+    {
+      "name": "initial",
+      "start": 8,
+      "frames": 145,
+      "frameP50": 16,
+      "frameP95": 17,
+      "drawP50": 1,
+      "drawP95": 1,
+      "figures": 592,
+      "stamps": 89,
+      "represented": 1103,
+      "flights": 16,
+      "cohorts": 3
+    },
+    {
+      "name": "shield",
+      "start": 36,
+      "frames": 186,
+      "frameP50": 16,
+      "frameP95": 17,
+      "drawP50": 1,
+      "drawP95": 1,
+      "figures": 422,
+      "stamps": 167,
+      "represented": 1413,
+      "flights": 16,
+      "cohorts": 15
+    },
+    {
+      "name": "surge",
+      "start": 51,
+      "frames": 186,
+      "frameP50": 16,
+      "frameP95": 17,
+      "drawP50": 1,
+      "drawP95": 1,
+      "figures": 302,
+      "stamps": 376,
+      "represented": 2561,
+      "flights": 16,
+      "cohorts": 15
+    },
+    {
+      "name": "encirclement",
+      "start": 102,
+      "frames": 281,
+      "frameP50": 16,
+      "frameP95": 17,
+      "drawP50": 1,
+      "drawP95": 1,
+      "figures": 447,
+      "stamps": 472,
+      "represented": 3282,
+      "flights": 16,
+      "cohorts": 16
+    }
+  ]
+}
