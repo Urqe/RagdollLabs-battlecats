@@ -238,3 +238,13 @@ survivors. The connected ×999 opening saves 5.9 s in the matched mixed
 comparison and roughly 10.7 s in flank-first. These replays use the
 existing gate economy and pre-deployment combat. Milestone 19C owns
 further balance work. [Released balance](level-4-balance.md)
+
+## Milestone 19B · Connected siege presentation
+
+Open `/?fixture=connected-siege` and select Level 4 to run the presentation
+fixture. The ordinary selector continues to use the released battlefield.
+The fixture shares the cannon, gates, result clock and input handlers with
+the release. Its scene, troop motion, shield animation and combat effects
+read the connected simulation's lane populations, route cohorts and events.
+Pause and resume use the battle clock, and the scene clears on restart and
+level switching. [Gap analysis, rendering details and evidence](level-4-presentation.md)

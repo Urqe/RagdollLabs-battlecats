@@ -189,10 +189,11 @@ export function frontlineGeometry(lane) {
   return { x: x - width / 2, y: lane.front, width };
 }
 
-export function createDualRenderer(state, canvas, battle) {
+export function createDualRenderer(state, canvas, battle, createBattlefield) {
   const ctx = canvas.getContext("2d");
   const background = canvas.ownerDocument.createElement("canvas");
   const figures = createFigures(ctx, canvas.ownerDocument);
+  const connected = createBattlefield?.(ctx, figures, state, battle);
 
   function formation(lane, redTeam, celebrating = false) {
     const count = redTeam ? lane.redTotal : lane.blueTotal;
@@ -469,11 +470,15 @@ export function createDualRenderer(state, canvas, battle) {
   }
 
   function draw() {
+    const started = connected ? performance.now() : 0;
     ctx.drawImage(background, 0, 0, W, H);
     if (!battle.state.lanes) return;
     figures.setClock(state.t + state.victoryElapsed);
-    redHorde();
-    for (const id of CROSSINGS) drawLane(battle.state.lanes[id], battle.feedback[id]);
+    if (connected) connected.draw();
+    else {
+      redHorde();
+      for (const id of CROSSINGS) drawLane(battle.state.lanes[id], battle.feedback[id]);
+    }
     for (const target of state.gates) drawGate(target);
     if (state.mode === "playing") {
       for (let offset = -9; offset <= 9; offset += 9) {
@@ -495,10 +500,15 @@ export function createDualRenderer(state, canvas, battle) {
       for (const shot of state.shots) figures.projectile(shot);
     }
     drawCannon(ctx, state);
+    connected?.recordDraw(performance.now() - started);
   }
 
   return {
     draw,
+    reset: connected?.reset,
+    receive: connected?.receive,
+    snapshot: connected?.snapshot,
+    frame: connected?.frame,
     resize() {
       const pixel = Math.min(globalThis.devicePixelRatio || 1, 2);
       canvas.width = background.width = Math.floor(W * pixel);
@@ -506,7 +516,8 @@ export function createDualRenderer(state, canvas, battle) {
       ctx.setTransform(pixel, 0, 0, pixel, 0, 0);
       const ground = background.getContext("2d");
       ground.setTransform(pixel, 0, 0, pixel, 0, 0);
-      terrain(ground, LEVEL_FOUR.crossings);
+      if (connected) connected.terrain(ground);
+      else terrain(ground, LEVEL_FOUR.crossings);
       draw();
     },
   };

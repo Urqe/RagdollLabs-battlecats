@@ -2,6 +2,7 @@ import { createBattleClock, createGame } from "./game.js";
 import { createRenderer } from "./render.js";
 import { createDualBattlefield } from "./dual-battlefield.js";
 import { createDualRenderer } from "./dual-render.js";
+import { createConnectedPresentation } from "./connected-render.js";
 import { createMotion } from "./motion.js";
 import { createSound } from "./sound.js";
 import { bindControls } from "./controls.js";
@@ -22,8 +23,12 @@ const game = createGame({
 });
 const state = game.state;
 const renderer = createRenderer(state, canvas, motion);
-const dual = createDualBattlefield({ state, onEnd: end, onEffect });
+const connectedFixture = new URLSearchParams(location.search).get("fixture") === "connected-siege";
 let dualRenderer;
+const dual = createDualBattlefield({
+  state, onEnd: end, onEffect, connected: connectedFixture,
+  onEvent: connectedFixture ? (event, battle) => dualRenderer?.receive(event, battle) : undefined,
+});
 const inDualBattle = () => state.level === LEVEL_FOUR;
 const activeRenderer = () => inDualBattle() ? dualRenderer : renderer;
 const activeClock = () => inDualBattle() ? dual : battleClock;
@@ -164,7 +169,9 @@ function start(level = playableLevel(progress.selected)) {
   saveProgress(progress);
   if (level === LEVEL_FOUR) {
     dual.reset();
-    dualRenderer ??= createDualRenderer(state, canvas, dual);
+    dualRenderer ??= createDualRenderer(state, canvas, dual,
+      connectedFixture ? createConnectedPresentation : undefined);
+    dualRenderer.reset?.();
   } else {
     if (inDualBattle()) dual.clear();
     game.reset(level);
@@ -206,6 +213,7 @@ function chooseLevel() {
   motion.reset();
   if (inDualBattle()) {
     dual.clear();
+    dualRenderer.reset?.();
     game.reset(LEVEL_ONE, "menu");
     renderer.resize();
   } else game.reset(state.level, "menu");
@@ -339,5 +347,11 @@ export function getSnapshot() {
   const feedback = Object.fromEntries(Object.entries(dual.feedback).map(
     ([id, { flights, ...local }]) => [id, { ...local, airborne: flights.active }],
   ));
-  return structuredClone({ ...state, dual: dual.state, feedback });
+  const presentation = dualRenderer?.snapshot?.();
+  return structuredClone({ ...state, dual: dual.state, feedback, ...(presentation && { presentation }) });
+}
+
+export function getConnectedFrame() {
+  if (!inDualBattle() || !connectedFixture) return null;
+  return dualRenderer.frame();
 }
