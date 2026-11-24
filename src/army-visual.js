@@ -11,11 +11,24 @@ const rows = new Uint8Array(FIELD_LIMIT);
 const columns = new Int8Array(FIELD_LIMIT);
 let slot = 0;
 for (let row = 0; slot < FIELD_LIMIT; row++) {
-  const width = Math.min(15, 5 + row * 2);
+  const width = fieldColumns(row);
   for (let col = 0; col < width && slot < FIELD_LIMIT; col++, slot++) {
     rows[slot] = row;
     columns[slot] = (col % 2 ? 1 : -1) * Math.ceil(col / 2);
   }
+}
+
+export function fieldColumns(row) {
+  return Math.min(15, 9 + row * 2);
+}
+
+// The slot order is center-out. Growing formations open their shoulders
+// before reserve mass extends the footprint behind them.
+export function fieldSpacing(half, row, field, pitch) {
+  const columns = (fieldColumns(row) - 1) / 2;
+  const maturity = clamp((field - 18) / 122, 0, 1);
+  const compact = Math.min(pitch, half / columns);
+  return compact + (half / columns - compact) * maturity * (row ? 0.86 : 1);
 }
 
 export const fieldRow = (index) => rows[index];

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { LEVEL_ONE } from "../src/levels.js";
-import { breakthroughOffset, createFormationDynamics, formationLag } from "../src/formation-dynamics.js";
+import { breakthroughOffset, createFormationDynamics, formationLag, rankReplenishment } from "../src/formation-dynamics.js";
 
 function record(hz) {
   const { pose, step } = createFormationDynamics();
@@ -59,5 +59,21 @@ test("local openings are bounded, share the winning direction and fade by the si
         }
       }
     }
+  }
+});
+
+
+test("casualty replenishment travels through the nearby ranks in order", () => {
+  const ages = Array.from({ length: 108 }, (_, i) => i / 120);
+  let previous = 0;
+  for (let row = 1; row <= 12; row++) {
+    const start = ages.findIndex(age => rankReplenishment(age, row, 0) > 0);
+    assert.ok(start > previous);
+    previous = start;
+    for (const age of ages) {
+      assert.equal(rankReplenishment(age, row, 30), 0);
+      assert.ok(rankReplenishment(age, row, 0) >= rankReplenishment(age, row, 14));
+    }
+    assert.equal(rankReplenishment(1, row, 0), 0);
   }
 });

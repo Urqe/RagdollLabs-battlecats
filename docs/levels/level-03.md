@@ -57,3 +57,7 @@ and volley checks, and `npm run test:browser -- meowmen.spec.js archers.spec.js`
 for the portrait playthrough and volley visuals.
 
 [Roadmap](../roadmap.md) · [Purrapult balance](../purrapult-balance.md)
+
+## Army movement
+
+Infantry ranks replenish from behind and can march on weak opposition while Meowmen continue firing their existing volleys. [Milestone 21](../living-armies.md)

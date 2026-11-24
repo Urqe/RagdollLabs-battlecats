@@ -180,3 +180,11 @@ during the 1.5 s celebration. Already launched blue ranks still follow the
 existing visual handoff as the result appears.
 
 [Portrait evidence and capture notes](playtest-log.md#milestone-13-validation)
+
+## Milestone 21 · Rank and cohort continuity
+
+The field is allocated center-out across forward shoulders before building
+depth. Both renderers clamp their occupied frontage at the terrain edge.
+Nearby casualties propagate a short forward pull through supporting
+ranks. Reinforcement handoffs follow the occupied rear shoulder and
+ease into open slots. [Formation rules and portrait evidence](living-armies.md#21b--living-formations)

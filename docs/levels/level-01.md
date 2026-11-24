@@ -33,3 +33,7 @@ First-time comprehension, fairness, human session length, and physical iPhone pe
 ## Revision history
 
 Merged milestones established modular simulation and CI, validated strategy outcomes, made escalating pressure readable, revised the final elimination and victory sequence, and added distinct combat motion and optional audio. [PR #1](https://github.com/Urqe/RagdollLabs-battlecats/pull/1) · [PR #2](https://github.com/Urqe/RagdollLabs-battlecats/pull/2) · [PR #3](https://github.com/Urqe/RagdollLabs-battlecats/pull/3) · [PR #4](https://github.com/Urqe/RagdollLabs-battlecats/pull/4) · [PR #5](https://github.com/Urqe/RagdollLabs-battlecats/pull/5)
+
+## Army movement
+
+A large force can march toward the red entrance while scattered arrivals continue. Cohorts merge into the occupied rear shoulder and fill the broad playable frontage. [Milestone 21](../living-armies.md)

@@ -56,3 +56,7 @@ then holds the bridge. Ordinary infantry withdraws east once the bridge is
 secured. When the main horde breaks, 60% of the standing east infantry
 takes the northern route. The rest holds east while the detachment presses
 into the red rear as resistance falls.
+
+## Army movement
+
+West and east use distinct rear receivers. The phalanx still determines when west infantry withdraws through the shared junction. East-side acceleration requires a standing army large enough to support the flank. [Milestone 21](../living-armies.md)

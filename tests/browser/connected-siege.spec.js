@@ -18,6 +18,15 @@ test("connected battlefield is public and the selector still opens Level 1", asy
   await expect(page.locator("#siegeRedCount")).toHaveText(/^\d/);
   expect(released.dual.siege.phase).toBe("twoFronts");
   expect(released.presentation.phase).toBe("locked");
+  await page.clock.runFor(1200);
+  expect((await snapshot(page)).dual.lanes.left.squads.length).toBeGreaterThan(0);
+  let receiving = await snapshot(page);
+  for (let i = 0; i < 18 && !receiving.presentation.metrics.joins; i++) {
+    await page.clock.runFor(100);
+    receiving = await snapshot(page);
+  }
+  expect(receiving.presentation.metrics.joins).toBeGreaterThan(0);
+  expect(receiving.presentation.leftBlue).toBe(receiving.dual.lanes.left.blueTotal);
   await page.getByRole("button", { name: "Levels", exact: true }).click();
   await page.locator('[data-level="last-stand"]').click();
   expect((await snapshot(page)).dual).toBeUndefined();
