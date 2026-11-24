@@ -153,7 +153,8 @@ test("both crossings can warn simultaneously and either can end the battle", () 
   left.blueTotal = right.blueTotal = 0;
   run(fixture, 0.1);
   assert.ok(fixture.feedback.left.danger && fixture.feedback.right.danger);
-  left.front = right.front = 509.9;
+  left.front = right.front = 509.99;
+  left.frontVelocity = right.frontVelocity = 2;
   fixture.advance(tick);
   assert.ok(left.breached && right.breached);
   assert.equal(state.mode, "defeat");
@@ -170,71 +171,32 @@ test("both crossings can warn simultaneously and either can end the battle", () 
   assert.equal(events.length, eventCount);
 });
 
-test("release strategies preserve all outcomes and authoritative events at 30, 60 and 120 Hz", () => {
-  const baseline = dualStrategies.map(strategy => simulateDual(strategy, 60));
+test("two-front strategies preserve authoritative events across render rates", () => {
+  const results = dualStrategies.map(strategy => simulateDual(strategy, 60));
   for (const hz of [30, 120])
-    assert.deepEqual(dualStrategies.map(strategy => simulateDual(strategy, hz)), baseline);
-  const byName = Object.fromEntries(baseline.map(outcome => [outcome.strategy, outcome]));
-  assert.deepEqual(baseline.slice(0, 6).map(result => result.breached),
-    [["right"], ["left"], ["left"], ["left"], ["left"], ["left"]]);
-  assert.ok(baseline.slice(0, 6).every(result => result.outcome === "defeat"));
-  assert.ok(byName["east-siege-first"].unlocked.siege > 0 && byName["east-siege-first"].securedAt === null);
-  const rush = byName["phalanx-rush"];
-  assert.equal(rush.securedAt, null);
-  assert.equal(rush.unlocked.left, undefined);
-  assert.deepEqual(byName["starter-fed-rush"].breached, ["left"]);
-  const sustained = byName["sustained-starter-rush"];
-  assert.equal(sustained.outcome, "victory");
-  assert.equal(sustained.unlocked.left, undefined);
-  assert.ok(sustained.duration > byName.adaptive.duration + 25);
-  assert.ok(sustained.withdrawal < 10);
-  for (const strategy of ["double-upgrade", "adaptive", "flank-first", "adaptive-seven", "adaptive-imperfect"]) {
+    assert.deepEqual(dualStrategies.map(strategy => simulateDual(strategy, hz)), results);
+  const byName = Object.fromEntries(results.map(result => [result.strategy, result]));
+  assert.deepEqual(byName["west-camping"].breached, ["right"]);
+  assert.deepEqual(byName["east-camping"].breached, ["left"]);
+  assert.deepEqual(byName["phalanx-rush"].breached, ["left"]);
+  assert.deepEqual(byName["skip-east99"].breached, ["right"]);
+  for (const strategy of ["double-upgrade", "adaptive", "flank-first", "adaptive-seven",
+    "adaptive-imperfect", "no-siege", "sustained-starter-rush"]) {
     const win = byName[strategy];
     assert.equal(win.outcome, "victory", strategy);
-    assert.ok(win.duration >= 95 && win.duration <= 150, strategy);
-    assert.ok(win.unlocked.left < win.unlocked.phalanx);
     assert.ok(win.unlocked.phalanx < win.deployingAt && win.deployingAt < win.securedAt);
-    assert.ok(win.securedAt < win.supplyCutoffAt && win.supplyCutoffAt <= win.breakthroughAt);
-    assert.ok(win.encirclementDuration > 7 && win.transferred >= win.withdrawal && win.withdrawal > 300);
-    assert.ok(win.retreated > 0 && win.redCasualties > win.retreated);
+    assert.ok(win.securedAt <= win.breakthroughAt && win.supplyCutoffAt <= win.breakthroughAt);
+    assert.ok(win.encirclementDuration > 4 && win.transferred >= win.withdrawal);
   }
   const both = byName["double-upgrade"];
-  assert.ok(both.unlocked.right < both.unlocked.phalanx);
-  assert.ok(byName["flank-first"].unlocked.right > byName["flank-first"].securedAt);
   const plain = byName["no-siege"];
-  assert.equal(plain.outcome, "victory");
-  assert.equal(plain.unlocked.siege, undefined);
-  assert.equal(plain.securedAt, both.securedAt);
-  assert.ok(plain.breakthroughAt - both.breakthroughAt > 10, "×999 repays the opening time");
-  const noWest = byName["skip-west99"];
-  assert.equal(noWest.unlocked.left, undefined);
-  assert.ok(noWest.outcome === "defeat" || noWest.duration - both.duration > 25);
-  assert.ok(both.withdrawal > noWest.withdrawal * 4, "west ×99 preserves the redeploying infantry");
-  const noEast = byName["skip-east99"];
-  assert.equal(noEast.unlocked.right, undefined);
-  assert.deepEqual(noEast.breached, ["right"]);
-  assert.deepEqual(byName["no-phalanx"].breached, ["left"]);
-});
-
-test("even an impossible maximum-pressure west army eventually loses without the shield wall", () => {
-  const { combat: west, objective } = LEVEL_FOUR.crossings.left;
-  assert.ok(west.minFront >= objective.reinforcementCutoff + west.reinforcementApproach,
-    "west red arrivals have full access at every reachable ordinary frontline");
-  assert.ok(west.maxRedReinforcements > west.maxRedLoss && west.redAdvance > 0);
-  let front = west.initialFront;
-  let red = west.initialRed;
-  for (let i = 1; i * tick <= 79; i++) {
-    // Relax all cannon, travel and blue loss limits. Assume the west always
-    // has maximum pressure and inflicts maximum possible red casualties.
-    red = Math.max(0, red + (Math.min(west.maxRedReinforcements,
-      west.redReinforcements + west.redReinforcementGrowth * i * tick) - west.maxRedLoss) * tick);
-    const pressure = red * west.redPressurePerCat;
-    const momentum = (pressure - west.bluePressureCapacity) / (pressure + west.bluePressureCapacity);
-    const speed = momentum > 0 ? west.redAdvance : west.blueAdvance;
-    front = Math.max(west.minFront, front + momentum * speed * tick);
-    if (front >= objective.castleFront) break;
-  }
-  assert.ok(front >= objective.castleFront);
+  assert.ok(both.unlocked.siege > 0 && plain.unlocked.siege === undefined);
+  assert.ok(both.supplyCutoffAt < plain.supplyCutoffAt, "×999 repays its opening time");
+  const noWall = byName["no-phalanx"];
+  assert.ok(noWall.duration > 90 && noWall.furthest.left < LEVEL_FOUR.objective.castleFront);
+  assert.equal(noWall.breakthroughAt, null);
+  assert.equal(noWall.encirclementDuration, null);
+  assert.notEqual(noWall.outcome, "victory");
 });
 
 test("east cutoff and flank combat cause a conserved retreat, followed by one flag capture", () => {

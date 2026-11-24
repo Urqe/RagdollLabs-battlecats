@@ -47,7 +47,7 @@ test("both fronts fight until the phalanx locks and the shield wall keeps fighti
   assert.ok(left.blueTotal < blue);
   while (sim.state.phalanx.phase !== "pushing") sim.step();
   const frontline = left.front;
-  assert.equal(siegeStatus(sim.state).west, "LEFT — PHALANX DEPLOYING");
+  assert.equal(siegeStatus(sim.state).west, "LEFT — SHIELDS LOCKED");
   sim.clock.pause();
   sim.step(60);
   assert.equal(left.front, frontline);
@@ -94,7 +94,7 @@ test("the exposed left crossing can breach during marching or deployment", () =>
       initialBlue: 0 };
     const sim = fixture({ left, phalanx: { marchTime } });
     sim.unlockPhalanx();
-    sim.step(4);
+    sim.step(22);
     assert.equal(sim.state.outcome, "defeat");
     assert.equal(sim.state.phalanx.phase, expected);
     assert.equal(sim.state.lanes.left.breached, true);
@@ -206,7 +206,7 @@ test("a real cannon replay conserves troops through breakthrough, flank movement
     const events = [];
     let final;
     let checkedAt, rearFront;
-    const result = simulateDual("adaptive-seven", hz, { onEvent(event, state) {
+    const result = simulateDual("adaptive-imperfect", hz, { onEvent(event, state) {
       events.push(event);
       if (checkedAt !== event.time && event.type !== "launch" && event.type !== "phalanxUnlocked") {
         checkedAt = event.time;
@@ -214,6 +214,7 @@ test("a real cannon replay conserves troops through breakthrough, flank movement
         const { transfers, flank } = state.siege;
         const moving = [...left.squads, ...right.squads, ...transfers];
         if (flank) moving.push(flank);
+        if (state.siege.phase === "flanking") rearFront = undefined;
         if (state.siege.phase === "encirclement") {
           const front = state.siege.rearFront;
           assert.ok(front >= (rearFront ?? 173) && front <= left.front - 28);
