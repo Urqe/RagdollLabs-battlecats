@@ -1,0 +1,61 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "phases": {
+    "lock": 32.41666666666611,
+    "siege": 46.28333333333199,
+    "flank": 94.68333333332924,
+    "rear": 99.58333333332897,
+    "win": 110.41666666666168
+  },
+  "initial": {
+    "frames": 428,
+    "frameP50": 16.7,
+    "frameP95": 66.6,
+    "drawP50": 1,
+    "drawP95": 7.8,
+    "figures": 614,
+    "stamps": 89,
+    "represented": 1117,
+    "flights": 16,
+    "cohorts": 12
+  },
+  "shieldWall": {
+    "frames": 316,
+    "frameP50": 16.7,
+    "frameP95": 66.6,
+    "drawP50": 1.1,
+    "drawP95": 9.4,
+    "figures": 420,
+    "stamps": 357,
+    "represented": 2130,
+    "flights": 16,
+    "cohorts": 25
+  },
+  "siege": {
+    "frames": 393,
+    "frameP50": 16.7,
+    "frameP95": 66.7,
+    "drawP50": 1,
+    "drawP95": 7.9,
+    "figures": 301,
+    "stamps": 375,
+    "represented": 2552,
+    "flights": 16,
+    "cohorts": 15
+  },
+  "encirclement": {
+    "frames": 820,
+    "frameP50": 16.7,
+    "frameP95": 33.4,
+    "drawP50": 1.2,
+    "drawP95": 5.5,
+    "figures": 447,
+    "stamps": 471,
+    "represented": 3272,
+    "flights": 16,
+    "cohorts": 16
+  }
+}
