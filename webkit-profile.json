@@ -1,0 +1,98 @@
+{
+  "browser": "webkit",
+  "version": "27.2",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "phases": {
+    "small": {
+      "samples": 28,
+      "frameMs": [
+        24,
+        44
+      ],
+      "canvasMs": [
+        1,
+        2
+      ]
+    },
+    "growing": {
+      "samples": 40,
+      "frameMs": [
+        27,
+        53
+      ],
+      "canvasMs": [
+        1,
+        2
+      ]
+    },
+    "multiplier999": {
+      "samples": 38,
+      "frameMs": [
+        31,
+        51
+      ],
+      "canvasMs": [
+        1,
+        2
+      ]
+    },
+    "twoFronts": {
+      "samples": 42,
+      "frameMs": [
+        25,
+        53
+      ],
+      "canvasMs": [
+        1,
+        2
+      ]
+    },
+    "deployment": {
+      "samples": 21,
+      "frameMs": [
+        31,
+        59
+      ],
+      "canvasMs": [
+        1,
+        2
+      ]
+    },
+    "redeployment": {
+      "samples": 40,
+      "frameMs": [
+        27,
+        54
+      ],
+      "canvasMs": [
+        1,
+        4
+      ]
+    },
+    "encirclement": {
+      "samples": 38,
+      "frameMs": [
+        29,
+        53
+      ],
+      "canvasMs": [
+        1,
+        2
+      ]
+    },
+    "overwhelming": {
+      "samples": 42,
+      "frameMs": [
+        25,
+        53
+      ],
+      "canvasMs": [
+        1,
+        1
+      ]
+    }
+  }
+}
