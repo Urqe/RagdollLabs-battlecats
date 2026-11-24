@@ -7,19 +7,19 @@ const select = async (page, id) => {
   await page.locator(`[data-level="${id}"]`).click();
 };
 
-test("connected battlefield is opt-in and has no effect on the public selector", async ({ page, browserName }) => {
+test("connected battlefield is public and the selector still opens Level 1", async ({ page, browserName }) => {
   await setup(page, browserName, false);
   await select(page, "two-tails");
   const released = await snapshot(page);
-  expect(released.dual.siege).toBeUndefined();
-  expect(released.presentation).toBeUndefined();
-  await page.goto("/?fixture=connected-siege");
-  await select(page, "last-stand");
+  expect(released.dual.siege.phase).toBe("twoFronts");
+  expect(released.presentation.phase).toBe("locked");
+  await page.getByRole("button", { name: "Levels", exact: true }).click();
+  await page.locator('[data-level="last-stand"]').click();
   expect((await snapshot(page)).dual).toBeUndefined();
 });
 
 test("connected siege shows deployment, troop travel, rear combat and the result", async ({ page, browserName }) => {
-  const { aim, errors } = await setup(page, browserName, false, "/?fixture=connected-siege");
+  const { aim, errors } = await setup(page, browserName, false);
   await select(page, "two-tails");
   let s = await snapshot(page);
   const check = async () => {
@@ -39,8 +39,8 @@ test("connected siege shows deployment, troop travel, rear combat and the result
   const phases = new Set();
   let sawOrdinaryVolley = false, sawSiege = false, paused = false;
   let simultaneousReactions = false, sawFlankMarch = false, sawRear = false;
-  for (let second = 0; second < 125 && s.mode === "playing"; second++) {
-    const target = dualAim("mixed", second, s.dual.lanes, s.gates, s.dual.phalanx);
+  for (let second = 0; second < 160 && s.mode === "playing"; second++) {
+    const target = dualAim("adaptive-seven", second, s.dual.lanes, s.gates, s.dual.phalanx);
     if (Math.abs(s.gunX - target) > 2) await aim(target);
     await page.clock.runFor(1000);
     const p = await check();
@@ -55,6 +55,7 @@ test("connected siege shows deployment, troop travel, rear combat and the result
       paused = true;
       expect(p.leftBlue).toBe(0);
       expect(p.lockAt).toBeGreaterThan(0);
+      await expect(page.locator("#banner")).toHaveText("WEST SECURED · INFANTRY REDEPLOYING");
       await page.getByRole("button", { name: "Pause", exact: true }).click();
       const frozen = await snapshot(page);
       const canvas = page.locator("#game");
@@ -71,7 +72,7 @@ test("connected siege shows deployment, troop travel, rear combat and the result
 
   expect(s.mode).toBe("victory");
   expect(s.dual.time).toBeGreaterThan(100);
-  expect(s.dual.time).toBeLessThan(120);
+  expect(s.dual.time).toBeLessThan(150);
   for (const phase of ["locked", "marching", "deploying", "secured"]) expect(phases.has(phase)).toBe(true);
   expect([sawOrdinaryVolley, sawSiege, paused, simultaneousReactions, sawFlankMarch, sawRear])
     .toEqual([true, true, true, true, true, true]);

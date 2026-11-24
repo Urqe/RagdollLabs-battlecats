@@ -128,7 +128,7 @@ and the presentation timers.
 
 [Level 4 rules](levels/level-04.md) · [Symmetric release balance](level-4-balance-m17.md)
 
-## Milestone 18 · One castle siege
+## Milestone 18 · Historical one castle siege
 
 [Level 4](levels/level-04.md) still uses the dual-front coordinator and fixed-step lane
 calculations. The shared projectile resolver recognizes the Level 4
@@ -158,9 +158,9 @@ same reinforcement squads with denser bounded presentation. The
 use frontline bounds to verify the west breach occurs before the
 earliest possible ordinary east victory.
 
-## Milestone 19A · Connected siege simulation fixture
+## Milestone 19A · Historical connected siege simulation fixture
 
-Run `node scripts/simulate-dual.js --connected` for the connected model.
+At `c3d45d7`, run `node scripts/simulate-dual.js --connected` for the connected model.
 The headless fixture opts in through `createDualBattlefield({ state, connected: true, onEvent })`.
 It uses the existing cannon and projectile resolver, including the six
 targets and their opening costs. The menu uses the released Milestone 18
@@ -237,14 +237,37 @@ fight. It inflicts about 1,624 casualties before routing about 4,698
 survivors. The connected ×999 opening saves 5.9 s in the matched mixed
 comparison and roughly 10.7 s in flank-first. These replays use the
 existing gate economy and pre-deployment combat. Milestone 19C owns
-further balance work. [Released balance](level-4-balance.md)
+further balance work. [Milestone 18 balance](level-4-balance-m18.md)
 
-## Milestone 19B · Connected siege presentation
+## Milestone 19B · Historical connected siege preview
 
-Open `/?fixture=connected-siege` and select Level 4 to run the presentation
+At `af25959`, open `/?fixture=connected-siege` and select Level 4 to run the presentation
 fixture. The ordinary selector continues to use the released battlefield.
 The fixture shares the cannon, gates, result clock and input handlers with
 the release. Its scene, troop motion, shield animation and combat effects
 read the connected simulation's lane populations, route cohorts and events.
 Pause and resume use the battle clock, and the scene clears on restart and
 level switching. [Gap analysis, rendering details and evidence](level-4-presentation.md)
+
+
+## Milestone 19C · Public connected Level 4
+
+The normal selector uses the connected coordinator and renderer for
+`two-tails`. One Level 4 path now serves pointer input, restarting,
+pause, audio and the result screen. The old renderer and special fixture
+switch were retired. Saved selection and completion still use the same
+level ID. Levels 1–3 keep their separate single-front adapter.
+
+The Level 4 definition owns its continuously growing west and east
+pressure, the six existing aim footprints, and the final costs
+`[132, 30, 30, 90]` in phalanx, west ×99, east ×99, east ×999 order.
+The shield wall is the only route to a western lock. Earlier east supply
+cutoff leaves western intake open. Events announce deployment,
+withdrawal, main breakthrough and rear arrival above the battlefield.
+West gate labels show their east assignment after lock-in.
+
+The battle adapter sends contact events to the renderer's existing three
+pools. It owns cannon timing and defeat warnings. The connected
+presentation interpolates troop motion from the same owned cohorts and
+publishes bounded draw statistics for the public-path recording script.
+[Release balance and invariants](level-4-balance.md) · [Recordings and measurements](level-4-presentation.md)

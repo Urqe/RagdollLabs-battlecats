@@ -73,9 +73,9 @@ npm run test:all
 
 For AI-assisted changes, keep simulation code independent of DOM and animation timing. Add a regression test for gameplay changes, run `npm run test:all`, and review mobile behavior. Preserve Level 1 as the regression baseline, including automatic three-cat volleys, manually destroyed barricades, and travel time before combat. Keep runtime dependencies lightweight.
 
-## Level 1 balance validation
+## Level balance validation
 
-See the [combat model, tested outcomes, and gameplay recordings](docs/level-1-balance.md). Run `npm run simulate` for Level 1 or `node scripts/simulate-purrapult.js` for Level 2 at 30, 60, and 120 Hz. Run `node scripts/simulate-dual.js` for the eight Level 4 strategies and the [phalanx and command-camp validation](docs/level-4-balance.md). Chromium uses native touch drags in the playthrough tests. The browser diagnostics read a detached snapshot from `src/main.js`. CI retains the evidence in the `playwright-results` artifact.
+See the [combat model, tested outcomes, and gameplay recordings](docs/level-1-balance.md). Run `npm run simulate` for Level 1 or `node scripts/simulate-purrapult.js` for Level 2 at 30, 60, and 120 Hz. Run `node scripts/simulate-dual.js` for the 17 connected Level 4 policies and the [phalanx, breakthrough and encirclement validation](docs/level-4-balance.md). Chromium uses native touch drags in the playthrough tests. The browser diagnostics read a detached snapshot from `src/main.js`. CI retains browser evidence in the `playwright-results` artifact. Level 4’s public selector, pause, restart, and saved progress are covered by `dual-crossing.spec.js` and `connected-siege.spec.js` in both browsers.
 
 ## Roadmap and level design
 

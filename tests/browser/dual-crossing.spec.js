@@ -14,7 +14,7 @@ const canvasImage = page => page.locator("#game").evaluate(canvas => canvas.toDa
 
 async function flagColor(page, rgb) {
   return page.locator("#game").evaluate((canvas, color) => {
-    const { data } = canvas.getContext("2d").getImageData(308, 92, 36, 19);
+    const { data } = canvas.getContext("2d").getImageData(355, 91, 36, 52);
     let area = 0;
     for (let i = 0; i < data.length; i += 4)
       if (color.every((channel, offset) => data[i + offset] === channel)) area++;
@@ -29,8 +29,14 @@ test("the public selector, visibility pause during deployment, restart and level
   expect(box.width).toBe(390);
   expect(box.height).toBeGreaterThan(700);
   const initial = await snapshot(page);
-  await aim(initial.gates[0].x);
-  const deploying = await advanceUntil(page, s => s.dual.phalanx.phase === "deploying", 10, 100);
+  let deploying = initial;
+  for (let second = 0; second < 80 && deploying.dual.phalanx.phase !== "deploying"; second++) {
+    const target = dualAim("adaptive-seven", second, deploying.dual.lanes, deploying.gates, deploying.dual.phalanx);
+    if (Math.abs(target - deploying.gunX) > 2) await aim(target);
+    await page.clock.runFor(1000);
+    deploying = await snapshot(page);
+  }
+  expect(deploying.dual.phalanx.phase).toBe("deploying");
   expect(deploying.dual.lanes.left.front).toBeGreaterThan(initial.dual.lanes.left.front);
   expect(deploying.dual.lanes.left.redEntryOpen).toBe(true);
 
@@ -76,8 +82,8 @@ test("a public playthrough seals the flank and routs the horde with the ×999 su
   const easternBlueBeforeSurge = [];
   let sawRightSiegeSquad = false;
   let s = await snapshot(page);
-  for (let second = 0; second < 115 && s.mode === "playing"; second++) {
-    const target = dualAim("mixed", second, s.dual.lanes, s.gates, s.dual.phalanx);
+  for (let second = 0; second < 160 && s.mode === "playing"; second++) {
+    const target = dualAim("adaptive-seven", second, s.dual.lanes, s.gates, s.dual.phalanx);
     if (Math.abs(s.gunX - target) > 2) await aim(target);
     await page.clock.runFor(1000);
     s = await snapshot(page);
@@ -85,7 +91,7 @@ test("a public playthrough seals the flank and routs the horde with the ×999 su
     sawRightSiegeSquad ||= s.dual.lanes.right.squads.some(squad => squad.count === 999);
   }
   expect(s.mode).toBe("victory");
-  expect(s.work).toEqual([36, 24, 27, 72]);
+  expect(s.work).toEqual([132, 30, 30, 90]);
   expect(sawRightSiegeSquad).toBe(true);
   expect(s.dual.lanes.right.blueTotal).toBeGreaterThan(Math.max(...easternBlueBeforeSurge) * 4);
   expect(s.dual.phalanx.phase).toBe("secured");
@@ -98,7 +104,7 @@ test("a public playthrough seals the flank and routs the horde with the ×999 su
   await pause(page).click();
   const frozen = await snapshot(page);
   const image = await canvasImage(page);
-  expect(await flagColor(page, [166, 80, 67])).toBeGreaterThan(120);
+  expect(await flagColor(page, [221, 104, 86])).toBeGreaterThan(120);
   await page.clock.fastForward(60000);
   expect(await snapshot(page)).toEqual(frozen);
   expect(await canvasImage(page)).toBe(image);
@@ -107,7 +113,7 @@ test("a public playthrough seals the flank and routs the horde with the ×999 su
     next => next.victoryElapsed >= FLAG_CAPTURE_TIME + FLAG_RAISE_TIME, 3, 100);
   expect(flags.mode).toBe("victory");
   expect(flags.dual).toEqual(frozen.dual);
-  expect(await flagColor(page, [50, 143, 232])).toBeGreaterThan(120);
+  expect(await flagColor(page, [65, 178, 255])).toBeGreaterThan(120);
   await expect(page.locator("#result")).toBeHidden();
   await page.clock.runFor(2500);
   await expect(page.getByRole("heading", { name: "The castle stands!" })).toBeVisible();
@@ -125,7 +131,7 @@ test("camping either ×20 shows a pausable reaction naming the breached crossing
   const { gates } = await snapshot(page);
   for (const [target, breached, held] of [[gates[2].x, "right", "left"], [gates[3].x, "left", "right"]]) {
     await aim(target);
-    const s = await advanceUntil(page, next => next.mode === "defeat", 32, 200);
+    const s = await advanceUntil(page, next => next.mode === "defeat", 38, 200);
     expect(s.dual.lanes[breached].breached).toBe(true);
     expect(s.dual.lanes[held].breached).toBe(false);
     await expect(page.locator("#result")).toBeHidden();

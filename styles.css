@@ -154,6 +154,11 @@ button:active {
   transition: opacity 0.2s;
   width: 95%;
 }
+#banner.siege-cue {
+  top: 6%;
+  color: #ffe5af;
+  font-size: 13px;
+}
 [hidden] {
   display: none !important;
 }

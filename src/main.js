@@ -2,7 +2,6 @@ import { createBattleClock, createGame } from "./game.js";
 import { createRenderer } from "./render.js";
 import { createDualBattlefield } from "./dual-battlefield.js";
 import { createDualRenderer } from "./dual-render.js";
-import { createConnectedPresentation } from "./connected-render.js";
 import { createMotion } from "./motion.js";
 import { createSound } from "./sound.js";
 import { bindControls } from "./controls.js";
@@ -23,11 +22,9 @@ const game = createGame({
 });
 const state = game.state;
 const renderer = createRenderer(state, canvas, motion);
-const connectedFixture = new URLSearchParams(location.search).get("fixture") === "connected-siege";
 let dualRenderer;
 const dual = createDualBattlefield({
-  state, onEnd: end, onEffect, connected: connectedFixture,
-  onEvent: connectedFixture ? (event, battle) => dualRenderer?.receive(event, battle) : undefined,
+  state, onEnd: end, onEffect, onEvent: onSiegeEvent,
 });
 const inDualBattle = () => state.level === LEVEL_FOUR;
 const activeRenderer = () => inDualBattle() ? dualRenderer : renderer;
@@ -36,6 +33,19 @@ const soundButtons = document.querySelectorAll("[data-sound]");
 let frame = null;
 let last = null;
 let barrierLabels = [];
+
+const siegeCues = {
+  phalanxDeploying: "MEOWRTANS DEPLOYING",
+  phalanxSecured: "WEST SECURED · INFANTRY REDEPLOYING",
+  mainBreakthrough: "MAIN HORDE BROKEN",
+  encirclementArrival: "ENCIRCLEMENT!",
+};
+
+function onSiegeEvent(event, battle) {
+  dualRenderer?.receive(event, battle);
+  const cue = siegeCues[event.type];
+  if (cue && !battle.outcome) notify(cue, 2.4);
+}
 
 function onEffect(kind, time, value, front, redLoss, blueLoss) {
   if (!inDualBattle()) motion.receive(kind, time, value, front, redLoss, blueLoss);
@@ -165,13 +175,14 @@ function start(level = playableLevel(progress.selected)) {
   void sound.unlock();
   const changed = state.level !== level;
   motion.reset();
+  el("banner").style.opacity = 0;
+  el("banner").classList.toggle("siege-cue", level === LEVEL_FOUR);
   progress.selected = level.id;
   saveProgress(progress);
   if (level === LEVEL_FOUR) {
     dual.reset();
-    dualRenderer ??= createDualRenderer(state, canvas, dual,
-      connectedFixture ? createConnectedPresentation : undefined);
-    dualRenderer.reset?.();
+    dualRenderer ??= createDualRenderer(state, canvas, dual);
+    dualRenderer.reset();
   } else {
     if (inDualBattle()) dual.clear();
     game.reset(level);
@@ -213,7 +224,7 @@ function chooseLevel() {
   motion.reset();
   if (inDualBattle()) {
     dual.clear();
-    dualRenderer.reset?.();
+    dualRenderer.reset();
     game.reset(LEVEL_ONE, "menu");
     renderer.resize();
   } else game.reset(state.level, "menu");
@@ -304,7 +315,10 @@ function loop(now) {
   if (last !== null) activeClock().advance((now - last) / 1000);
   last = now;
   if (wasPlaying && state.mode === "victory") el("banner").style.opacity = 0;
-  if (battleActive() && !inDualBattle()) updateHud();
+  if (battleActive()) {
+    if (!inDualBattle()) updateHud();
+    else if (state.t > state.bannerUntil || state.mode === "defeat") el("banner").style.opacity = 0;
+  }
   activeRenderer().draw();
   if (battleActive())
     frame = requestAnimationFrame(loop);
@@ -344,14 +358,10 @@ renderer.resize();
 
 export function getSnapshot() {
   if (!inDualBattle()) return structuredClone(state);
-  const feedback = Object.fromEntries(Object.entries(dual.feedback).map(
-    ([id, { flights, ...local }]) => [id, { ...local, airborne: flights.active }],
-  ));
-  const presentation = dualRenderer?.snapshot?.();
-  return structuredClone({ ...state, dual: dual.state, feedback, ...(presentation && { presentation }) });
+  return structuredClone({ ...state, dual: dual.state, feedback: dual.feedback,
+    presentation: dualRenderer.snapshot() });
 }
 
 export function getConnectedFrame() {
-  if (!inDualBattle() || !connectedFixture) return null;
-  return dualRenderer.frame();
+  return inDualBattle() ? dualRenderer.frame() : null;
 }

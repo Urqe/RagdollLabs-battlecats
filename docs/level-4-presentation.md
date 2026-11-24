@@ -16,11 +16,11 @@ Its formations will follow the 19A fronts and route cohorts. Two contact
 areas and the rear attack will get separate effect pools so shield surges
 leave room for ordinary melee feedback.
 
-## Fixture and presentation
+## Battlefield presentation
 
-Start `npm run dev`, open `/?fixture=connected-siege`, then choose
-**A Tale of Two Tails**. Level 4 without the query parameter uses the released
-renderer and simulation. Levels 1–3 still use their existing presentation.
+Start `npm run dev` and choose **A Tale of Two Tails** from the normal
+level selector. The connected battlefield and simulation use the same
+entry, input, pause and result controls as the other levels.
 
 - The cached terrain joins one northern staging field to two approaches and
   one castle apron. A central ridge separates the approaches while leaving
@@ -53,15 +53,15 @@ renderer and simulation. Levels 1–3 still use their existing presentation.
   own pulses and the retreat animation uses the routed survivor count.
   The salute and flag raise start from the existing victory clock.
 
-The fixture uses bounded presentation rows and effects. Render calls
+The battlefield uses bounded presentation rows and effects. Render calls
 sample the fixed-step state, including while effects and formations are
 frozen on pause. The renderer does not adjust battle time, casualties,
 reinforcements or routing.
 
 ## Comparative review
 
-Level 1 builds a single large mass around its central seam. In the
-fixture, two crowded seams animate simultaneously and the northern
+Level 1 builds a single large mass around its central seam. In Level 4,
+two crowded seams animate simultaneously and the northern
 staging field feeds their visual depth. The contact rhythm is shared
 with Level 1, with a separate cadence for volleys against the shield wall.
 The ×999 columns and west-to-east march provide more distinct movement
@@ -69,10 +69,10 @@ cues than the released Level 4. The west shield row anchors the left
 contact as the right line moves into the staging field. The visible route
 around the ridge explains the rear attack before the escape animation.
 
-## Portrait gameplay recordings
+## Historical 19B preview recordings
 
-Both levels were recorded in Chromium at 390 × 844. The Level 4 run
-uses the actual selector, touch aim and cannon. The offensive reel
+At `af25959`, both levels were recorded in Chromium at 390 × 844. The Level 4 run
+uses the opt-in preview with the selector, touch aim and cannon. The offensive reel
 cuts between transfer arrival, the initial ×999 surge, and the later
 right-side melee as the army closes in on command.
 
@@ -84,7 +84,7 @@ right-side melee as the army closes in on command.
 | [D · East offensive](https://github.com/Urqe/RagdollLabs-battlecats/raw/2fc808a4438c1e9f87694c4d3efa41205354add8/d-offensive.webm) | Transfers joining the east reserve, dense ×999 waves, and the last main-army melee |
 | [E · Final encirclement](https://github.com/Urqe/RagdollLabs-battlecats/raw/2fc808a4438c1e9f87694c4d3efa41205354add8/e-encirclement.webm) | A substantial flank around the north of the ridge, both west contact points, and the rout and flag |
 
-Run `CHROMIUM_PATH=/usr/bin/chromium node scripts/capture-connected-siege.js`
+From `af25959`, run `CHROMIUM_PATH=/usr/bin/chromium node scripts/capture-connected-siege.js`
 with the development server and FFmpeg available. Omit `CHROMIUM_PATH`
 to use Playwright Chromium. The script preserves the full recording
 locally and exports the five reels and phase metrics. The linked run won
@@ -92,7 +92,7 @@ at 110.4 s. Its touch aim follows the mixed strategy on a real clock,
 so the capture's timings are evidence of the footage. The fixed-step
 balance reference stays in the [19A architecture notes](level-architecture.md#matched-cannon-replays).
 
-## Mobile viewport measurements
+## Historical 19B viewport measurements
 
 The isolated profiles sampled actual `requestAnimationFrame` intervals
 and whole-Canvas JavaScript draw time without video recording. The
@@ -121,3 +121,77 @@ shared host, while the isolated profiles stayed at 16.7–17 ms. The
 profiles measure this environment's rendering and scheduling. Physical
 iPhone testing, gameplay balance and public cutover remain for 19C.
 [Recording measurements](https://github.com/Urqe/RagdollLabs-battlecats/blob/2fc808a4438c1e9f87694c4d3efa41205354add8/metrics.json) · [Isolated profiles](https://github.com/Urqe/RagdollLabs-battlecats/blob/2fc808a4438c1e9f87694c4d3efa41205354add8/profile.json)
+
+
+## Public Level 4 release
+
+The release keeps the 19B combat layers and adds brief captions for
+deployment, withdrawal, breakthrough and rear contact. Captions sit
+above the battlefield and pause with combat. Both west multiplier
+labels change to “→ EAST” when their routes change. The old preview
+query and the obsolete Level 4 renderer are gone.
+
+The five reels below come from one uninterrupted touch playthrough on
+the normal public path at 390 × 844. The early reel starts while both
+starter gates are feeding the lines. The double-upgrade reel shows
+the west and east ×99 work followed by a cut to the late phalanx
+investment. The offensive reel cuts from the ×999 unlock to the later
+melee at command. The phalanx and encirclement reels run continuously.
+The full video includes the result.
+
+To reproduce with the local server running, use
+`CHROMIUM_PATH=/usr/bin/chromium node scripts/capture-connected-siege.js`.
+Omit `CHROMIUM_PATH` to use Playwright Chromium. Set
+`SIEGE_PROFILE_ONLY=1 SIEGE_BROWSER=webkit` to measure the same public
+path in WebKit without video recording. The default policy plays a
+seven-second adaptive rhythm. Real pointer input may land on a nearby
+tick compared with the fixed-step strategy script.
+
+The full run won at **113.7 simulation seconds**. The recording includes the menu and the outcome. [Uninterrupted public playthrough](https://github.com/Urqe/RagdollLabs-battlecats/raw/5a2ca95cb3d7e1da3612729954f9723f7e3b5c37/level-4-full.webm) · [Level 1 benchmark](https://github.com/Urqe/RagdollLabs-battlecats/raw/5a2ca95cb3d7e1da3612729954f9723f7e3b5c37/level-1-benchmark.webm)
+
+| Reel | What to watch |
+| --- | --- |
+| [A · Early battle](https://github.com/Urqe/RagdollLabs-battlecats/raw/5a2ca95cb3d7e1da3612729954f9723f7e3b5c37/a-early-battle.webm) | The two ×20 gates feed active fights before the stronger gates open |
+| [B · Double-upgrade struggle](https://github.com/Urqe/RagdollLabs-battlecats/raw/5a2ca95cb3d7e1da3612729954f9723f7e3b5c37/b-double-upgrade.webm) | Two ×99 investments and the switch between defenders and the expensive shield wall |
+| [C · Deployment and transfer](https://github.com/Urqe/RagdollLabs-battlecats/raw/5a2ca95cb3d7e1da3612729954f9723f7e3b5c37/c-phalanx.webm) | Shield lock, repeated impacts and the infantry moving through the apron |
+| [D · Offensive breakthrough](https://github.com/Urqe/RagdollLabs-battlecats/raw/5a2ca95cb3d7e1da3612729954f9723f7e3b5c37/d-offensive.webm) | Deep ×999 waves and actual main-army contact near command |
+| [E · Encirclement and victory](https://github.com/Urqe/RagdollLabs-battlecats/raw/5a2ca95cb3d7e1da3612729954f9723f7e3b5c37/e-encirclement.webm) | The flanking column rounds the ridge, reaches the west rear, and clears the red resistance |
+
+Level 1's benchmark packs the contact into one seam. Level 4 fills
+two active seams and makes the east reserve grow visibly after
+the transfer and ×999 arrivals. The heavier wall investment leaves
+more time to see contact recoil and local reinforcements before the
+formation locks. The later battle is readable through troop direction
+and two visible west contact points.
+
+### Public mobile-browser measurements
+
+Both runs used the normal Level 4 selector at 390 × 844.
+Chromium recorded the uninterrupted touch run. WebKit completed
+the double-upgrade policy in 104.5 simulation seconds without
+recording. Both ran on the shared emulation host alongside browser
+checks. Frame intervals and Canvas JavaScript submission times
+are in milliseconds. Maxima cover both runs.
+
+| Phase | Chromium frame p50 / p95 | Chromium draw p50 / p95 | WebKit frame p50 / p95 | WebKit draw p50 / p95 | Represented soldiers max | Airborne max | Moving cohorts max |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Initial melee | 16.7 / 50.1 | 1 / 8.3 | 23 / 63 | 1 / 3 | 1,089 | 16 | 15 |
+| Phalanx deployment | 16.7 / 50.1 | 1.5 / 5.3 | 34 / 76 | 1 / 4 | 1,746 | 16 | 12 |
+| Transfer | 16.7 / 33.4 | 1.1 / 5.1 | 30 / 66 | 1 / 2 | 2,122 | 16 | 19 |
+| ×999 offensive | 16.7 / 33.3 | 1.2 / 5 | 25 / 64 | 1 / 3 | 2,868 | 16 | 15 |
+| Encirclement | 33.3 / 83.3 | 1.4 / 15.9 | 25 / 67 | 1 / 2 | 3,291 | 16 | 16 |
+
+The sampled peaks were 3,291 silhouettes, 16 active airborne cats and
+19 moving cohorts. Reserve stamps draw up to six figures per Canvas
+call. Host contention produced long frame intervals in both engines.
+Physical iPhone performance remains unverified.
+[Chromium public-path measurements](https://github.com/Urqe/RagdollLabs-battlecats/blob/5a2ca95cb3d7e1da3612729954f9723f7e3b5c37/chromium-recording.json) · [WebKit public-path measurements](https://github.com/Urqe/RagdollLabs-battlecats/blob/milestone-19c-recordings/webkit-public.json)
+
+A separate unrecorded renderer probe sampled the same five phases at
+390 × 844 after the browser suites ended. Canvas draw p50s were
+1.0–1.2 ms in Chromium and 1 ms in WebKit. Frame p95s were
+16.7–16.8 ms in Chromium and 17–23 ms in WebKit. WebKit's highest
+frame p95 was during deployment. Draw p95s were at most 3.8 ms
+and 3 ms respectively. The probe provides a lower-contention
+comparison for the public-path measurements above.
+[Isolated phase samples](https://github.com/Urqe/RagdollLabs-battlecats/blob/milestone-19c-recordings/isolated-renderer.json)
