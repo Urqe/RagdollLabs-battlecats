@@ -607,6 +607,9 @@ export function createFigures(ctx, ownerDocument) {
     blueArmy,
     fallen,
     airborne,
+    reserveStamp(x, y, count, red, pose, scale) {
+      drawReserveTile(x, y, count, red ? 0 : 1, pose % TILE_POSES, scale);
+    },
     soldier(x, y, red, size, phase) {
       cat(x, y, red ? RED : BLUE, size, phase);
     },
