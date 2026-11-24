@@ -36,6 +36,7 @@ let last = null;
 let barrierLabels = [];
 
 const siegeCues = {
+  phalanxPushing: "SHIELDS LOCKED",
   phalanxDeploying: "MEOWRTANS DEPLOYING",
   phalanxSecured: "WEST SECURED · INFANTRY REDEPLOYING",
   mainBreakthrough: "MAIN HORDE BROKEN",
@@ -44,6 +45,9 @@ const siegeCues = {
 
 function onSiegeEvent(event, battle) {
   dualRenderer?.receive(event, battle);
+  // The east HUD already marks breakthrough. Keep the west handoff cue
+  // readable when both milestones happen on the same fixed tick.
+  if (event.type === "mainBreakthrough" && battle.phalanx.since === event.time) return;
   const cue = siegeCues[event.type];
   if (cue && !battle.outcome) notify(cue, 2.4);
 }
@@ -93,11 +97,13 @@ function end(won) {
   const defeatDetail = breached && (breached[0].breached && breached[1].breached
     ? "Both crossings fell."
     : `The ${breached[0].breached ? "west" : "east"} crossing fell.`);
+  const wallTooLate = breached && breached[0].breached && dual.state.phalanx.phase !== "locked";
   el("resultText").textContent = won
     ? (inDualBattle() ? "The Meowrtans held the west. The command camp fell in the east, and the red horde fled."
       : `Your cat army overwhelmed the invaders and cleared the battlefield. ${level.title} is won!`)
     : defeatDetail ? `${defeatDetail} ${breached[0].breached
-      ? "Free the Meowrtans before the west flank is overrun."
+      ? wallTooLate ? "The castle was breached before the Meowrtans locked shields."
+        : "Free the Meowrtans before the west flank is overrun."
       : "Reinforce the east while you open barricades."}`
     : "The enemy reached your castle before you could turn the tide. Reinforce the frontline between volleys at the barricades.";
   el("resultLevel").textContent = `Level ${level.number} · ${level.title}`;

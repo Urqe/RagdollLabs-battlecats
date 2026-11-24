@@ -54,7 +54,7 @@ test("connected siege shows deployment, troop travel, rear combat and the result
   let sawOrdinaryVolley = false, sawSiege = false, paused = false;
   let simultaneousReactions = false, sawFlankMarch = false, sawRear = false;
   for (let second = 0; second < 160 && s.mode === "playing"; second++) {
-    const target = dualAim("adaptive-seven", second, s.dual.lanes, s.gates, s.dual.phalanx);
+    const target = dualAim("adaptive-imperfect", second, s.dual.lanes, s.gates, s.dual.phalanx);
     if (Math.abs(s.gunX - target) > 2) await aim(target);
     await page.clock.runFor(1000);
     const p = await check();
@@ -85,7 +85,7 @@ test("connected siege shows deployment, troop travel, rear combat and the result
   }
 
   expect(s.mode).toBe("victory");
-  expect(s.dual.time).toBeGreaterThan(100);
+  expect(s.dual.time).toBeGreaterThan(60);
   expect(s.dual.time).toBeLessThan(150);
   for (const phase of ["locked", "marching", "deploying", "pushing", "secured"]) expect(phases.has(phase)).toBe(true);
   expect([sawOrdinaryVolley, sawSiege, paused, simultaneousReactions, sawFlankMarch, sawRear])

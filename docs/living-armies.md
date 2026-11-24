@@ -1,5 +1,7 @@
 # Milestone 21 · Living Armies
 
+For the current pressure model and balance, see [Milestone 22 · Arcade combat](arcade-combat.md). The figures below describe the earlier milestone.
+
 ## 21A · Organic Combat Dynamics
 
 Before this milestone, relative pressure could reach its maximum while the

@@ -34,7 +34,7 @@ test("the presentation leaves connected outcomes and events identical at all ren
     const { lanes, phalanx } = sim.state;
     let mostCohorts = 0, mostFlights = 0, mostJoins = 0;
     for (let second = 0; second < 160 && !sim.state.outcome; second++) {
-      state.gunX = dualAim("adaptive-seven", second, lanes, state.gates, phalanx);
+      state.gunX = dualAim("adaptive-imperfect", second, lanes, state.gates, phalanx);
       for (let frame = 0; frame < hz && !sim.state.outcome; frame++) {
         sim.advance(1 / hz);
         visual.draw();
@@ -79,7 +79,7 @@ test("east reinforcements survive and render before ×999, then clear at real de
   const { lanes, phalanx } = sim.state;
   let sawTwenty = false, sawNinetyNine = false, sawSiege = false, sawCleared = false, sawRearContact = false;
   for (let second = 0; second < 145 && !sim.state.outcome; second++) {
-    state.gunX = dualAim("adaptive-seven", second, lanes, state.gates, phalanx);
+    state.gunX = dualAim("adaptive-imperfect", second, lanes, state.gates, phalanx);
     for (let frame = 0; frame < 60 && !sim.state.outcome; frame++) {
       sim.advance(1 / 60);
       const { right } = lanes;

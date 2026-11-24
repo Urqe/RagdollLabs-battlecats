@@ -1,5 +1,7 @@
 # Level 4 release balance · Milestone 19C
 
+For the current pressure model and balance, see [Milestone 22 · Arcade combat](arcade-combat.md). The figures below describe the earlier milestone.
+
 The Level 4 menu opens the connected siege. [Level rules](levels/level-04.md) · [Presentation and recordings](level-4-presentation.md) · [Milestone 18 archive](level-4-balance-m18.md) · [Milestone 17 archive](level-4-balance-m17.md)
 
 | Setting | West | East |
@@ -85,7 +87,7 @@ about 17.8 s later and the full battle lasts 144.0 s. The off-center
 variant uses a ±10 logical-unit aim bias and three one-second detours
 through the central gap.
 
-## Why a battle without the phalanx must lose
+## Why a battle without the phalanx had to lose
 
 West red intake stays at full access at every ordinary frontline
 position. The west minimum is 265, above the reinforcement cutoff of
@@ -102,7 +104,7 @@ reachable frontline is always at least as far toward the castle as
 this optimistic line. Even that line crosses the castle threshold
 at **75.37 s**. Since west supply eventually exceeds its casualty cap
 and cannot be cut by ordinary west infantry, arbitrarily many arrivals
-give no way around this bound. [Executable bound](../tests/dual-battlefield.test.js)
+give no way around this bound. [Historical executable bound](https://github.com/Urqe/RagdollLabs-battlecats/blob/d5e281c/tests/dual-battlefield.test.js)
 
 ## Regression and release limits
 

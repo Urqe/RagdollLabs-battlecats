@@ -271,3 +271,21 @@ test("a real cannon replay conserves troops through breakthrough, flank movement
   assert.ok(events.some(event => event.type === "arrival" && event.side === "blue" &&
     event.multiplier === 999 && event.laneId === "right"));
 });
+
+test("the shield lock protects an endangered flank on its authoritative tick", () => {
+  const sim = fixture();
+  sim.unlockPhalanx();
+  while (sim.state.phalanx.phase !== "deploying") sim.step();
+  const { left } = sim.state.lanes;
+  while (sim.state.time - sim.state.phalanx.since < LEVEL_FOUR.phalanx.deployTime - tick)
+    sim.step();
+  Object.assign(left, { front: left.objective.castleFront - 0.01,
+    frontVelocity: 10, blueTotal: 0, redTotal: 2000 });
+  sim.step();
+  assert.equal(sim.state.phalanx.phase, "pushing");
+  assert.equal(left.breached, false);
+  assert.ok(left.frontVelocity < 0);
+  const lock = sim.events.find(e => e.type === "phalanxPushing");
+  const impact = sim.events.find(e => e.type === "shieldImpact");
+  assert.equal(lock.time, impact.time);
+});
