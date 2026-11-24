@@ -11,6 +11,11 @@ test("connected battlefield is public and the selector still opens Level 1", asy
   await setup(page, browserName, false);
   await select(page, "two-tails");
   const released = await snapshot(page);
+  await expect(page.locator("#siegeHud")).toBeVisible();
+  await expect(page.locator("#siegeLeft")).toHaveText("LEFT — CONTESTED");
+  await expect(page.locator("#siegeRight")).toHaveText("RIGHT — CONTESTED");
+  await expect(page.locator("#siegeBlueCount")).toHaveText(/^\d/);
+  await expect(page.locator("#siegeRedCount")).toHaveText(/^\d/);
   expect(released.dual.siege.phase).toBe("twoFronts");
   expect(released.presentation.phase).toBe("locked");
   await page.getByRole("button", { name: "Levels", exact: true }).click();
@@ -73,7 +78,7 @@ test("connected siege shows deployment, troop travel, rear combat and the result
   expect(s.mode).toBe("victory");
   expect(s.dual.time).toBeGreaterThan(100);
   expect(s.dual.time).toBeLessThan(150);
-  for (const phase of ["locked", "marching", "deploying", "secured"]) expect(phases.has(phase)).toBe(true);
+  for (const phase of ["locked", "marching", "deploying", "pushing", "secured"]) expect(phases.has(phase)).toBe(true);
   expect([sawOrdinaryVolley, sawSiege, paused, simultaneousReactions, sawFlankMarch, sawRear])
     .toEqual([true, true, true, true, true, true]);
   expect(s.presentation.shieldAt).toBeGreaterThan(s.presentation.lockAt);

@@ -1,7 +1,8 @@
 import { createAirborneCats } from "./airborne-cats.js";
 import { FLAG_CAPTURE_TIME, FLAG_RAISE_TIME, smoothStep, victoryAdvance } from "./army-movement.js";
 import { armyScale, encounterBalance, encounterOffset, fieldColumn, fieldRow } from "./army-visual.js";
-import { siegeRoutes } from "./connected-siege.js";
+import { siegeRoutes, westRearEntry } from "./connected-siege.js";
+import { createFormationDynamics, formationLag } from "./formation-dynamics.js";
 import { clamp, H, TAU, W } from "./config.js";
 import { polygon } from "./terrain.js";
 
@@ -9,7 +10,7 @@ const westRally = [99, 397];
 const junction = [209, 478];
 const entry = [210, 511];
 const ridgePass = [220, 83];
-const westRear = [99, 173];
+const westRear = [90, westRearEntry];
 const eastCommand = [315, 121];
 const eastBend = [284, 449];
 const eastShoulder = [302, 393];
@@ -66,10 +67,10 @@ function terrain(ctx) {
     rect(ctx, i % 3 ? "#362f2325" : "#e1d2a245", x, y, 2 + i % 5, 1 + i % 2);
   }
   // Timber decking and stone abutments mark the west hold.
-  rect(ctx, "#574f41", 25, 278, 109, 52);
-  for (let y = 281; y < 330; y += 7) rect(ctx, "#958060", 31, y, 96, 5);
-  rect(ctx, "#5a645b", 24, 273, 9, 63);
-  rect(ctx, "#5a645b", 125, 273, 9, 63);
+  rect(ctx, "#574f41", 27, 278, 108, 52);
+  for (let y = 281; y < 330; y += 7) rect(ctx, "#958060", 34, y, 94, 5);
+  rect(ctx, "#5a645b", 25, 273, 8, 63);
+  rect(ctx, "#5a645b", 129, 273, 8, 63);
   for (const x of [31, 141, 250, 361]) {
     polygon(ctx, "#412f32", [x - 24, 53, x - 8, 25, x + 17, 25, x + 26, 54]);
     polygon(ctx, "#a35d4c", [x - 20, 51, x - 8, 25, x + 5, 50]);
@@ -136,7 +137,7 @@ export function routePoint(cohort, offset, anchors, point) {
 }
 
 const effectPool = () => ({
-  flights: createAirborneCats(8), pulse: -10, casualtyAt: -10, serial: 0,
+  dynamics: createFormationDynamics(), flights: createAirborneCats(8), pulse: -10, casualtyAt: -10, serial: 0,
   x: 0, y: 0, intensity: 0, redLost: 0, blueLost: 0,
 });
 
@@ -149,7 +150,8 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     eastCommand, ridgePass, westContact, eastContact, withdrawalRally };
   const point = {};
   const scale = {};
-  const metrics = { figures: 0, stamps: 0, represented: 0, flights: 0, cohorts: 0, drawMs: 0 };
+  const metrics = { figures: 0, stamps: 0, reserveSilhouettes: 0, represented: 0, flights: 0,
+    cohorts: 0, transferCohorts: 0, flankCohorts: 0, drawMs: 0 };
   const renderState = { leftBlue: 0, rightBlue: 0, leftRed: 0, rightRed: 0,
     phase: "locked", transfers: 0, flank: false };
 
@@ -177,19 +179,12 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     });
   }
 
-  function lockTravel(time) {
-    const remaining = 1 - smoothStep((time - lockAt) / 0.62);
-    return (withdrawalFront - state.level.phalanx.holdFront) * remaining;
-  }
-
   function receive(event, sim) {
     const { type, laneId, time } = event;
     const rearHit = event.waypoint === "westRear";
     const local = rearHit ? rear : laneId === "left" ? west : east;
     if (type === "infantryWithdrawal" && event.front !== undefined) withdrawalFront = event.front;
-    if (type === "phalanxSecured") lockAt = time;
-    if (type === "frontline" && laneId === "left" && time === lockAt &&
-        event.front === state.level.phalanx.holdFront) withdrawalFront = event.previousFront;
+    if (type === "phalanxPushing") lockAt = time;
     if (type === "mainBreakthrough") breakthroughAt = time;
     if (type === "transferArrival" || (type === "arrival" && event.side === "blue" && laneId === "right")) {
       joinedAt = time;
@@ -197,9 +192,8 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     }
     if (type === "enemyRouted") routed = { count: event.count, time };
     if (type !== "clash" && type !== "shieldImpact" && type !== "spearThrust" && type !== "casualties") return;
-    local.y = rearHit ? westRear[1] + 8
-      : event.front + (laneId === "left" && time >= lockAt && lockAt >= 0 ? lockTravel(time) : 0);
-    local.x = rearHit ? westRear[0] : center(laneId, local.y);
+    local.y = event.front;
+    local.x = center(laneId, local.y);
     local.flights.step(time);
     if (type === "shieldImpact") {
       shieldAt = local.pulse = time;
@@ -239,20 +233,23 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
   function stamp(x, y, count, red, pose, size) {
     figures.reserveStamp(x, y, count, red, pose, size);
     metrics.stamps++;
+    metrics.reserveSilhouettes += count;
     metrics.represented += count;
   }
 
-  function formation(population, opposing, red, id, front, depth, local, time, pace, invert = false, intake = 0) {
+  function formation(population, opposing, red, id, front, depth, local, time, pace,
+    invert = false, intake = 0, fieldLimit = 144, reserveLimit = 588) {
     if (population <= 0) return;
     const { field, reserve } = armyScale(population, scale);
     const side = (red ? -1 : 1) * (invert ? -1 : 1);
-    const fieldCount = Math.min(field, 144);
+    const fieldCount = Math.min(field, fieldLimit);
     const rows = fieldRow(fieldCount - 1) + 1;
     const balance = encounterBalance(population, opposing);
     const recoil = Math.max(0, 1 - (time - local.pulse) / 0.17) * local.intensity;
-    const step = Math.min((depth * 0.64) / rows, (red ? 8.1 : 8.8) - Math.max(0, -balance) * 1.9);
+    const pose = local.dynamics.pose;
+    const step = Math.min((depth * 0.64) / rows, (red ? 8.1 : 8.8) - Math.max(0, -balance) * 1.9) * (1 - pose.compression * 0.17);
     const rearDepth = rows * step + 14;
-    const budget = Math.min(588, reserve + field - fieldCount);
+    const budget = Math.min(reserveLimit, reserve + field - fieldCount);
     const staging = intake > 0 && depth > 128 ? Math.floor(budget * 0.28 / 6) : 0;
     const reserveCount = budget - staging * 6;
     for (let i = staging - 1; i >= 0; i--) {
@@ -265,7 +262,9 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     for (let i = Math.ceil(reserveCount / 6) - 1; i >= 0; i--) {
       const row = Math.floor(i / 7), col = i % 7;
       const d = Math.min(depth, rearDepth + row * Math.min(10, (depth - rearDepth) / 14));
-      const y = front + side * (d + Math.sin(time * 7 + row * 0.9 + col * 0.4) * 1.8);
+      const offset = Math.sin(time * 7 + row * 0.9 + col * 0.4) * 1.8 + Math.sin(i * 4.1) * 3;
+      const lag = formationLag(pose, front, 0.8 + row / 70);
+      const y = front + side * clamp(d + offset + side * lag, 9, depth);
       const half = frontage(id, y);
       const x = center(id, y) + (col - 3) * half * 0.26 + (row % 2 ? 4 : -4);
       stamp(x, y, Math.min(6, reserveCount - i * 6), red, Math.floor(time * 8) + i,
@@ -282,7 +281,8 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
       const push = opposing > 0 ? encounterOffset(time, i, row, red, balance, pressure,
         recoil * (1 - Math.min(1, Math.abs(local.x - x) / 43)) * 3) : 0;
       const stride = Math.sin(time * (opposing > 0 ? 14 : 9) + i * 1.1) * (row < 4 ? 2.1 : 1.12);
-      y += side * (-push + stride);
+      const lag = formationLag(pose, front, Math.min(0.8, row / 22));
+      y = front + side * clamp(d - push + stride + side * lag, 7, depth);
       const flight = local.flights.slots[Number(red)][i];
       if (flight && !invert) {
         flight.drawX = x;
@@ -300,27 +300,30 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     const transfer = cohort.route === "withdrawal" || cohort.route === "westRally";
     const siege = cohort.multiplier === 999;
     const { field, reserve } = armyScale(cohort.count, scale);
-    const groups = Math.min(flank ? 68 : transfer ? 31 : siege ? 13 : 8,
+    const groups = Math.min(flank ? 96 : transfer ? 31 : siege ? 13 : 8,
       Math.ceil((field + reserve * 0.37) / (flank || transfer ? 5 : 13)));
-    const width = flank ? 7 : transfer ? 4 : siege ? 4 : 2;
+    const width = flank ? 8 : transfer ? 4 : siege ? 4 : 2;
     const rows = Math.ceil(groups / width);
     const path = siegeRoutes[cohort.route];
     const endDistance = path[cohort.leg][2];
-    const close = cohort.leg === path.length - 1 ? smoothStep((endDistance - cohort.distance) / 7) : 1;
+    const close = !flank && cohort.leg === path.length - 1 ? smoothStep((endDistance - cohort.distance) / 7) : 1;
     const age = time - cohort.departedAt;
     const opening = smoothStep(age / 0.27);
     const turns = cohort.route === "withdrawal";
     const release = smoothStep(age / 0.72);
     metrics.cohorts++;
+    if (flank) metrics.flankCohorts++;
+    if (transfer) metrics.transferCohorts++;
     for (let i = groups - 1; i >= 0; i--) {
       const row = Math.floor(i / width), col = i % width;
-      const lead = (row - (flank || transfer ? 0 : rows * 0.18)) * (flank ? 1.12 : 0.95);
+      const lead = (row - (flank || transfer ? 0 : rows * 0.18)) * (flank ? 1.8 : 0.95);
       const gathering = turns ? mix(-row * 0.72, lead, release) : flank ? lead : lead * opening;
       routePoint(cohort, gathering * close, anchors, point);
       const spread = (col - (Math.min(width, groups - row * width) - 1) / 2) *
         (flank ? 10.5 : turns ? mix(17, 10, release) : transfer ? 10 : siege ? 7.6 : 7) + Math.sin(i * 7) * 1.9;
       const x = point.x + point.sideX * spread + Math.sin(time * 16 + i) * 1.3;
-      const y = point.y + point.sideY * spread + Math.cos(time * 16 + i) * 1.3;
+      const strideY = point.y + point.sideY * spread + Math.cos(time * 16 + i) * 1.3;
+      const y = flank && cohort.leg === 1 ? Math.min(westRearEntry - 7, strideY) : strideY;
       if (flank || transfer || siege) {
         stamp(x, y, siege || flank ? 6 : 4, false, Math.floor(time * 12) + i,
           flank ? 0.75 : siege ? 0.59 : 0.58);
@@ -334,8 +337,9 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     const { phase, since } = sim.phalanx;
     if (phase === "locked") return;
     const rules = state.level.phalanx;
-    const deploy = phase === "deploying" ? smoothStep((time - since) / rules.deployTime) : Number(phase === "secured");
-    const anchor = phase === "secured" ? rules.holdFront + lockTravel(time) : sim.lanes.left.front;
+    const locked = phase === "pushing" || phase === "secured";
+    const deploy = phase === "deploying" ? smoothStep((time - since) / rules.deployTime) : Number(locked);
+    const anchor = sim.lanes.left.front;
     const holdX = westX(anchor);
     const march = phase === "marching" ? clamp((time - since) / rules.marchTime, 0, 1)
       : phase === "unlocked" ? 0 : 1;
@@ -350,7 +354,7 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     const salute = smoothStep(state.victoryElapsed / 0.57);
     for (let rank = 1; rank >= 0; rank--) {
       for (let i = 0; i < 9; i++) {
-        const px = x + (i - 4) * mix(8.6, 10.1, deploy) + rank * 3;
+        const px = x + (i - 4) * mix(8.6, 9.6, deploy) + rank * 3;
         const py = y - deploy * 16 + rank * 13 + impact * (rank ? 1 : 3) +
           (1 - deploy) * Math.sin(time * 19 + i * 0.5 + rank) * 2;
         soldier(px, py, false, 6.15, i + rank);
@@ -393,29 +397,44 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
   }
 
   function draw() {
-    metrics.figures = metrics.stamps = metrics.represented = metrics.flights = metrics.cohorts = 0;
+    metrics.figures = metrics.stamps = metrics.reserveSilhouettes = metrics.represented = 0;
+    metrics.flights = metrics.cohorts = metrics.transferCohorts = metrics.flankCohorts = 0;
     const sim = battle.state;
     const { left, right } = sim.lanes;
     const time = sim.time + state.victoryElapsed + (state.defeatElapsed ?? 0);
     const playing = state.mode === "playing";
     const won = sim.outcome === "victory";
     const encircled = sim.siege.phase === "encirclement";
-    const wall = sim.phalanx.phase === "secured";
+    const wall = sim.phalanx.phase === "secured" || sim.phalanx.phase === "pushing";
+    const rearFront = sim.siege.rearFront;
     west.flights.step(time);
     east.flights.step(time);
     rear.flights.step(time);
-    const westFront = left.front + (wall ? lockTravel(time) : 0);
+    const westFront = left.front;
     const eastFront = right.front - (won ? victoryAdvance(right.front, 98, state.victoryElapsed) : 0);
     Object.assign(renderState, { leftBlue: left.blueTotal, rightBlue: right.blueTotal,
       leftRed: left.redTotal, rightRed: right.redTotal, phase: sim.phalanx.phase,
       transfers: sim.siege.transfers.length, flank: Boolean(sim.siege.flank) });
-    formation(left.redTotal, playing ? left.blueTotal || Number(wall) * 850 : 0,
-      true, "left", westFront, encircled ? westFront - westRear[1] - 18 : Math.max(35, westFront - 55),
-      west, time, battle.feedback.left.direction, false, left.redEntryRate);
+    for (const [lane, local, front] of [[left, west, westFront], [right, east, eastFront]]) {
+      const engaged = playing && lane.redTotal > 0 && (lane.blueTotal > 0 || (lane === left && wall));
+      local.dynamics.step(time, front, lane, engaged, battle.feedback[lane.id].arrivalAt,
+        Math.min(1, local.intensity), Math.min(1, (lane.blueTotal + lane.redTotal) / 700));
+    }
+    rear.dynamics.step(time, rearFront, left, encircled, -Infinity, 0, 1);
+    const rearContact = encircled || sim.siege.phase === "flanking";
+    const rearRed = encircled ? left.redTotal * 0.27 : 0;
+    const rearDepth = Math.max(14, (westFront - rearFront) * 0.32);
+    const westDepth = encircled ? westFront - rearFront - rearDepth
+      : rearContact ? westFront - rearFront - 7 : Math.max(35, westFront - 55);
+    formation(left.redTotal - rearRed, playing ? left.blueTotal || Number(wall) * 850 : 0,
+      true, "left", westFront, westDepth, west, time, battle.feedback.left.direction,
+      false, rearContact ? 0 : left.redEntryRate, encircled ? 106 : 144, encircled ? 470 : 588);
+    if (encircled) formation(rearRed, sim.siege.flank.count, true, "left", rearFront,
+      rearDepth, rear, time, 1, true, 0, 38, 118);
     formation(right.redTotal, playing ? right.blueTotal : 0, true, "right", right.front,
       Math.max(26, right.front - 55), east, time, battle.feedback.right.direction, false, right.redEntryRate);
     if (left.blueTotal) formation(left.blueTotal, playing ? left.redTotal : 0,
-      false, "left", left.front, Math.max(35, 516 - left.front), west, time, battle.feedback.left.direction);
+      false, "left", left.front + (wall ? 28 : 0), Math.max(35, 516 - left.front - (wall ? 28 : 0)), west, time, battle.feedback.left.direction);
     formation(right.blueTotal, playing ? right.redTotal : 0, false, "right", eastFront,
       Math.max(33, 474 - eastFront), east, time, battle.feedback.right.direction);
     westContact[0] = westX(withdrawalFront);
@@ -433,9 +452,10 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     for (const cohort of sim.siege.transfers) column(cohort, time);
     if (sim.siege.phase === "flanking") column(sim.siege.flank, time);
     if ((encircled || won) && sim.siege.flank) {
+      metrics.flankCohorts = 1;
       const advance = won ? smoothStep(state.victoryElapsed / 0.8) * 24 : 0;
       formation(sim.siege.flank.count, playing ? left.redTotal : 0,
-        false, "left", westRear[1] + 7 + advance, 99, rear, time, -1, true);
+        false, "left", rearFront + advance, Math.min(117, rearFront - 55), rear, time, -1, true);
     }
     phalanx(sim, time);
     if (playing || (won && state.victoryElapsed < 0.72)) {

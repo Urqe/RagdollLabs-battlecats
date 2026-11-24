@@ -61,7 +61,7 @@ async function capture(levelFour) {
   const check = () => page.evaluate(() => window.readBattle());
 
   if (levelFour) {
-    const client = engine === chromium ? await context.newCDPSession(page) : null;
+    const client = engine === chromium && process.env.SIEGE_TOUCH === "1" ? await context.newCDPSession(page) : null;
     const box = await page.locator("#game").boundingBox();
     const point = x => ({ x: box.x + x * box.width / 420, y: box.y + box.height * 0.88 });
     let state = await check();
@@ -107,13 +107,14 @@ function summarize(frames) {
   return {
     frames: frames.length, frameP50: quantile("duration", 0.5), frameP95: quantile("duration", 0.95),
     drawP50: quantile("drawMs", 0.5), drawP95: quantile("drawMs", 0.95),
-    figures: max("figures"), stamps: max("stamps"), represented: max("represented"),
-    flights: max("flights"), cohorts: max("cohorts"),
+    figures: max("figures"), stamps: max("stamps"), reserveSilhouettes: max("reserveSilhouettes"),
+    represented: max("represented"), flights: max("flights"), cohorts: max("cohorts"),
+    transferCohorts: max("transferCohorts"), flankCohorts: max("flankCohorts"),
   };
 }
 
 try {
-  if (!profileOnly) {
+  if (!profileOnly && process.env.SIEGE_SKIP_BENCHMARK !== "1") {
     const benchmark = await capture(false);
     reel(benchmark.source, "level-1-benchmark.webm", [benchmark.start + 1.4, 13]);
   }
@@ -122,29 +123,27 @@ try {
   const march = frames.find(frame => frame.phalanx === "marching");
   const west99 = frames.find(frame => frame.west99);
   const east99 = frames.find(frame => frame.east99);
-  const deploying = frames.find(frame => frame.phalanx === "deploying");
+  const pushing = frames.find(frame => frame.phalanx === "pushing");
   const siege = frames.find(frame => frame.siege);
   const flank = frames.find(frame => frame.phase === "flanking");
   const rear = frames.find(frame => frame.phase === "encirclement");
   const win = frames.find(frame => frame.phase === "victory");
   const at = frame => origin + frame.wall / 1000;
   if (!profileOnly) {
-    reel(source, "a-early-battle.webm", [start + 0.9, 9]);
-    reel(source, "b-double-upgrade.webm", [at(west99) - 3, 8], [at(east99) - 2, 7],
-      [at(march) - 8, 8]);
-    reel(source, "c-phalanx.webm", [at(march) - 0.8, 12]);
-    reel(source, "d-offensive.webm", [at(siege) - 0.55, 10], [at(flank) - 11.5, 9]);
-    reel(source, "e-encirclement.webm", [at(flank) - 1.1]);
+    reel(source, "a-right-continuity.webm", [start + 1, at(east99) - start + 12]);
+    reel(source, "b-phalanx-push.webm", [at(march) - 1, at(lock) - at(march) + 2]);
+    reel(source, "c-two-front-combat.webm", [at(lock) - 1, 11]);
+    reel(source, "d-encirclement.webm", [at(flank) - 1]);
   }
   const metrics = {
     viewport, strategy, browser: engine.name(), recording: !profileOnly,
-    phases: { west99: west99.time, east99: east99.time, march: march.time, lock: lock.time,
+    phases: { west99: west99.time, east99: east99.time, march: march.time, pushing: pushing.time, lock: lock.time,
       siege: siege.time, flank: flank.time, rear: rear.time, win: win.time },
     initial: summarize(frames.filter(frame => frame.time >= 3 && frame.time < 14)),
-    deployment: summarize(frames.filter(frame => frame.time >= deploying.time && frame.time < lock.time)),
+    pushing: summarize(frames.filter(frame => frame.phalanx === "pushing")),
     transfer: summarize(frames.filter(frame => frame.time >= lock.time && frame.time < lock.time + 4)),
     shieldWall: summarize(frames.filter(frame => frame.time >= lock.time + 1 && frame.time < lock.time + 9)),
-    siege: summarize(frames.filter(frame => frame.time >= siege.time + 2 && frame.time < siege.time + 13)),
+    breakthrough: summarize(frames.filter(frame => frame.time >= flank.time - 9 && frame.time < flank.time)),
     encirclement: summarize(frames.filter(frame => frame.phase === "flanking" || frame.phase === "encirclement")),
   };
   const evidence = JSON.stringify(metrics, null, 2) + "\n";

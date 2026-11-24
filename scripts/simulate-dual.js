@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { pathToFileURL } from "node:url";
+import { siegePopulation } from "../src/connected-siege.js";
 import { createDualBattlefield } from "../src/dual-battlefield.js";
 import { CROSSINGS } from "../src/dual-front.js";
 import { createState } from "../src/state.js";
@@ -45,10 +46,8 @@ export function simulateDual(strategy, hz, { onEvent } = {}) {
     state.gunX = dualAim(strategy, second, lanes, state.gates, phalanx);
     for (let frame = 0; frame < hz && !battle.state.outcome; frame++) battle.advance(1 / hz);
   }
-  const { siege, outcome, time } = battle.state;
-  const standingBlue = lanes.left.blueTotal + lanes.right.blueTotal + (siege.flank?.count ?? 0);
-  const marching = [...lanes.left.squads, ...lanes.right.squads, ...siege.transfers];
-  const survivingBlue = marching.reduce((sum, cohort) => sum + cohort.count, standingBlue);
+  const { outcome, time } = battle.state;
+  const { blue: survivingBlue } = siegePopulation(battle.state);
   return {
     strategy, outcome, duration: time,
     breached: CROSSINGS.filter(id => lanes[id].breached),

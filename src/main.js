@@ -1,3 +1,4 @@
+import { siegePopulation, siegeStatus } from "./connected-siege.js";
 import { createBattleClock, createGame } from "./game.js";
 import { createRenderer } from "./render.js";
 import { createDualBattlefield } from "./dual-battlefield.js";
@@ -193,11 +194,13 @@ function start(level = playableLevel(progress.selected)) {
   el("levels").hidden = true;
   el("result").hidden = true;
   el("battleNav").hidden = false;
-  el("hud").style.display = inDualBattle() ? "none" : "flex";
+  el("hud").style.display = "flex";
+  el("hud").classList.toggle("siege-hud", inDualBattle());
+  el("siegeHud").hidden = !inDualBattle();
   if (!inDualBattle()) {
     buildBarrierHud();
     updateHud();
-  }
+  } else updateSiegeHud();
   activeRenderer().draw();
   last = performance.now();
   if (document.hidden) pause();
@@ -261,6 +264,19 @@ function chooseLevel() {
   renderer.draw();
 }
 
+const compactArmy = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+const siegeHud = ["siegeBlueCount", "siegeRedCount", "siegeLeft", "siegeRight"].map(el);
+
+function updateSiegeHud() {
+  const { blue, red } = siegePopulation(dual.state);
+  const { west, east } = siegeStatus(dual.state);
+  const values = [compactArmy.format(Math.floor(blue)), compactArmy.format(Math.ceil(red)), west, east];
+  siegeHud.forEach((node, index) => {
+    if (node.textContent !== values[index]) node.textContent = values[index];
+  });
+  if (state.t > state.bannerUntil || state.mode === "defeat") el("banner").style.opacity = 0;
+}
+
 function updateHud() {
   if (state.t > state.bannerUntil) el("banner").style.opacity = 0;
   const warning = el("danger");
@@ -317,7 +333,7 @@ function loop(now) {
   if (wasPlaying && state.mode === "victory") el("banner").style.opacity = 0;
   if (battleActive()) {
     if (!inDualBattle()) updateHud();
-    else if (state.t > state.bannerUntil || state.mode === "defeat") el("banner").style.opacity = 0;
+    else updateSiegeHud();
   }
   activeRenderer().draw();
   if (battleActive())

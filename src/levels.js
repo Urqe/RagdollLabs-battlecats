@@ -213,12 +213,12 @@ export const LEVEL_FOUR = Object.freeze({
     right: Object.freeze({
       combat: Object.freeze({ ...crossingCombat, initialFront: 350, initialRed: 660,
         blueAdvance: 5.7, blueFullAdvanceAt: 36000, redAdvance: 10, redReinforcements: 39, redReinforcementGrowth: 2.9,
-        maxRedReinforcements: 270, maxRedLoss: 235, redLossPerBlue: 0.17,
+        maxRedReinforcements: 270, maxRedLoss: 235, redLossPerBlue: 0.17, redLossPerDefender: 3,
         redPressurePerCat: 0.65, blueContactLoss: 0.075 }),
       objective: crossingObjective, marchSpeed: 175, initialBlue: 615,
     }),
   }),
-  phalanx: Object.freeze({ marchTime: 2.4, deployTime: 1.15, holdFront: 308,
+  phalanx: Object.freeze({ marchTime: 2.4, deployTime: 1.15, pushSpeed: 30, holdFront: 308,
     queueCapacity: 1700 }),
   support: null,
 });

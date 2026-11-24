@@ -249,12 +249,12 @@ test("east cutoff and flank combat cause a conserved retreat, followed by one fl
     onEffect: kind => { if (kind === "victory" || kind === "flagCapture") events.push(kind); },
   });
   starterCover(fixture, state);
-  until(fixture, () => fixture.state.phalanx.phase === "secured");
+  until(fixture, () => fixture.state.phalanx.phase === "secured", 40);
   events.length = 0;
   Object.assign(right, { redTotal: 0, blueTotal: 10000 });
   run(fixture, 0.1);
   assert.equal(fixture.state.outcome, null);
-  assert.equal(right.redTotal, 0);
+  assert.ok(right.redTotal > 0, "fresh arrivals survive their first combat tick");
   assert.equal(left.redEntryOpen, true);
   Object.assign(right, { front: right.objective.reinforcementCutoff, redTotal: 100 });
   fixture.advance(tick);

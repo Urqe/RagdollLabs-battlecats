@@ -65,7 +65,7 @@ export function createDualBattlefield({ state, onEnd = ignore, onEffect = ignore
       const danger = lane.breached || lane.front >= lane.objective.castleFront - 32 ||
         (lane.front >= lane.objective.castleFront - (local.danger ? 92 : 78) &&
           (local.danger || local.direction > 0));
-      local.danger = danger && !(id === "left" && battle.state.phalanx.phase === "secured");
+      local.danger = danger && !(id === "left" && ["pushing", "secured"].includes(battle.state.phalanx.phase));
     }
   }
 

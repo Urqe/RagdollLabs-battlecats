@@ -70,7 +70,7 @@ function advancePhalanx(formation, rules, time) {
   let phase = formation.phase;
   if (phase === "unlocked" && elapsed > 0) phase = "marching";
   else if (phase === "marching" && elapsed >= rules.marchTime) phase = "deploying";
-  else if (phase === "deploying" && elapsed >= rules.deployTime) phase = "secured";
+  else if (phase === "deploying" && elapsed >= rules.deployTime) phase = "pushing";
   if (phase === formation.phase) return;
   Object.assign(formation, { phase, since: time });
   return phase;
@@ -105,17 +105,29 @@ export function createDualFront(crossings, { onEvent, beforeTick, afterTick, pha
 
     const { left, right } = state.lanes;
     connected?.advanceTransfers(right, dt, emit);
-    if (phalanx && state.phalanx.phase === "secured") {
+    const phaseAtStart = state.phalanx?.phase;
+    if (phaseAtStart === "pushing" || phaseAtStart === "secured") {
       march(left, dt, emit);
+      if (phaseAtStart === "pushing") {
+        const previousFront = left.front;
+        const distance = phalanx.holdFront - previousFront;
+        left.front = previousFront + Math.sign(distance) * Math.min(Math.abs(distance), phalanx.pushSpeed * dt);
+        if (left.front !== previousFront)
+          emit?.("left", "frontline", { previousFront, front: left.front });
+      }
       connected.hold(left, dt, emit);
+      if (phaseAtStart === "pushing" && left.front === phalanx.holdFront) {
+        Object.assign(state.phalanx, { phase: "secured", since: state.time });
+        emit?.("left", "phalanxSecured", { phase: "secured", front: left.front });
+        connected.secure(left, emit);
+      }
     } else {
       updateLane(left, state.time, dt, emit, march);
       if (phalanx && !left.breached) {
         const phase = advancePhalanx(state.phalanx, phalanx, state.time);
         if (phase) {
           const type = "phalanx" + phase[0].toUpperCase() + phase.slice(1);
-          emit?.("left", type, { phase, front: phase === "secured" ? phalanx.holdFront : left.front });
-          if (phase === "secured") connected.secure(left, emit);
+          emit?.("left", type, { phase, front: left.front });
         }
       }
     }
