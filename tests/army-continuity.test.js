@@ -27,15 +27,15 @@ for (const hz of [30, 60, 120]) {
     }
     assert.ok(visible > (target.field + target.reserve) * 0.9);
 
-    stepArmyPresentation(army, 200000, 2.5);
+    stepArmyPresentation(army, 50000, 4);
     const before = army.reserve;
-    const remaining = armyScale(150000);
-    stepArmyPresentation(army, 150000, dt);
+    const remaining = armyScale(25000);
+    stepArmyPresentation(army, 25000, dt);
     assert.equal(army.reserve, remaining.reserve);
     assert.ok(army.reserveExtent >= before);
     for (let i = 0; i < Math.ceil(hz * 1.15); i++) {
       const extent = army.reserveExtent;
-      stepArmyPresentation(army, 150000, dt);
+      stepArmyPresentation(army, 25000, dt);
       assert.ok(army.reserveExtent <= extent && army.reserveExtent >= remaining.reserve);
     }
     assert.equal(army.reserveExtent, remaining.reserve);
@@ -124,9 +124,10 @@ test("victory fades extant waves without an entry-frame cut or active red casual
   const motion = createMotion();
   const { figures, draws } = painter();
   step(state, motion, 2);
-  const wave = { mult: 999, x: 310, entryY: 565, phase: 1, marchTime: 0.9, count: 999 };
+  const wave = { mult: 100, x: 310, entryY: 565, phase: 1, marchTime: 0.9, count: 100 };
   state.squads.push(wave);
   motion.receive("arrival", state.t, wave);
+  motion.step(state.t, 0, state.blueTotal, true, state.level, state);
   figures.setClock(state.t);
   figures.blueArmy(state, 0, motion.contact, motion.tails);
   const before = draws.length;

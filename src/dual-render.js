@@ -29,10 +29,10 @@ export function createDualRenderer(state, canvas, battle) {
     const { x, hitY, width } = gate;
     const left = x - width / 2;
     const phalanx = gate.mult === null;
-    const color = gate.mult === 20 ? blue : gate.mult === 999 ? "#ffdb91" : amber;
+    const color = gate.mult === 5 ? blue : gate.mult === 100 ? "#ffdb91" : amber;
     const lit = state.mode === "playing" && state.t - gate.flashAt < 0.13;
     rect(ctx, "#302f30", left, hitY - 37, width, 46);
-    const fill = lit ? (gate.mult === 999 ? "#87d5ed" : "#568aa1") : "#4b5960";
+    const fill = lit ? (gate.mult === 100 ? "#87d5ed" : "#568aa1") : "#4b5960";
     rect(ctx, fill, left + 4, hitY - 15, width - 8, 23);
     rect(ctx, color, left, hitY - 37, width, 3);
     rect(ctx, color, left, hitY - 14, 4, 20);
@@ -95,7 +95,7 @@ export function createDualRenderer(state, canvas, battle) {
         }
         const y = target?.open ? target.hitY :
           target ? state.level.barricades[barrierIndex(state, target.barricadeId)].hitY : 594;
-        const tint = target ? (target.mult === 20 ? "#79d9ff" : amber) : "#c1b99c";
+        const tint = target ? (target.mult === 5 ? "#79d9ff" : amber) : "#c1b99c";
         for (let dot = state.level.battlefield.shotY - 7; dot >= y; dot -= 7)
           rect(ctx, tint, x - 0.5, dot, 1.5, 3);
       }

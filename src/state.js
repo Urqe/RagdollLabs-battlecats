@@ -11,7 +11,7 @@ export function createState(level = LEVEL_ONE) {
     nextShot = 0,
     front = combat.initialFront,
     redTotal = combat.initialRed,
-    blueTotal = 0,
+    blueTotal = combat.initialBlue ?? 0,
     work = level.barricades.map(() => 0),
     recoil = 0,
     shots = [],

@@ -37,6 +37,7 @@ async function capture(browser, plan) {
     await page.locator("#chooseLevel").click();
     await page.locator(`[data-level="${plan.id}"]`).click();
     const box = await page.locator("#game").boundingBox();
+    await page.screenshot({ path: resolve(output, plan.name + "-opening.png") });
     const client = await context.newCDPSession(page);
     let result;
     let showedSupport = false;
@@ -86,7 +87,7 @@ async function capture(browser, plan) {
 }
 
 await mkdir(output, { recursive: true });
-const browser = await chromium.launch();
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
 try {
   const requested = process.argv.slice(3);
   for (const plan of scenarios) {

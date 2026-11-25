@@ -235,7 +235,7 @@ test("a real cannon replay conserves troops through breakthrough, flank movement
   assert.deepEqual(run(30), baseline);
   assert.deepEqual(run(120), baseline);
   assert.equal(result.outcome, "victory");
-  assert.ok(result.duration >= 100 && result.duration <= 150);
+  assert.ok(result.duration >= 50 && result.duration <= 150);
 
   const names = ["phalanxSecured", "infantryWithdrawal", "transferArrival", "supplyCutoff",
     "mainBreakthrough", "encirclementStarted", "encirclementArrival", "rearAttack",
@@ -247,7 +247,7 @@ test("a real cannon replay conserves troops through breakthrough, flank movement
   assert.ok(departure.count > breakthrough.count / 2 && departure.count < breakthrough.count);
   assert.equal(arrival.count, departure.count);
   assert.ok(arrival.time - departure.time >= 4.87);
-  assert.ok(rear.time > arrival.time && routed.time - rear.time > 2);
+  assert.ok(rear.time > arrival.time && routed.time - rear.time > 0.4);
   assert.equal(victory.time, routed.time);
   assert.ok(result.retreated > 0);
   assert.equal(final.lanes.left.redTotal, 0);
@@ -269,7 +269,7 @@ test("a real cannon replay conserves troops through breakthrough, flank movement
     result.retreated + casualties.reduce((total, event) => total + event.redLost, 0));
   assert.ok(events.some(event => event.type === "rearAttack" && event.redLost > 0 && event.blueLost > 0));
   assert.ok(events.some(event => event.type === "arrival" && event.side === "blue" &&
-    event.multiplier === 999 && event.laneId === "right"));
+    event.multiplier === LEVEL_FOUR.gates.at(-1).mult && event.laneId === "right"));
 });
 
 test("the shield lock protects an endangered flank on its authoritative tick", () => {

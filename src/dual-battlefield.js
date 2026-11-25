@@ -9,11 +9,11 @@ const freshFeedback = () => ({
   direction: 0, arrivalAt: -Infinity, cutoffAt: -Infinity, danger: false,
 });
 
-export function createDualBattlefield({ state, onEnd = ignore, onEffect = ignore, onEvent }) {
+export function createDualBattlefield({ state, level = LEVEL_FOUR, onEnd = ignore, onEffect = ignore, onEvent }) {
   const feedback = {};
-  const battle = createDualFront(LEVEL_FOUR.crossings, {
+  const battle = createDualFront(level.crossings, {
     beforeTick: updateCannon, onEvent: receive, afterTick: updatePresentation,
-    phalanx: LEVEL_FOUR.phalanx,
+    phalanx: level.phalanx,
   });
 
   function receive(event) {
@@ -109,7 +109,7 @@ export function createDualBattlefield({ state, onEnd = ignore, onEffect = ignore
   function reset() {
     clear();
     battle.reset();
-    resetState(state, LEVEL_FOUR, "playing");
+    resetState(state, level, "playing");
     state.defeatElapsed = 0;
     state.nextShot = 0.15;
   }

@@ -20,7 +20,7 @@ export function createMultipliers(state, sprinkle, random = Math.random) {
       fromX,
       entryY - 5,
       g.color,
-      g.mult === 999 ? 5 : g.mult === 99 ? 3 : 1,
+      1 + g.style * 2,
     );
   }
   return { spawnSquad };

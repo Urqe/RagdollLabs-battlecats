@@ -68,7 +68,7 @@ test("Meowmen open within a tenth of a second and keep three resolved volleys vi
   const impacts = events.filter(([kind]) => kind === "archerImpact");
   assert.ok(Math.abs(launches[0][1] - state.support.unlockedAt - 0.1) < 1e-9);
   assert.ok(launches.length > 12);
-  assert.equal(impacts[0][2].loss, 150);
+  assert.equal(impacts[0][2].loss, LEVEL_THREE.support.damagePerArrow * LEVEL_THREE.support.arrows);
   for (let i = 1; i < launches.length; i++) {
     assert.ok(Math.abs(launches[i][1] - launches[i - 1][1] - 0.24) < 1e-9);
     assert.equal(impacts[i - 1][2].launchedAt, launches[i - 1][1]);

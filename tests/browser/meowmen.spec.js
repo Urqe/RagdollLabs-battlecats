@@ -21,7 +21,7 @@ test("Meowmen selection, defeat, replay, victory and progress on mobile", async 
   });
   await advanceUntil(page, (s) => s.support.impacts >= 3, 4, 100);
   await advanceUntil(page, (s) => s.danger.flashUntil > s.t, 12, 100);
-  await expect(page.locator("#danger")).toContainText("AIM AT ×20");
+  await expect(page.locator("#danger")).toContainText("AIM AT ×5");
   const defeated = await advanceUntil(page, (s) => s.mode === "end", 10, 200);
   expect(defeated.support.damage).toBeGreaterThan(0);
   expect(defeated.support.shot).toBeNull();

@@ -25,9 +25,9 @@ export function updateArmy(
         "#64bbff",
         4,
       );
-      if (q.mult === 999 && !state.finalActivated) {
+      if (q.mult === state.level.gates.at(-1).mult && !state.finalActivated) {
         state.finalActivated = true;
-        notify("×999 REINFORCEMENTS ARRIVED!", 3);
+        notify(`×${q.mult} REINFORCEMENTS ARRIVED!`, 3);
       }
     }
   }

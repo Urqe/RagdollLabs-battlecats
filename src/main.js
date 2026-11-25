@@ -298,7 +298,7 @@ function updateHud() {
     if (warning.textContent !== message) warning.textContent = message;
   }
   const marching = state.squads.reduce((n, q) => n + q.count, 0);
-  el("blueCount").textContent = Math.floor(
+  el("blueCount").textContent = Math.ceil(
     state.blueTotal + marching,
   ).toLocaleString("en-US");
   el("redCount").textContent = Math.ceil(state.redTotal).toLocaleString(

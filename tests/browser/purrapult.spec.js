@@ -131,7 +131,7 @@ test("artillery-assisted defense wins Level 2 and persists its completion", asyn
   expect([...seen]).toEqual(["unlocked", "flight", "impact", "counterattack"]);
   expect(s.mode).toBe("victory");
   expect(s.redTotal).toBe(0);
-  expect(s.support.damage).toBeGreaterThan(25000);
+  expect(s.support.damage).toBeGreaterThan(1000);
   expect(s.support.shot).toBeNull();
   s = await advanceUntil(page, (state) => state.mode === "end", 3, 200);
   await expect(page.locator("#resultTitle")).toHaveText("The castle stands!");

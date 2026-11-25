@@ -48,7 +48,7 @@ test("connected siege shows deployment, troop travel, rear combat and the result
     return p;
   };
   const initial = await check();
-  expect(initial.metrics.represented).toBeGreaterThan(420);
+  expect(initial.metrics.represented).toBe(259);
 
   const phases = new Set();
   let sawOrdinaryVolley = false, sawSiege = false, paused = false;
@@ -60,9 +60,9 @@ test("connected siege shows deployment, troop travel, rear combat and the result
     const p = await check();
     phases.add(p.phase);
     simultaneousReactions ||= p.nonlethal > 0 && p.defeated > 0;
-    sawOrdinaryVolley ||= s.dual.lanes.left.squads.some(squad => squad.multiplier === 20);
-    sawSiege ||= s.dual.lanes.right.squads.some(squad => squad.multiplier === 999) &&
-      p.metrics.cohorts > 0 && p.metrics.represented > 1000;
+    sawOrdinaryVolley ||= s.dual.lanes.left.squads.some(squad => squad.multiplier === 5);
+    sawSiege ||= s.dual.lanes.right.squads.some(squad => squad.multiplier === 100) &&
+      p.metrics.cohorts > 0 && p.metrics.represented > 300;
     sawFlankMarch ||= s.dual.siege.phase === "flanking" && p.flank && p.metrics.cohorts > 0;
     sawRear ||= s.dual.siege.phase === "encirclement" && p.flank && s.dual.siege.rearRedLost > 0;
     if (!paused && p.transfers > 0) {

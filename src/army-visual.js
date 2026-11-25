@@ -1,8 +1,9 @@
 import { clamp } from "./config.js";
 
-export const LITERAL_ARMY = 100;
-export const FIELD_LIMIT = 232;
-export const RESERVE_LIMIT = 1600;
+export const LITERAL_ARMY = 150;
+export const CROSSING_LITERAL_ARMY = 112;
+export const FIELD_LIMIT = 252;
+export const RESERVE_LIMIT = 720;
 export const RESERVE_GROUP = 6;
 export const RESERVE_ROWS = 25;
 export const ENTRY_LIMIT = 30;
@@ -19,14 +20,14 @@ for (let row = 0; slot < FIELD_LIMIT; row++) {
 }
 
 export function fieldColumns(row) {
-  return Math.min(15, 9 + row * 2);
+  return Math.min(17, 9 + row * 2);
 }
 
 // The slot order is center-out. Growing formations open their shoulders
 // before reserve mass extends the footprint behind them.
 export function fieldSpacing(half, row, field, pitch) {
   const columns = (fieldColumns(row) - 1) / 2;
-  const maturity = clamp((field - 18) / 122, 0, 1);
+  const maturity = clamp((field - 18) / 158, 0, 1);
   const compact = Math.min(pitch, half / columns);
   return compact + (half / columns - compact) * maturity * (row ? 0.86 : 1);
 }
@@ -34,29 +35,21 @@ export function fieldSpacing(half, row, field, pitch) {
 export const fieldRow = (index) => rows[index];
 export const fieldColumn = (index) => columns[index];
 
-export function armyScale(population, scale = {}) {
+export function armyScale(population, scale = {}, literal = LITERAL_ARMY, limit = FIELD_LIMIT) {
   const count = Math.ceil(Math.max(0, population));
-  const extra = count - LITERAL_ARMY;
-  if (extra <= 0) {
-    scale.field = count;
-    scale.reserve = 0;
-    return scale;
-  }
-  scale.field = LITERAL_ARMY +
-    Math.floor((FIELD_LIMIT - LITERAL_ARMY) * -Math.expm1(-extra / 182));
-  scale.reserve = Math.min(
-    count - scale.field,
-    Math.ceil(
-      260 * -Math.expm1(-extra / 1850) +
-      410 * -Math.expm1(-extra / 20500) +
-      930 * -Math.expm1(-extra / 145000),
-    ),
-  );
+  const extra = Math.max(0, count - literal);
+  scale.field = count - extra +
+    Math.floor((limit - literal) * -Math.expm1(-extra / 185));
+  scale.reserve = Math.min(count - scale.field, Math.ceil(
+    110 * -Math.expm1(-extra / 520) +
+    230 * -Math.expm1(-extra / 3600) +
+    380 * -Math.expm1(-extra / 18000),
+  ));
   return scale;
 }
 
 export function entryRepresentation(reserve, rate, timeSinceCutoff) {
-  const activity = clamp(rate / 370, 0, 1);
+  const activity = clamp(rate / 36, 0, 1);
   const remain = clamp(1 - timeSinceCutoff / 0.65, 0, 1);
   return Math.floor(Math.min(reserve * 0.22, ENTRY_LIMIT) * activity * remain);
 }

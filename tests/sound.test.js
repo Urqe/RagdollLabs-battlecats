@@ -88,7 +88,7 @@ test("permission and storage failures are harmless and another gesture can retry
   assert.equal(sound.play("fire"), true);
 });
 
-test("combat repeats are throttled, and a ×999 chord uses a bounded voice budget", async () => {
+test("combat repeats are throttled, and a ×100 chord uses a bounded voice budget", async () => {
   const context = audioContext();
   const sound = createSound({
     makeContext: () => context,
@@ -98,15 +98,15 @@ test("combat repeats are throttled, and a ×999 chord uses a bounded voice budge
   assert.equal(sound.play("clash"), true);
   context.currentTime = 0.1;
   assert.equal(sound.play("clash"), false);
-  assert.equal(sound.play("gate999"), true);
-  assert.equal(sound.play("gate999"), false);
+  assert.equal(sound.play("gate100"), true);
+  assert.equal(sound.play("gate100"), false);
   assert.equal(context.oscillators.length, 4);
   context.currentTime = 0.37;
   assert.equal(sound.play("clash"), true);
-  assert.equal(sound.play("gate99"), false);
+  assert.equal(sound.play("gate25"), false);
   for (const voice of context.oscillators) voice.onended();
   context.currentTime = 1;
-  assert.equal(sound.play("gate20"), true);
+  assert.equal(sound.play("gate5"), true);
 });
 
 test("pausing suspends a victory cue and only abandoning it closes the context", async () => {

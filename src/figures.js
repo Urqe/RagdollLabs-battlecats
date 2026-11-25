@@ -10,6 +10,7 @@ import {
 import { collapsePose, retirementOpacity, rowsAt, slotCoverage } from "./army-continuity.js";
 import {
   FIELD_LIMIT,
+  LITERAL_ARMY,
   RESERVE_LIMIT,
   RESERVE_GROUP,
   RESERVE_ROWS,
@@ -328,7 +329,7 @@ export function createFigures(ctx, ownerDocument) {
     const packed = (formation?.compression ?? 0) * release;
     const step = Math.min(
       (reach * 0.59) / Math.max(1, rows),
-      8.9 - packed * (red ? 0.65 : 2.15) - compression * 0.76,
+      10.6 - packed * (red ? 0.65 : 2.15) - compression * 0.76,
     );
     const gapAmount = gapStrength(clock - gap?.at);
     const sinceCutoff = clock - (contact.cutoffAt ?? clock);
@@ -382,7 +383,7 @@ export function createFigures(ctx, ownerDocument) {
         const cheer = Math.sin(Math.PI * clamp(cheerTime / 0.55, 0, 1)) * 7;
         baseline = tip + side * row * step + lag - travel - cheer;
         lane = laneHalfWidth(baseline) - 6;
-        spacing = fieldSpacing(lane, row, field, 12.5);
+        spacing = fieldSpacing(lane, row, field, 14);
         anchor = red ? 0 : (contact.blueAnchor - 210) * clamp((baseline - 275) / 320, 0, 0.32);
         stagger = row ? (row % 2 - 0.5) * Math.min(3, spacing * 0.4) : 0;
         lastRow = row;
@@ -396,7 +397,7 @@ export function createFigures(ctx, ownerDocument) {
           local * shock * stress * 2.7 - flush * pressure * 1.3 + recoil * 5) * 0.72
         : 0;
       const cadence = (row || marching) && !fallen
-        ? Math.sin(clock * (marching ? 17 : 11) + rank * 0.6 - row * 0.59)
+        ? Math.sin(clock * (marching ? 17 : 11) + rank * 0.6 - row * 0.59 + spacingNoise[i] * 0.9)
           * Math.min(marching ? 1.7 : gait, step * 0.24) : 0;
       const opening = engaged && !fallen
         ? breakthroughOffset(clock, x, row, formation?.opening ?? 0, red) : 0;
@@ -420,7 +421,7 @@ export function createFigures(ctx, ownerDocument) {
       const displaced = fallen ? y + side * fallPose * (3 + recoil * 7)
         : y + gapShift(x, y, gap, red ? gapAmount : 0, i);
       const within = boundCatY(displaced, seam, red, celebrating ? -3 : engaged ? 6.8 : 1.9);
-      const size = clamp(4.35 + within * 0.0027, 4.35, 6.12);
+      const size = clamp(5.15 + within * 0.0027 - Math.min(0.65, row * 0.07), 4.7, 6.4);
       const wall = laneHalfWidth(within) - 6;
       const drawX = clamp(x, 210 - wall, 210 + wall);
       let alpha = fallen ? retirementOpacity(field, fieldExtent, i, fallPose) : coverage;
@@ -492,7 +493,7 @@ export function createFigures(ctx, ownerDocument) {
     const half = laneHalfWidth(y) - 2;
     traveller.x = clamp(center + local * spread * (0.66 + route * 0.34), 210 - half, 210 + half);
     traveller.y = y;
-    traveller.tint = q.mult === 999 && (i % 4 === 0 || run < 0.09) ? BRIGHT_BLUE : BLUE;
+    traveller.tint = q.mult === 100 && (i % 4 === 0 || run < 0.09) ? BRIGHT_BLUE : BLUE;
     traveller.phase = q.phase + i * 0.91;
     traveller.size = clamp(3.95 + y * 0.0039, 3.8, 6.15);
     return true;
@@ -555,6 +556,21 @@ export function createFigures(ctx, ownerDocument) {
     if (alpha !== 1) ctx.globalAlpha = 1;
   }
 
+  function groupedWave(q, age, state) {
+    const profile = waveProfile(q.mult);
+    const limit = Math.min(profile.count, q.count);
+    for (let i = 0; i < limit; i += RESERVE_GROUP) {
+      if (!travelPose(q, i, age, state)) break;
+      let visible = 1;
+      while (visible < RESERVE_GROUP && i + visible < limit &&
+        age >= waveRelease(profile, i + visible)) visible++;
+      ctx.globalAlpha = tailVisibility(q, i);
+      drawReserveTile(traveller.x, traveller.y, visible, 1,
+        Math.floor(clock * 12 + q.phase) % TILE_POSES, 0.84);
+    }
+    ctx.globalAlpha = 1;
+  }
+
   function blueArmy(state, _surge, contact, tails, gap, flights) {
     waveTails = state.mode === "end" ? [] : tails;
     waveVisibility = victoryWaveVisibility(state.victoryElapsed, state.level.combat.victoryDuration);
@@ -575,8 +591,19 @@ export function createFigures(ctx, ownerDocument) {
     if (state.mode === "end") return;
 
     // Already launched ranks continue advancing during the celebration.
-    for (const q of state.squads) blueWave(q, (q.marchTime || 0) + state.victoryElapsed, state);
-    for (const q of tails) blueWave(q, clock - q.born, state);
+    const crowded = state.blueTotal > LITERAL_ARMY;
+    const detailed = state.squads.length - 6;
+    for (const [i, q] of state.squads.entries()) {
+      const age = (q.marchTime || 0) + state.victoryElapsed;
+      if (crowded && i < detailed && q.count >= 100) groupedWave(q, age, state);
+      else blueWave(q, age, state);
+    }
+    for (const q of tails) {
+      const age = clock - q.born;
+      if (crowded && q.count >= 100 && q.join &&
+        !(q.join.fieldCount + q.join.reserveCount)) groupedWave(q, age, state);
+      else blueWave(q, age, state);
+    }
   }
 
   function airborne(cats) {

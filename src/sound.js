@@ -5,15 +5,15 @@ const VICTORY_VOICES = 3;
 // Each note is [offset, start frequency, end frequency, length, volume, waveform].
 const cues = {
   fire: { cooldown: 0.24, notes: [[0, 174, 67, 0.065, 0.16, "triangle"]] },
-  gate20: { cooldown: 0.22, notes: [[0, 470, 710, 0.07, 0.075, "sine"]] },
-  gate99: {
+  gate5: { cooldown: 0.22, notes: [[0, 470, 710, 0.07, 0.075, "sine"]] },
+  gate25: {
     cooldown: 0.24,
     notes: [
       [0, 303, 555, 0.13, 0.105, "triangle"],
       [0.05, 650, 840, 0.09, 0.06, "sine"],
     ],
   },
-  gate999: {
+  gate100: {
     cooldown: 0.52,
     notes: [
       [0, 120, 218, 0.25, 0.15, "triangle"],

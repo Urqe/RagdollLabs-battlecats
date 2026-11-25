@@ -81,7 +81,7 @@ for (const [index, needed] of [
     }
     assert.equal(s.work[index - 1], needed);
   });
-for (const mult of [20, 99, 999])
+for (const mult of [5, 25, 100])
   test(`three cats through ×${mult} produce ${3 * mult} marching cats`, () => {
     const { state: s } = fixture(),
       gate = s.gates.find((g) => g.mult === mult);
@@ -95,11 +95,12 @@ for (const mult of [20, 99, 999])
       s.squads.reduce((n, q) => n + q.count, 0),
       3 * mult,
     );
-    assert.equal(s.blueTotal, 0);
+    assert.equal(s.blueTotal, LEVEL_ONE.combat.initialBlue);
   });
 test("reinforcements move, render blue cats, then join combat at the front", () => {
   const { state: s } = fixture();
   createMultipliers(s, noop).spawnSquad(s.gates[0], 210);
+  s.blueTotal = 0;
   const start = s.squads[0].y;
   const paintedAt = [];
   let y;
@@ -145,14 +146,14 @@ test("reinforcements move, render blue cats, then join combat at the front", () 
   s.squads[0].y = s.front + 18;
   updateArmy(s, 0.02, noop, noop);
   assert.equal(s.squads.length, 0);
-  assert.equal(s.blueTotal, 20);
+  assert.equal(s.blueTotal, 5);
 });
 test("controlling the supply entrance cuts reinforcements while the remaining horde still fights", () => {
   const game = fixture();
   const s = game.state;
   s.front = LEVEL.reinforcementCutoff + 0.005;
   s.redTotal = 100;
-  s.blueTotal = 1000;
+  s.blueTotal = 100;
   game.update(0.02);
   assert.equal(s.mode, "playing");
   assert.equal(s.redEntryOpen, false);
@@ -162,7 +163,7 @@ test("controlling the supply entrance cuts reinforcements while the remaining ho
 
   // A shift in the line after securing the entrance cannot reopen recruitment.
   s.front += 30;
-  s.redTotal = 1;
+  s.redTotal = 0.1;
   game.update(0.02);
   assert.equal(s.redTotal, 0);
   assert.equal(s.mode, "victory");
@@ -175,14 +176,14 @@ test("victory freezes combat on elimination and shows the result after the captu
   game.reset();
   const s = game.state;
   s.redTotal = 0;
-  s.blueTotal = 1000;
+  s.blueTotal = 100;
   game.update(0.01);
   assert.equal(s.mode, "playing");
   assert.ok(s.redTotal > 0);
   s.redEntryOpen = false;
   s.redTotal = 1;
   s.front = LEVEL.reinforcementCutoff - 4;
-  game.update(0.02);
+  game.update(0.15);
   assert.equal(s.mode, "victory");
   assert.equal(s.redTotal, 0);
   const frozen = structuredClone(s);
@@ -266,7 +267,7 @@ test("visible formations grow, shrink and disappear with actual troop counts", (
     const entering = paints.blue + paints.final;
     assert.ok(entering > 0);
     paints.blue = paints.final = 0;
-    s.squads[0].marchTime = 0.22;
+    s.squads[0].marchTime = 0.65;
     renderer.draw();
     const count = paints.blue + paints.final;
     assert.ok(count > entering && count > previous && count < blue);

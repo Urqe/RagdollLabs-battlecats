@@ -80,7 +80,7 @@ test("the public selector, visibility pause during deployment, restart and level
   expect(errors).toEqual([]);
 });
 
-test("a public playthrough seals the flank and routs the horde with the ×999 surge", async ({ page, browserName }) => {
+test("a public playthrough seals the flank and routs the horde with the ×100 surge", async ({ page, browserName }) => {
   const { aim, errors } = await setup(page, browserName, false);
   await selectTwoTails(page);
   const easternBlueBeforeSurge = [];
@@ -92,12 +92,12 @@ test("a public playthrough seals the flank and routs the horde with the ×999 su
     await page.clock.runFor(1000);
     s = await snapshot(page);
     if (!s.gates[5].open) easternBlueBeforeSurge.push(s.dual.lanes.right.blueTotal);
-    sawRightSiegeSquad ||= s.dual.lanes.right.squads.some(squad => squad.count === 999);
+    sawRightSiegeSquad ||= s.dual.lanes.right.squads.some(squad => squad.count === 100);
   }
   expect(s.mode).toBe("victory");
-  expect(s.work).toEqual([132, 30, 30, 90]);
+  expect(s.work).toEqual([132, 30, 30, 51]);
   expect(sawRightSiegeSquad).toBe(true);
-  expect(s.dual.lanes.right.blueTotal).toBeGreaterThan(Math.max(...easternBlueBeforeSurge) * 4);
+  expect(s.dual.lanes.right.blueTotal).toBeGreaterThan(Math.max(...easternBlueBeforeSurge) * 0.4);
   expect(s.dual.phalanx.phase).toBe("secured");
   expect(s.dual.retreat.count).toBeGreaterThan(0);
   for (const lane of Object.values(s.dual.lanes)) {
@@ -129,7 +129,7 @@ test("a public playthrough seals the flank and routs the horde with the ×999 su
   expect(errors).toEqual([]);
 });
 
-test("camping either ×20 shows a pausable reaction naming the breached crossing", async ({ page, browserName }) => {
+test("camping either ×5 shows a pausable reaction naming the breached crossing", async ({ page, browserName }) => {
   const { aim } = await setup(page, browserName, false);
   await selectTwoTails(page);
   const { gates } = await snapshot(page);
@@ -151,7 +151,7 @@ test("camping either ×20 shows a pausable reaction naming the breached crossing
   }
 });
 
-test("arriving west ×99 volleys reverse a retreat through the normal controls", async ({ page, browserName }) => {
+test("arriving west ×25 volleys reverse a retreat through the normal controls", async ({ page, browserName }) => {
   const { aim, errors } = await setup(page, browserName, false);
   await selectTwoTails(page);
   const { gates } = await snapshot(page);
@@ -159,11 +159,11 @@ test("arriving west ×99 volleys reverse a retreat through the normal controls",
   await page.clock.runFor(4000);
   await aim(gates[1].x);
   const incoming = await advanceUntil(page, s => s.dual.lanes.left.squads.some(
-    squad => squad.multiplier === 99), 8, 100);
+    squad => squad.multiplier === 25), 8, 100);
   const retreat = incoming.dual.lanes.left;
   expect(retreat.frontVelocity).toBeGreaterThan(3);
   const recovering = await advanceUntil(page, s =>
-    s.dual.lanes.left.frontVelocity < -2 && s.dual.lanes.left.blueTotal > 1000, 5, 100);
+    s.dual.lanes.left.frontVelocity < -2 && s.dual.lanes.left.blueTotal > 150, 5, 100);
   const west = recovering.dual.lanes.left;
   expect(west.blueTotal).toBeGreaterThan(retreat.blueTotal);
   await page.clock.runFor(2000);

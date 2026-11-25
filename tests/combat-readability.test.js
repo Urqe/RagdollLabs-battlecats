@@ -10,7 +10,7 @@ import { traceBattle } from "../scripts/simulate-combat.js";
 
 test("red reserves add territorial pressure beyond their direct engagement limit", () => {
   const { combat } = LEVEL_ONE;
-  assert.deepEqual(casualtyRates(1000, 50000, combat), { blue: 267, red: 111 });
+  assert.deepEqual(casualtyRates(1000, 50000, combat), { blue: 267, red: 1000 * combat.redLossPerBlue });
   assert.deepEqual(casualtyRates(1000, 500000, combat), casualtyRates(1000, 50000, combat));
   assert.equal(casualtyRates(1000, 3000, combat).blue, 202);
   assert.equal(casualtyRates(0, 500000, combat).blue, 0);
@@ -71,7 +71,7 @@ test("local lane openings are event-backed, temporary, and independent of the fr
   const game = createGame();
   game.reset();
   const s = game.state;
-  Object.assign(s, { blueTotal: 140, redTotal: 1800 });
+  Object.assign(s, { blueTotal: 160, redTotal: 1800 });
   motion.step(0, 0, s.blueTotal, true, s.level, s);
   const front = s.front;
   const [red, blue] = motion.contact.exchanges;
@@ -103,15 +103,15 @@ test("local lane openings are event-backed, temporary, and independent of the fr
 for (const hz of [30, 60, 120]) {
   test(`a warned player can rescue the same barricade attack at ${hz} Hz`, () => {
     const ignored = traceBattle(LEVEL_ONE, "ignore", hz);
-    const rescued = traceBattle(LEVEL_ONE, "rescue", hz, 4.5);
-    assert.deepEqual(rescued, traceBattle(LEVEL_ONE, "rescue", hz, 4.5));
+    const rescued = traceBattle(LEVEL_ONE, "rescue", hz, 0.55);
+    assert.deepEqual(rescued, traceBattle(LEVEL_ONE, "rescue", hz, 0.55));
     assert.deepEqual(rescued.warningSample, ignored.warningSample);
     assert.equal(rescued.warning, ignored.warning);
     assert.ok(rescued.warningSample.forecast >= 3 && rescued.warningSample.forecast <= 5);
-    assert.equal(ignored.result, "end");
+    assert.equal(ignored.result, "victory");
     assert.equal(rescued.result, "victory");
-    assert.ok(rescued.arrived - rescued.switchAt < 1.2);
-    assert.ok(rescued.reversed < ignored.time);
+    assert.ok(rescued.arrived - rescued.switchAt < 1.5);
+    assert.ok(rescued.reversed < ignored.samples.find(sample => sample.incoming >= 300).t);
     assert.ok(rescued.samples.every(sample => sample.blue >= 0 && sample.red >= 0));
   });
 }

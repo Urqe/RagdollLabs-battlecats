@@ -126,9 +126,9 @@ test("misses retain their impact without adding casualties, and a later hit uses
   assert.equal(motion.archers.impact.loss, 48);
   assert.equal(state.redTotal, red - 48);
   const { impact } = motion.archers;
-  assert.equal(motion.airborne.active.length, 4);
+  assert.equal(motion.airborne.active.length, 3);
   assert.equal(motion.airborne.active.filter(cat => cat.defeated).length, 1);
-  assert.equal(new Set(motion.airborne.active.map(cat => cat.x + "," + cat.y)).size, 4);
+  assert.equal(new Set(motion.airborne.active.map(cat => cat.x + "," + cat.y)).size, 3);
   const tips = [], puffs = [];
   const ctx = new Proxy({
     translate: (...point) => tips.push(point),

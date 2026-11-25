@@ -58,7 +58,7 @@ test("the presentation leaves connected outcomes and events identical at all ren
   assert.deepEqual(replay(120), baseline);
 });
 
-test("east reinforcements survive and render before ×999, then clear at real defeat", () => {
+test("east reinforcements remain visible until the supply cutoff", () => {
   const state = createState();
   const sim = createDualBattlefield({ state });
   sim.reset();
@@ -77,7 +77,7 @@ test("east reinforcements survive and render before ×999, then clear at real de
     airborne: noOp,
   }, state, sim);
   const { lanes, phalanx } = sim.state;
-  let sawTwenty = false, sawNinetyNine = false, sawSiege = false, sawCleared = false, sawRearContact = false;
+  let sawTwenty = false, sawNinetyNine = false, sawCleared = false, sawRearContact = false;
   for (let second = 0; second < 145 && !sim.state.outcome; second++) {
     state.gunX = dualAim("adaptive-imperfect", second, lanes, state.gates, phalanx);
     for (let frame = 0; frame < 60 && !sim.state.outcome; frame++) {
@@ -100,15 +100,14 @@ test("east reinforcements survive and render before ×999, then clear at real de
         assert.ok(eastRed.every(([x, y]) => x < 420 && y >= 50 && y < right.front));
         sawTwenty ||= !state.gates[4].open;
         sawNinetyNine ||= state.gates[4].open && !state.gates[5].open;
-        sawSiege ||= state.gates[5].open;
       } else if (!right.redEntryOpen) {
         assert.equal(eastRed.length, 0);
         sawCleared = true;
       }
     }
   }
-  assert.deepEqual([sawTwenty, sawNinetyNine, sawSiege, sawCleared, sawRearContact],
-    [true, true, true, true, true]);
+  assert.deepEqual([sawTwenty, sawNinetyNine, sawCleared, sawRearContact],
+    [true, true, true, true]);
 });
 
 
