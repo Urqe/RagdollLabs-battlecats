@@ -37,7 +37,7 @@ async function capture(browser, plan) {
     await page.locator("#chooseLevel").click();
     await page.locator(`[data-level="${plan.id}"]`).click();
     const box = await page.locator("#game").boundingBox();
-    await page.screenshot({ path: resolve(output, plan.name + "-opening.png") });
+    await page.screenshot({ path: resolve(output, plan.name + "-opening.png"), scale: "css" });
     const client = await context.newCDPSession(page);
     let result;
     let showedSupport = false;

@@ -173,3 +173,39 @@ test("30, 60 and 150 individual cats expand the formation at mobile scale", () =
     previousDepth = depth;
   }
 });
+
+test("one extra cat keeps the earlier individual slots near their prior positions", () => {
+  const state = createState();
+  const { figures, draws } = painter();
+  const { contact } = createMotion();
+  state.mode = "playing";
+  state.redTotal = 0;
+  state.blueTotal = 60;
+  figures.blueArmy(state, 0, contact, []);
+  const before = draws.splice(0).reverse();
+  state.blueTotal++;
+  figures.blueArmy(state, 0, contact, []);
+  const after = draws.reverse();
+  for (const [index, slot] of before.entries()) {
+    assert.ok(Math.abs(slot.x - after[index].x) < 1);
+    assert.ok(Math.abs(slot.y - after[index].y) < 2);
+  }
+});
+
+test("overlapping final waves keep older columns visible using bounded draw calls", () => {
+  const state = createState();
+  const { figures, draws } = painter();
+  const { contact } = createMotion();
+  state.mode = "playing";
+  state.blueTotal = 6000;
+  state.squads = Array.from({ length: 36 }, (_, index) => ({
+    x: 329, y: 415, entryY: 565, count: 100, mult: 100, slot: index % 3 - 1,
+    phase: index * 0.1, marchTime: 1.15,
+  }));
+  const before = structuredClone(state);
+  figures.setClock(2);
+  figures.blueArmy(state, 0, contact, []);
+  assert.ok(draws.length < 700);
+  assert.ok(draws.reduce((sum, draw) => sum + draw.represented, 0) > 1000);
+  assert.deepEqual(state, before);
+});

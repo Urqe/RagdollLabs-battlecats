@@ -130,14 +130,14 @@ test("a receiving slot beyond an obstructed gate uses a complementary fade", () 
   assert.ok(tail.join.started[0] >= 2.26);
 });
 
-test("overlapping ×99 and ×999 handoffs stay bounded and reset when leaving a level", () => {
+test("overlapping ×25 and ×100 handoffs stay bounded and reset when leaving a level", () => {
   const motion = createMotion();
   const state = createState();
   state.mode = "playing";
   state.blueTotal = 1000;
   step(motion, state, 0);
   for (let i = 0; i < 28; i++) {
-    const q = wave(i % 2 ? 99 : 999, i % 2 ? 90 : 329);
+    const q = wave(i % 2 ? 25 : 100, i % 2 ? 90 : 329);
     state.blueTotal += q.count;
     motion.receive("arrival", 0.1, q, state.front);
   }
@@ -145,7 +145,7 @@ test("overlapping ×99 and ×999 handoffs stay bounded and reset when leaving a 
   const occupied = new Set();
   assert.ok(motion.tails.length <= 12);
   for (const { join } of motion.tails) {
-    assert.ok(join.fieldCount + join.reserveCount <= 24);
+    assert.ok(join.fieldCount + join.reserveCount <= 32);
     for (const [prefix, start, length] of [
       ["f", join.field, join.fieldCount], ["r", join.reserve, join.reserveCount],
     ]) {

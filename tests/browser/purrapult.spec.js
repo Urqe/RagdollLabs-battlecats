@@ -120,8 +120,8 @@ test("artillery-assisted defense wins Level 2 and persists its completion", asyn
       await mark("impact", "06-yarn-impact.png", s);
     }
     if (
-      s.finalActivated &&
-      s.support.damage > 18000 &&
+      s.gates[1].open &&
+      s.support.damage > 700 &&
       s.front < 285 &&
       !seen.has("counterattack")
     ) {

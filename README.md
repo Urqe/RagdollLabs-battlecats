@@ -14,7 +14,7 @@ SiegeDolls is a small, ad-free, one-finger cat siege game with two playable leve
 
 ## Choose a level
 
-Open **Choose level** from the main menu to play **The Last Stand** or **The Purrapult** immediately. **Defend the Castle** launches your last selected level. Use **Levels** below the battlefield or **Choose level** on the result screen to switch. **Try Again** replays the current battle. Completion markers track wins and every implemented level is available from the start.
+Open **Choose level** from the main menu to play any of the four levels immediately. **Defend the Castle** launches your last selected level. Use **Levels** below the battlefield or **Choose level** on the result screen to switch. **Try Again** replays the current battle. Completion markers track wins and every implemented level is available from the start.
 
 ## Level 1
 
@@ -24,7 +24,7 @@ The red horde starts larger and recruits faster as the siege goes on. Switch bet
 2. **Left ×25 barricade:** Aim your cannon directly at the wood barrier instead of producing reinforcements. Each hit damages it, and a progress indicator shows your work. Once broken, fire through the ×25 gate to reclaim ground before the horde surges again.
 3. **Right ×100 barricade:** Takes more hits to break. Again you must personally aim at the wood, temporarily sacrificing reinforcements. Once open, send three cats through the gate to produce a **300-cat** counterattack per volley.
 
-Cats do not instantly teleport to the front. Each gate creates a visible **marching formation** that moves toward the enemy; their combat strength is added when the formation reaches combat. Large squads render representative soldiers with their total still accounted for in the battle simulation.
+Cats do not instantly teleport to the front. Each gate creates a visible **marching formation** that moves toward the enemy; their combat strength is added when the formation reaches combat. Large squads render representative soldiers with their total still accounted for in the battle simulation. [Army scale and rendering](docs/army-scale-individuality.md)
 
 **Victory** comes when your blue army cuts off the enemy supply route and eliminates the last invader. A short celebration shows blue taking the yard. **Defeat** comes when the red frontline reaches the castle.
 

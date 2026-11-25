@@ -1,9 +1,15 @@
 import { chromium, webkit } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+import { scaleCandidate } from "./army-scale-candidates.js";
 
 const engine = process.argv[2] === "webkit" ? webkit : chromium;
 const output = process.argv[3];
+const candidate = process.env.PROFILE_CANDIDATE;
+const candidateLevels = candidate
+  ? (await import(pathToFileURL(resolve(process.env.PROFILE_BASELINE, "src/levels.js")))).LEVELS
+  : null;
 const viewport = { width: 390, height: 844 };
 const executablePath = engine === chromium ? process.env.CHROMIUM_PATH : undefined;
 const browser = await engine.launch({ executablePath });
@@ -12,8 +18,10 @@ try {
   const page = await browser.newPage({ viewport, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
   await page.goto(process.env.SIEGE_URL ?? "http://127.0.0.1:4173");
   const report = {};
-  for (let level = 1; level <= 4; level++) {
-    const setup = async number => {
+  const levels = (process.env.PROFILE_LEVELS ?? "1,2,3,4").split(",").map(Number);
+  for (const level of levels) {
+    const override = candidate ? scaleCandidate(candidateLevels[level - 1], candidate) : null;
+    const setup = async ({ number, override }) => {
       const [{ createGame }, { createMotion }, { createRenderer }, { createDualRenderer },
         { createDualBattlefield }, { createState }, { LEVELS }, { createAim }, { dualAim },
         { purrapultAim }, { meowmenAim }] = await Promise.all([
@@ -22,7 +30,7 @@ try {
         import("/src/levels.js"), import("/tests/helpers/strategies.js"), import("/tests/helpers/dual-strategies.js"),
         import("/tests/helpers/purrapult.js"), import("/tests/helpers/meowmen.js"),
       ]);
-      const level = LEVELS[number - 1];
+      const level = override ?? LEVELS[number - 1];
       const canvas = document.querySelector("#game");
       document.querySelector("#menu").hidden = true;
       const dt = 1 / 60;
@@ -31,7 +39,7 @@ try {
       let renderer, state, lanes, step, stage;
       if (dual) {
         state = createState(level);
-        const game = createDualBattlefield({ state, onEvent: (event, sim) => renderer.receive(event, sim) });
+        const game = createDualBattlefield({ state, level, onEvent: (event, sim) => renderer.receive(event, sim) });
         renderer = createDualRenderer(state, canvas, game);
         game.reset();
         ({ lanes } = game.state);
@@ -91,13 +99,17 @@ try {
         },
       };
     };
-    await page.evaluate(setup, level);
+    await page.evaluate(setup, { number: level, override });
     const checkpoints = await page.evaluate(() => window.scaleProfile.checkpoints());
+    if (process.env.PROFILE_PROGRESS) console.error(`${engine.name()} level ${level}, ${checkpoints.length} checkpoints`);
     await page.reload();
-    await page.evaluate(setup, level);
+    await page.evaluate(setup, { number: level, override });
     report[level] = {};
     let tick = 0;
+    const included = process.env.PROFILE_CHECKPOINTS?.split(",");
     for (const checkpoint of checkpoints.sort((a, b) => a.tick - b.tick)) {
+      if (included && !included.includes(checkpoint.name)) continue;
+      if (process.env.PROFILE_PROGRESS) console.error(checkpoint.name);
       report[level][checkpoint.name] = await page.evaluate(async advance => {
         const { step, state, lanes, renderer, canvas, stage } = window.scaleProfile;
         for (let i = 0; i < advance; i++) step();
@@ -132,7 +144,11 @@ try {
         }));
         const frameMs = [], canvasMs = [];
         await new Promise(done => {
-          let last;
+          let last, handle;
+          const timeout = setTimeout(() => {
+            cancelAnimationFrame(handle);
+            done();
+          }, 2500);
           function frame(now) {
             const drawStart = performance.now();
             renderer.draw();
@@ -141,12 +157,16 @@ try {
               canvasMs.push(performance.now() - drawStart);
             }
             last = now;
-            if (frameMs.length < 24) requestAnimationFrame(frame);
-            else done();
+            if (frameMs.length < 24) handle = requestAnimationFrame(frame);
+            else {
+              clearTimeout(timeout);
+              done();
+            }
           }
-          requestAnimationFrame(frame);
+          handle = requestAnimationFrame(frame);
         });
         function quantiles(values) {
+          if (!values.length) return [null, null];
           values.sort((a, b) => a - b);
           return [0.5, 0.95].map(q => +values[Math.floor(q * (values.length - 1))].toFixed(2));
         }
@@ -154,14 +174,14 @@ try {
           { blue: lane.blueTotal, red: lane.redTotal, front: lane.front }]));
         const memory = performance.memory?.usedJSHeapSize ?? null;
         return { time: state.t, mode: state.mode, ...stage(), active, represented,
-          frameMs: quantiles(frameMs), canvasMs: quantiles(canvasMs), usedJSHeapSize: memory };
+          samples: frameMs.length, frameMs: quantiles(frameMs), canvasMs: quantiles(canvasMs), usedJSHeapSize: memory };
       }, checkpoint.tick - tick);
       tick = checkpoint.tick;
       if (output && ["opening", "first-reinforcement", "peak", "outcome", "phalanx", "encirclement"].includes(checkpoint.name))
-        await page.screenshot({ path: join(output, `level-${level}-${checkpoint.name}.png`) });
+        await page.screenshot({ scale: "css", path: join(output, `level-${level}-${checkpoint.name}.png`) });
     }
   }
-  console.log(JSON.stringify({ browser: engine.name(), version: browser.version(), viewport, report }, null, 2));
+  console.log(JSON.stringify({ browser: engine.name(), version: browser.version(), viewport, candidate, report }, null, 2));
 } finally {
   await browser.close();
 }
