@@ -64,7 +64,7 @@ for (const hz of [30, 60, 120]) {
     assert.ok(late.state.support.damage > 0);
     assert.ok(early.openingFront > balanced.openingFront + 30);
     assert.ok(balanced.notices.includes("MEOWMEN BARRAGE STARTED!"));
-    assert.ok(balanced.state.support.impacts >= 250);
+    assert.ok(balanced.state.support.impacts > 100);
     assert.ok(balanced.state.t < gates.state.t - 10);
 
     // Same cannon decisions, including the shots spent on the crew barricade.

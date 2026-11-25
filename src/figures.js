@@ -1,3 +1,4 @@
+import { effectiveStrength } from "./lane-combat.js";
 import { TAU, clamp } from "./config.js";
 import { laneHalfWidth, polygon } from "./terrain.js";
 import { waveProfile, waveRelease, waveY } from "./motion.js";
@@ -319,9 +320,10 @@ export function createFigures(ctx, ownerDocument) {
     const reach = Math.abs(end - tip);
     const marching = celebrating && state.victoryElapsed < FLAG_CAPTURE_TIME + 0.4;
     const pressure = red ? contact.pressure : -contact.pressure;
-    const redPressure = (red ? total : opposing) * state.level.combat.redPressurePerCat;
-    const balance = red ? encounterBalance(redPressure, opposing)
-      : encounterBalance(total, redPressure);
+    const { frontage, redPressurePerCat } = state.level.combat;
+    const ownPressure = effectiveStrength(total, frontage) * (red ? redPressurePerCat : 1);
+    const enemyPressure = effectiveStrength(opposing, frontage) * (red ? 1 : redPressurePerCat);
+    const balance = encounterBalance(ownPressure, enemyPressure);
     const formation = contact.formation;
     const packed = (formation?.compression ?? 0) * release;
     const step = Math.min(

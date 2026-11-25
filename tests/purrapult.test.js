@@ -175,7 +175,7 @@ test("the final artillery casualty can win, and an in-flight ball is discarded a
   state.t = state.support.readyAt;
   updateArtillery(state);
   assert.ok(state.support.shot);
-  state.front = state.level.objective.castleFront - 0.01;
+  state.front = state.level.objective.castleFront;
   game.update(0.01);
   assert.equal(state.mode, "end");
   assert.equal(state.support.shot, null);

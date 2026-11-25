@@ -288,7 +288,8 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
   }
 
   function formation(population, opposing, red, id, front, depth, local, time, pace,
-    invert = false, intake = 0, fieldLimit = 144, reserveLimit = 588) {
+    invert = false, intake = 0, fieldLimit = 144, reserveLimit = 588,
+    balance = encounterBalance(population, opposing)) {
     if (population <= 0) {
       if (!red && !invert) updateReceiver(id, front, depth, 12, time);
       return;
@@ -297,7 +298,6 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     const side = (red ? -1 : 1) * (invert ? -1 : 1);
     const fieldCount = Math.min(field, fieldLimit);
     const rows = fieldRow(fieldCount - 1) + 1;
-    const balance = encounterBalance(population, opposing);
     const recoil = Math.max(0, 1 - (time - local.pulse) / 0.17) * local.intensity;
     const pose = local.dynamics.pose;
     const step = Math.min((depth * 0.64) / rows, (red ? 8.1 : 8.8) - Math.max(0, -balance) * 1.9) * (1 - pose.compression * 0.17);
@@ -417,10 +417,11 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     if (phase === "locked") return;
     const rules = state.level.phalanx;
     const locked = phase === "pushing" || phase === "secured";
-    const deploy = phase === "deploying" ? smoothStep((time - since) / rules.deployTime) : Number(locked);
+    const age = sim.time - since;
+    const deploy = phase === "deploying" ? smoothStep(age / rules.deployTime) : Number(locked);
     const anchor = sim.lanes.left.front;
     const holdX = westX(anchor);
-    const march = phase === "marching" ? clamp((time - since) / rules.marchTime, 0, 1)
+    const march = phase === "marching" ? clamp(age / rules.marchTime, 0, 1)
       : phase === "unlocked" ? 0 : 1;
     // Match the rear approach before stepping into the contact position.
     const x = march < 0.72 ? mix(187, westRally[0], march / 0.72) : mix(westRally[0], holdX, (march - 0.72) / 0.28);
@@ -452,7 +453,8 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
         for (let ring = 0; ring < 3; ring++) {
           ctx.fillStyle = ["#584e3d", "#edc577", "#347c9e"][ring];
           ctx.beginPath();
-          ctx.arc(px, shieldY, [6.5, 5.6, 3.7][ring], 0, TAU);
+          ctx.ellipse(px, shieldY, [6.5, 5.6, 3.7][ring] * (locked ? 1 : 0.68 + deploy * 0.06),
+            [6.5, 5.6, 3.7][ring], 0, 0, TAU);
           ctx.fill();
         }
         rect(ctx, "#fff0ae", px - 1.2, shieldY - 1.2, 2.4, 2.4);
@@ -505,13 +507,15 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     const rearDepth = Math.max(14, (westFront - rearFront) * 0.32);
     const westDepth = encircled ? westFront - rearFront - rearDepth
       : rearContact ? westFront - rearFront - 7 : Math.max(35, westFront - 55);
+    const westBalance = wall ? 0 : encounterBalance(left.bluePressure, left.redPressure);
+    const eastBalance = encounterBalance(right.bluePressure, right.redPressure);
     formation(left.redTotal - rearRed, playing ? left.blueTotal || Number(wall) * 850 : 0,
       true, "left", westFront, westDepth, west, time, battle.feedback.left.direction,
-      false, rearContact ? 0 : left.redEntryRate, encircled ? 106 : 144, encircled ? 470 : 588);
+      false, rearContact ? 0 : left.redEntryRate, encircled ? 106 : 144, encircled ? 470 : 588, -westBalance);
     if (encircled) formation(rearRed, sim.siege.flank.count, true, "left", rearFront,
       rearDepth, rear, time, 1, true, 0, 38, 118);
     formation(right.redTotal, playing ? right.blueTotal : 0, true, "right", right.front,
-      Math.max(26, right.front - 55), east, time, battle.feedback.right.direction, false, right.redEntryRate);
+      Math.max(26, right.front - 55), east, time, battle.feedback.right.direction, false, right.redEntryRate, 144, 588, -eastBalance);
     let westPending = 0, eastPending = 0;
     for (let i = arrivals.length - 1; i >= 0; i--) {
       const arrival = arrivals[i];
@@ -521,9 +525,9 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
       else eastPending += arrival.count * pending;
     }
     formation(Math.max(0, left.blueTotal - westPending), playing ? left.redTotal : 0,
-      false, "left", left.front + (wall ? 28 : 0), Math.max(35, 516 - left.front - (wall ? 28 : 0)), west, time, battle.feedback.left.direction);
+      false, "left", left.front + (wall ? 28 : 0), Math.max(35, 516 - left.front - (wall ? 28 : 0)), west, time, battle.feedback.left.direction, false, 0, 144, 588, westBalance);
     formation(Math.max(0, right.blueTotal - eastPending), playing ? right.redTotal : 0, false, "right", eastFront,
-      Math.max(33, 474 - eastFront), east, time, battle.feedback.right.direction);
+      Math.max(33, 474 - eastFront), east, time, battle.feedback.right.direction, false, 0, 144, 588, eastBalance);
     westContact[0] = westX(withdrawalFront);
     westContact[1] = withdrawalFront + 12;
     withdrawalRally[1] = Math.max(westRally[1], withdrawalFront + 24);

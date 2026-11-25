@@ -17,6 +17,7 @@ export const westRearEntry = 173;
 
 export const connectedSiegeRules = Object.freeze({
   marchSpeed: 16,
+  reinforcementSpeed: 21,
   impactInterval: 0.4,
   surgeEvery: 5,
   surgeIntensity: 1.7,
@@ -98,7 +99,7 @@ export function createConnectedSiege(state, wall, rules) {
   function march(lane, dt, emit) {
     let pending = 0;
     for (const squad of lane.squads) {
-      if (squad.departedAt === state.time || !move(squad, rules.marchSpeed * dt)) {
+      if (squad.departedAt === state.time || !move(squad, (rules.reinforcementSpeed ?? rules.marchSpeed) * dt)) {
         lane.squads[pending++] = squad;
       } else if (lane.id === "left" && state.phalanx.phase === "secured") {
         transfer(squad, "westRally", emit);
@@ -142,7 +143,8 @@ export function createConnectedSiege(state, wall, rules) {
     const pressure = Math.min(1, left.redTotal / wall.queueCapacity);
     const surge = ++siege.impacts % rules.surgeEvery === 0 && pressure >= rules.surgePressure;
     const intensity = (0.25 + 0.75 * pressure) * (surge ? rules.surgeIntensity : 1);
-    const redLost = Math.min(left.redTotal, rules.spearLossRate * rules.impactInterval * pressure);
+    const thrustDamage = rules.spearLossRate * rules.impactInterval * pressure;
+    const redLost = Math.min(left.redTotal, Math.max(thrustDamage, left.redEntryOpen ? 0 : 1));
     left.redTotal -= redLost;
     const repelled = Math.min(Math.floor(left.redTotal), Math.ceil(10 * intensity));
     emit?.("left", "shieldImpact", { front: left.front, surge, intensity, repelled });
@@ -195,7 +197,10 @@ export function createConnectedSiege(state, wall, rules) {
       ...left.combat, maxRedLoss: rules.rearRedLossCap,
     });
     const redLost = Math.min(left.redTotal, rates.red * rules.impactInterval);
-    const blueLost = Math.min(flank.count, rates.blue * rules.impactInterval);
+    // Finish the last fractional file under contact so a defeated flank
+    // can be replaced by real reinforcements marching from the east.
+    const blueLost = Math.min(flank.count, Math.max(left.redTotal > 0 ? 1 : 0,
+      rates.blue * rules.impactInterval));
     left.redTotal -= redLost;
     flank.count -= blueLost;
     siege.rearRedLost += redLost;
@@ -231,8 +236,10 @@ export function siegePopulation({ lanes: { left, right }, siege }) {
 }
 
 export function siegeStatus({ lanes: { left, right }, phalanx, siege, outcome }) {
-  const west = left.breached ? "LEFT — BREACHED"
+  const west = left.breached
+    ? phalanx.phase === "locked" ? "LEFT — BREACHED" : "LEFT — SHIELDS TOO LATE"
     : phalanx.phase === "secured" ? "LEFT — SECURED"
+    : phalanx.phase === "pushing" ? "LEFT — SHIELDS LOCKED"
     : phalanx.phase === "locked" ? "LEFT — CONTESTED" : "LEFT — PHALANX DEPLOYING";
   const east = right.breached ? "RIGHT — BREACHED"
     : outcome === "victory" ? "VICTORY"

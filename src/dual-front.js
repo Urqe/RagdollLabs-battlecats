@@ -35,14 +35,14 @@ function marchReinforcements(lane, dt, emit) {
   lane.squads.length = pending;
 }
 
-function updateLane(lane, time, dt, emit, march) {
+function updateLane(lane, time, dt, emit, march, blueSupport = 0) {
   const { combat, objective } = lane;
   const previousFront = lane.front;
   const supplyWasOpen = lane.redEntryOpen;
 
   march(lane, dt, emit);
 
-  const { redArrived, redLost, blueLost } = advanceLaneCombat(lane, combat, objective, time, dt);
+  const { redArrived, redLost, blueLost } = advanceLaneCombat(lane, combat, objective, time, dt, blueSupport);
   if (emit) {
     if (redArrived > 0) {
       emit(lane.id, "arrival", { side: "red", count: redArrived, front: previousFront });
@@ -105,6 +105,13 @@ export function createDualFront(crossings, { onEvent, beforeTick, afterTick, pha
 
     const { left, right } = state.lanes;
     connected?.advanceTransfers(right, dt, emit);
+    if (phalanx) {
+      const phase = advancePhalanx(state.phalanx, phalanx, state.time);
+      if (phase) {
+        const type = "phalanx" + phase[0].toUpperCase() + phase.slice(1);
+        emit?.("left", type, { phase, front: left.front });
+      }
+    }
     const phaseAtStart = state.phalanx?.phase;
     if (phaseAtStart === "pushing" || phaseAtStart === "secured") {
       march(left, dt, emit);
@@ -112,6 +119,7 @@ export function createDualFront(crossings, { onEvent, beforeTick, afterTick, pha
         const previousFront = left.front;
         const distance = phalanx.holdFront - previousFront;
         left.front = previousFront + Math.sign(distance) * Math.min(Math.abs(distance), phalanx.pushSpeed * dt);
+        left.frontVelocity = (left.front - previousFront) / dt;
         if (left.front !== previousFront)
           emit?.("left", "frontline", { previousFront, front: left.front });
       }
@@ -119,17 +127,13 @@ export function createDualFront(crossings, { onEvent, beforeTick, afterTick, pha
       if (phaseAtStart === "pushing" && left.front === phalanx.holdFront) {
         Object.assign(state.phalanx, { phase: "secured", since: state.time });
         emit?.("left", "phalanxSecured", { phase: "secured", front: left.front });
+        left.frontVelocity = 0;
         connected.secure(left, emit);
       }
     } else {
-      updateLane(left, state.time, dt, emit, march);
-      if (phalanx && !left.breached) {
-        const phase = advancePhalanx(state.phalanx, phalanx, state.time);
-        if (phase) {
-          const type = "phalanx" + phase[0].toUpperCase() + phase.slice(1);
-          emit?.("left", type, { phase, front: left.front });
-        }
-      }
+      const deployment = phaseAtStart === "deploying"
+        ? (state.time - state.phalanx.since) / phalanx.deployTime : 0;
+      updateLane(left, state.time, dt, emit, march, deployment * (phalanx?.deployPressure ?? 0));
     }
     updateLane(right, state.time, dt, emit, march);
     if (!phalanx) {

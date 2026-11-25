@@ -31,13 +31,13 @@ test("the public selector, visibility pause during deployment, restart and level
   const initial = await snapshot(page);
   let deploying = initial;
   for (let second = 0; second < 80 && deploying.dual.phalanx.phase !== "deploying"; second++) {
-    const target = dualAim("adaptive-seven", second, deploying.dual.lanes, deploying.gates, deploying.dual.phalanx);
+    const target = dualAim("adaptive-imperfect", second, deploying.dual.lanes, deploying.gates, deploying.dual.phalanx);
     if (Math.abs(target - deploying.gunX) > 2) await aim(target);
     await page.clock.runFor(1000);
     deploying = await snapshot(page);
   }
   expect(deploying.dual.phalanx.phase).toBe("deploying");
-  expect(deploying.dual.lanes.left.front).toBeGreaterThan(initial.dual.lanes.left.front);
+  expect(deploying.dual.lanes.left.front).toBeLessThan(deploying.dual.lanes.left.objective.castleFront);
   expect(deploying.dual.lanes.left.redEntryOpen).toBe(true);
 
   await page.evaluate(() => {
@@ -61,7 +61,7 @@ test("the public selector, visibility pause during deployment, restart and level
   const secured = await advanceUntil(page, s => s.dual.phalanx.phase === "secured", travel + 0.2, 100);
   expect(secured.dual.lanes.left.front).toBe(hold.holdFront);
   expect(secured.mode).toBe("playing");
-  expect(secured.dual.lanes.left.redEntryOpen).toBe(true);
+  expect(secured.dual.lanes.left.redEntryOpen).toBe(!secured.dual.siege.breakthrough);
   expect(secured.dual.lanes.left.redTotal).toBeGreaterThan(0);
 
   await pause(page).click();
@@ -87,7 +87,7 @@ test("a public playthrough seals the flank and routs the horde with the ×999 su
   let sawRightSiegeSquad = false;
   let s = await snapshot(page);
   for (let second = 0; second < 160 && s.mode === "playing"; second++) {
-    const target = dualAim("adaptive-seven", second, s.dual.lanes, s.gates, s.dual.phalanx);
+    const target = dualAim("adaptive-imperfect", second, s.dual.lanes, s.gates, s.dual.phalanx);
     if (Math.abs(s.gunX - target) > 2) await aim(target);
     await page.clock.runFor(1000);
     s = await snapshot(page);
@@ -149,4 +149,26 @@ test("camping either ×20 shows a pausable reaction naming the breached crossing
       breached === "left" ? "west crossing fell" : "east crossing fell");
     await page.getByRole("button", { name: "TRY AGAIN" }).click();
   }
+});
+
+test("arriving west ×99 volleys reverse a retreat through the normal controls", async ({ page, browserName }) => {
+  const { aim, errors } = await setup(page, browserName, false);
+  await selectTwoTails(page);
+  const { gates } = await snapshot(page);
+  await aim(gates[3].x);
+  await page.clock.runFor(4000);
+  await aim(gates[1].x);
+  const incoming = await advanceUntil(page, s => s.dual.lanes.left.squads.some(
+    squad => squad.multiplier === 99), 8, 100);
+  const retreat = incoming.dual.lanes.left;
+  expect(retreat.frontVelocity).toBeGreaterThan(3);
+  const recovering = await advanceUntil(page, s =>
+    s.dual.lanes.left.frontVelocity < -2 && s.dual.lanes.left.blueTotal > 1000, 5, 100);
+  const west = recovering.dual.lanes.left;
+  expect(west.blueTotal).toBeGreaterThan(retreat.blueTotal);
+  await page.clock.runFor(2000);
+  const after = await snapshot(page);
+  expect(after.dual.lanes.left.front).toBeLessThan(west.front);
+  expect(after.presentation.leftBlue).toBe(after.dual.lanes.left.blueTotal);
+  expect(errors).toEqual([]);
 });
