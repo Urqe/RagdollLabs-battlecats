@@ -21,7 +21,7 @@ test("Level 2 is available immediately and starting, leaving and replaying disca
   page,
   browserName,
 }) => {
-  const { aim, errors, hold } = await setup(page, browserName, false);
+  const { aim, errors } = await setup(page, browserName, false);
   await page.getByRole("button", { name: "Choose level" }).click();
   await expect(page.locator(".level-choice:disabled")).toHaveCount(6);
   await expect(select(page, LEVEL_ONE)).toBeEnabled();
@@ -49,7 +49,8 @@ test("Level 2 is available immediately and starting, leaving and replaying disca
   await select(page, LEVEL_TWO).click();
   await checkFresh(page, LEVEL_TWO);
 
-  const defeated = await hold(LEVEL_TWO.support.x, 18000);
+  await aim(LEVEL_TWO.support.x);
+  const defeated = await advanceUntil(page, state => state.mode === "end", 25, 300);
   await expect(page.locator("#resultTitle")).toHaveText(
     "The horde broke through",
   );

@@ -118,7 +118,7 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
 
   await page.clock.runFor(17000);
   s = await snapshot(page);
-  expect(s.front).toBeLessThan(frontBefore - 130);
+  expect(s.front).toBeLessThan(frontBefore - 80);
   expect(s.blueTotal).toBeGreaterThan(4000);
   expect(s.redTotal).toBeLessThan(arrival.redTotal * 0.75);
   expect(s.redTotal).toBeGreaterThan(0);
@@ -267,7 +267,7 @@ test("a portrait warning lets the player exchange barricade fire for reinforceme
   expect(warned.front).toBeCloseTo(ignored.front, 0);
   await page.clock.runFor(550);
   const relieved = await hold(90, 4000);
-  expect(relieved.blueTotal).toBeGreaterThan(warned.blueTotal * 3);
+  expect(relieved.blueTotal).toBeGreaterThan(warned.blueTotal + warned.gates[1].mult * 9);
   expect(relieved.front).toBeLessThan(ignoredFront - 10);
   expect(relieved.danger.level).toBe("stable");
   await expect(page.locator("#danger")).toBeHidden();

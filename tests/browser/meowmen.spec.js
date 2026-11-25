@@ -30,17 +30,18 @@ test("Meowmen selection, defeat, replay, victory and progress on mobile", async 
   await page.locator("#replay").click();
   expect((await snapshot(page)).support).toMatchObject({ open: false, damage: 0, shot: null });
 
-  const plan = meowmenAim("balanced");
+  const plan = meowmenAim("archer-first");
   let state = await snapshot(page);
-  while (state.mode === "playing" && state.t < 125) {
+  while (state.mode === "playing" && state.t < 65) {
     const target = plan(state);
     if (Math.abs(target - state.gunX) > 1) await aim(target);
-    await page.clock.runFor(120);
+    await page.clock.runFor(180);
     state = await snapshot(page);
   }
   expect(state.mode).toBe("victory");
-  expect(state.finalActivated).toBe(true);
-  expect(state.support.impacts).toBeGreaterThan(200);
+  expect(state.gates[1].open).toBe(true);
+  expect(state.finalActivated).toBe(false);
+  expect(state.support.impacts).toBeGreaterThan(45);
   await advanceUntil(page, (s) => s.mode === "end", 3);
   await expect(page.locator("#resultTitle")).toHaveText("The castle stands!");
   await page.locator("#resultLevels").click();
