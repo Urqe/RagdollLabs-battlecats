@@ -14,15 +14,15 @@ test("Meowmen selection, defeat, replay, victory and progress on mobile", async 
   await select(LEVEL_THREE).click();
 
   await aim(LEVEL_THREE.support.x);
+  await advanceUntil(page, (s) => s.danger.flashUntil > s.t, 4, 100);
+  await expect(page.locator("#danger")).toContainText("AIM AT ×5");
   const flight = await advanceUntil(page, (s) => s.support.shot !== null, 5, 100);
   await expect(page.locator("#banner")).toHaveText("MEOWMEN BARRAGE STARTED!");
   expect(flight.support.shot).toMatchObject({
     originX: LEVEL_THREE.support.x, originY: LEVEL_THREE.support.y, arrows: 6,
   });
   await advanceUntil(page, (s) => s.support.impacts >= 3, 4, 100);
-  await advanceUntil(page, (s) => s.danger.flashUntil > s.t, 12, 100);
-  await expect(page.locator("#danger")).toContainText("AIM AT ×20");
-  const defeated = await advanceUntil(page, (s) => s.mode === "end", 10, 200);
+  const defeated = await advanceUntil(page, (s) => s.mode === "end", 25, 200);
   expect(defeated.support.damage).toBeGreaterThan(0);
   expect(defeated.support.shot).toBeNull();
   await expect(page.locator("#resultLevel")).toHaveText("Level 3 · The Meowmen");
@@ -30,17 +30,18 @@ test("Meowmen selection, defeat, replay, victory and progress on mobile", async 
   await page.locator("#replay").click();
   expect((await snapshot(page)).support).toMatchObject({ open: false, damage: 0, shot: null });
 
-  const plan = meowmenAim("balanced");
+  const plan = meowmenAim("archer-first");
   let state = await snapshot(page);
-  while (state.mode === "playing" && state.t < 125) {
+  while (state.mode === "playing" && state.t < 65) {
     const target = plan(state);
     if (Math.abs(target - state.gunX) > 1) await aim(target);
-    await page.clock.runFor(120);
+    await page.clock.runFor(180);
     state = await snapshot(page);
   }
   expect(state.mode).toBe("victory");
-  expect(state.finalActivated).toBe(true);
-  expect(state.support.impacts).toBeGreaterThan(200);
+  expect(state.gates[1].open).toBe(true);
+  expect(state.finalActivated).toBe(false);
+  expect(state.support.impacts).toBeGreaterThan(45);
   await advanceUntil(page, (s) => s.mode === "end", 3);
   await expect(page.locator("#resultTitle")).toHaveText("The castle stands!");
   await page.locator("#resultLevels").click();

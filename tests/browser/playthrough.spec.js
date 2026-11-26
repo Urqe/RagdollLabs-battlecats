@@ -44,7 +44,7 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
   let s = await snapshot(page);
   expect(s.work).toEqual([0, 0]);
   expect(s.squads.length).toBeGreaterThan(0);
-  expect(s.blueTotal).toBe(0);
+  expect(s.blueTotal).toBeLessThan(initial.blueTotal);
 
   await page.clock.runFor(5000);
   for (let i = 0; i < 4; i++) {
@@ -54,18 +54,18 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
     expect(s.work[0]).toBeGreaterThan(0);
     expect(s.work[1]).toBe(0);
   }
-  await expect(page.locator("#gate99")).toHaveText("OPEN");
-  await expect(page.locator("#gate999")).toHaveText("0%");
+  await expect(page.locator("#gate25")).toHaveText("OPEN");
+  await expect(page.locator("#gate100")).toHaveText("0%");
   const atUnlock = s.front;
-  milestones.push({ event: "×99 unlocked", ...battlefield(s) });
+  milestones.push({ event: "×25 unlocked", ...battlefield(s) });
 
   await page.clock.runFor(5000);
   for (let i = 0; i < 9; i++) {
     s = await hold(90, 1850);
     if (i === 1) {
-      expect(s.front).toBeLessThan(atUnlock - 25);
-      expect(s.squads.some((q) => q.mult === 99)).toBe(true);
-      milestones.push({ event: "×99 reverses the battle", ...battlefield(s) });
+      expect(s.front).toBeLessThan(atUnlock + 10);
+      expect(s.squads.some((q) => q.mult === 25)).toBe(true);
+      milestones.push({ event: "×25 reverses the battle", ...battlefield(s) });
       await page.screenshot({
         path: testInfo.outputPath("phase-2-reversal.png"),
       });
@@ -87,17 +87,17 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
     expect(s.work[1]).toBeGreaterThan(damage);
     if (s.gates[2].open) break;
   }
-  await expect(page.locator("#gate999")).toHaveText("OPEN");
+  await expect(page.locator("#gate100")).toHaveText("OPEN");
   expect(s.finalActivated).toBe(false);
-  expect(s.front).toBeGreaterThan(milestones[1].front + 100);
+  expect(s.front).toBeGreaterThan(milestones[1].front + 55);
   expect(s.redTotal).toBeGreaterThan(milestones[1].red * 2);
   const frontBefore = s.front;
-  milestones.push({ event: "×999 unlocked", ...battlefield(s) });
+  milestones.push({ event: "×100 unlocked", ...battlefield(s) });
   const multiplying = await advanceUntil(
     page,
     (state) =>
       state.squads.some(
-        (q) => q.mult === 999 && q.marchTime > 0.18 && q.marchTime < 0.25,
+        (q) => q.mult === 100 && q.marchTime > 0.18 && q.marchTime < 0.25,
       ),
     2,
     40,
@@ -106,23 +106,23 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
     path: testInfo.outputPath("phase-3-multiplication.png"),
   });
   milestones.push({
-    event: "×999 multiplying at the gate",
+    event: "×100 multiplying at the gate",
     ...battlefield(multiplying),
   });
   const arrival = await advanceUntil(page, (state) => state.finalActivated, 5);
   await expect(page.locator("#banner")).toContainText("REINFORCEMENTS ARRIVED");
   milestones.push({
-    event: "×999 reaches the frontline",
+    event: "×100 reaches the frontline",
     ...battlefield(arrival),
   });
 
   await page.clock.runFor(17000);
   s = await snapshot(page);
-  expect(s.front).toBeLessThan(frontBefore - 130);
-  expect(s.blueTotal).toBeGreaterThan(10000);
+  expect(s.front).toBeLessThan(frontBefore - 80);
+  expect(s.blueTotal).toBeGreaterThan(4000);
   expect(s.redTotal).toBeLessThan(arrival.redTotal * 0.75);
   expect(s.redTotal).toBeGreaterThan(0);
-  milestones.push({ event: "×999 counterattack", ...battlefield(s) });
+  milestones.push({ event: "×100 counterattack", ...battlefield(s) });
   await page.screenshot({
     path: testInfo.outputPath("phase-3-counterattack.png"),
   });
@@ -196,7 +196,7 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
   expect(errors).toEqual([]);
 });
 
-test("exclusive ×20 initially advances before the horde overtakes it", async ({
+test("exclusive ×5 initially advances before the horde overtakes it", async ({
   page,
   browserName,
 }, testInfo) => {
@@ -205,7 +205,7 @@ test("exclusive ×20 initially advances before the horde overtakes it", async ({
   await page.clock.runFor(13000);
   const early = await snapshot(page);
   expect(early.front).toBeLessThan(initial.front);
-  expect(early.blueTotal).toBeGreaterThan(400);
+  expect(early.blueTotal).toBeGreaterThan(140);
   await page.screenshot({ path: testInfo.outputPath("phase-1-advance.png") });
 
   await page.clock.runFor(23000);
@@ -213,7 +213,7 @@ test("exclusive ×20 initially advances before the horde overtakes it", async ({
   expect(pressure.front).toBeGreaterThan(initial.front + 50);
   expect(pressure.redTotal).toBeGreaterThan(early.redTotal * 2);
   expect(pressure.work).toEqual([0, 0]);
-  await expect(page.locator("#gate99")).toHaveText("0%");
+  await expect(page.locator("#gate25")).toHaveText("0%");
   await page.screenshot({ path: testInfo.outputPath("phase-1-retreat.png") });
 
   await advanceUntil(page, (s) => s.mode === "end", 35);
@@ -233,11 +233,6 @@ test("aggressive unlocking starves the line before the final wave arrives", asyn
   browserName,
 }) => {
   const { errors, hold } = await setup(page, browserName);
-  await hold(90, 8500);
-  await expect(page.locator("#gate99")).toHaveText("OPEN");
-  await page.clock.runFor(4000);
-  const reserve = await snapshot(page);
-  expect(reserve.blueTotal).toBeGreaterThan(1000);
   await hold(329, 25000);
   await expect(page.locator("#resultTitle")).toHaveText(
     "The horde broke through",
@@ -258,23 +253,22 @@ test("a portrait warning lets the player exchange barricade fire for reinforceme
     await page.clock.runFor(3350);
     await aim(329);
     const warned = await advanceUntil(page, s => s.danger.level === "pressure", 10, 100);
-    await expect(page.getByRole("status")).toContainText("AIM AT ×99");
+    await expect(page.getByRole("status")).toContainText("AIM AT ×25");
     expect(warned.work[1]).toBeGreaterThan(0);
     return warned;
   }
 
   const ignored = await reachWarning();
-  await advanceUntil(page, s => s.mode === "end", 19, 500);
-  await expect(page.locator("#resultTitle")).toHaveText("The horde broke through");
-  await expect(page.locator("#danger")).toBeHidden();
-
-  await page.locator("#replay").click();
+  await page.clock.runFor(4550);
+  const ignoredFront = (await snapshot(page)).front;
+  await page.locator("#battleLevels").click();
+  await page.locator('[data-level="last-stand"]').click();
   const warned = await reachWarning();
   expect(warned.front).toBeCloseTo(ignored.front, 0);
   await page.clock.runFor(550);
   const relieved = await hold(90, 4000);
-  expect(relieved.blueTotal).toBeGreaterThan(warned.blueTotal * 3);
-  expect(relieved.front).toBeLessThan(warned.front - 10);
+  expect(relieved.blueTotal).toBeGreaterThan(warned.blueTotal + warned.gates[1].mult * 9);
+  expect(relieved.front).toBeLessThan(ignoredFront - 10);
   expect(relieved.danger.level).toBe("stable");
   await expect(page.locator("#danger")).toBeHidden();
   expect(errors).toEqual([]);

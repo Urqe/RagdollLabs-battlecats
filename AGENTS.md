@@ -4,7 +4,7 @@ This file applies to repository work by coding agents. Keep it concise; use link
 
 ## Product guardrails
 
-SiegeDolls is a mobile-first, one-finger Canvas arcade strategy game. The horizontal cannon automatically fires three kittens; players decide when to reinforce through ×20/×99/×999 gates versus spending shots on barricades or support unlocks. Preserve readable army growth, tactical consequences, playful miniature-cat presentation, quick replayability, and freedom to select any implemented level. No monetization, grinding, or extra controls without explicit scope.
+SiegeDolls is a mobile-first, one-finger Canvas arcade strategy game. The horizontal cannon automatically fires three kittens; players decide when to reinforce through ×5/×25/×100 gates versus spending shots on barricades or support unlocks. Preserve readable army growth, tactical consequences, playful miniature-cat presentation, quick replayability, and freedom to select any implemented level. No monetization, grinding, or extra controls without explicit scope.
 
 The **simulation owns** populations, arrivals, casualties, pressure, frontline, artillery damage, and victory/defeat. The renderer may interpolate and dramatize these events but must not create combat-effective troops, fictional losses, teleporting reinforcements, or invisible enemies. Large armies use bounded representative sprites—not per-cat combat agents.
 

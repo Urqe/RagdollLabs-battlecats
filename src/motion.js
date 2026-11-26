@@ -2,43 +2,44 @@ import { arrowSpread, ARROW_AFTERMATH_LIFE, reactToArrows } from "./archer-rende
 import { createAirborneCats, MAX_AIRBORNE_CATS } from "./airborne-cats.js";
 import { clamp } from "./config.js";
 import { LEVEL_ONE } from "./levels.js";
+import { laneHalfWidth } from "./terrain.js";
 import { impactShape, launchImpactCats } from "./formation.js";
 import { createFormationDynamics, EXCHANGE_DURATION } from "./formation-dynamics.js";
-import { fieldColumn, LITERAL_ARMY } from "./army-visual.js";
+import { fieldColumn, fieldSpacing, LITERAL_ARMY } from "./army-visual.js";
 import {
   createArmyPresentation, resetArmyPresentation, stepArmyPresentation,
 } from "./army-continuity.js";
 
 const profiles = {
-  20: {
-    count: 3,
+  5: {
+    count: 5,
     cols: 2,
-    rankDelay: 0.041,
-    spacing: 7,
+    rankDelay: 0.078,
+    spacing: 8,
     spread: 0.08,
     flare: 0.16,
-    laneOffset: 2,
+    laneOffset: 14,
   },
-  99: {
-    count: 9,
-    cols: 3,
-    rankDelay: 0.109,
+  25: {
+    count: 20,
+    cols: 4,
+    rankDelay: 0.068,
     spacing: 12,
     spread: 0.25,
     flare: 0.34,
     laneOffset: 13,
   },
-  999: {
-    count: 24,
-    cols: 4,
-    rankDelay: 0.143,
+  100: {
+    count: 32,
+    cols: 5,
+    rankDelay: 0.088,
     spacing: 12.8,
     spread: 0.29,
     flare: 0.57,
     laneOffset: 21,
   },
 };
-export const waveProfile = (mult) => profiles[mult] ?? profiles[20];
+export const waveProfile = (mult) => profiles[mult] ?? profiles[5];
 export const waveRelease = (profile, index) => {
   const rank = Math.floor(index / profile.cols);
   return (
@@ -76,7 +77,7 @@ export function createMotion(onReversal = () => {}) {
   const falls = [];
   const pulses = new Float64Array(3);
   const arrivals = new Float64Array(3);
-  const indexOf = (mult) => (mult === 20 ? 0 : mult === 99 ? 1 : 2);
+  const indexOf = (mult) => (mult === 5 ? 0 : mult === 25 ? 1 : 2);
   let clock = 0;
   let direction = 0;
   let nextDirection = 0;
@@ -271,10 +272,19 @@ export function createMotion(onReversal = () => {}) {
     const fraction = lost / previous;
     const count = previous <= LITERAL_ARMY ? Math.min(3, lost)
       : fraction >= 0.075 ? Math.min(7, 2 + Math.floor(fraction * 8)) : 0;
-    const spread = Math.min(25, 4 + Math.abs(front - 266) * 0.14);
+    const tip = front + (red ? -7 : 9);
+    const half = laneHalfWidth(tip) - 6;
+    const spacing = fieldSpacing(half, 0, previous, 14);
+    const rank = Math.min(previous, 9);
     for (let i = 0; i < count; i++) {
-      const x = 210 + Math.sin(time * 9 + i * 2.4) * spread;
+      const slot = (exchangeIndex++ % rank);
+      const x = 210 + fieldColumn(slot) * spacing;
       addFall(x, front, red, time);
+      const exchange = contact.exchanges[Number(!red)];
+      if (time - exchange.at >= EXCHANGE_DURATION) {
+        exchange.at = time;
+        exchange.x = x;
+      }
     }
   }
 

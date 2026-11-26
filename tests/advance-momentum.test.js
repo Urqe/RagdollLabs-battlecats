@@ -94,7 +94,7 @@ test("arriving reserves slow, stabilize and reverse a retreat in proportion to t
     return { initialVelocity, inTransit, beforeArrival, velocity: left.frontVelocity,
       blue: left.blueTotal, red: left.redTotal, front: left.front };
   }
-  const multipliers = [0, 20, 99, 999];
+  const multipliers = [0, 5, 25, 100];
   const flows = multipliers.map(multiplier => run(60, multiplier));
   for (const hz of [30, 120]) assert.deepEqual(multipliers.map(m => run(hz, m)), flows);
   const [none, relief, stabilization, recovery] = flows;

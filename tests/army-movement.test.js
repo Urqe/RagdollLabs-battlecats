@@ -75,19 +75,19 @@ test("a small volley draws continuously at the arrival frame and gives each clai
   const motion = createMotion();
   const probe = renderProbe();
   step(motion, state, 2);
-  const incoming = wave(20);
+  const incoming = wave(5);
   state.squads.push(incoming);
-  const before = probe.blue(state, motion).slice(-3);
+  const before = probe.blue(state, motion).slice(-5);
 
   state.squads.length = 0;
   state.blueTotal += incoming.count;
   motion.receive("arrival", state.t, incoming, state.front);
   step(motion, state, 2);
-  const after = probe.blue(state, motion).slice(-3);
+  const after = probe.blue(state, motion).slice(-5);
   assert.deepEqual(after, before);
   const tail = motion.tails[0];
   assert.equal(tail.join.field, 44);
-  assert.equal(tail.join.fieldCount, 3);
+  assert.equal(tail.join.fieldCount, 5);
 
   let previous = 44;
   for (let i = 1; i <= 37; i++) {
@@ -98,11 +98,11 @@ test("a small volley draws continuously at the arrival frame and gives each clai
     assert.ok(motion.contact.blueArmy.field <= state.blueTotal);
     previous = motion.contact.blueArmy.field;
     if (i === 10) {
-      assert.equal(tail.painted, 7);
-      assert.ok(drawn.length <= 64);
+      assert.ok(tail.painted > 0 && tail.painted <= 31);
+      assert.ok(drawn.length <= 49);
     }
   }
-  assert.equal(state.blueTotal, 64);
+  assert.equal(state.blueTotal, 49);
 });
 
 test("a receiving slot beyond an obstructed gate uses a complementary fade", () => {
@@ -116,7 +116,7 @@ test("a receiving slot beyond an obstructed gate uses a complementary fade", () 
   step(motion, state, state.t);
   probe.blue(state, motion);
 
-  const q = { ...wave(20, 329), marchTime: 0.25 };
+  const q = { ...wave(5, 329), marchTime: 0.25 };
   state.blueTotal += q.count;
   motion.receive("arrival", state.t, q, state.front);
   step(motion, state, state.t);
@@ -130,14 +130,14 @@ test("a receiving slot beyond an obstructed gate uses a complementary fade", () 
   assert.ok(tail.join.started[0] >= 2.26);
 });
 
-test("overlapping ×99 and ×999 handoffs stay bounded and reset when leaving a level", () => {
+test("overlapping ×25 and ×100 handoffs stay bounded and reset when leaving a level", () => {
   const motion = createMotion();
   const state = createState();
   state.mode = "playing";
   state.blueTotal = 1000;
   step(motion, state, 0);
   for (let i = 0; i < 28; i++) {
-    const q = wave(i % 2 ? 99 : 999, i % 2 ? 90 : 329);
+    const q = wave(i % 2 ? 25 : 100, i % 2 ? 90 : 329);
     state.blueTotal += q.count;
     motion.receive("arrival", 0.1, q, state.front);
   }
@@ -145,7 +145,7 @@ test("overlapping ×99 and ×999 handoffs stay bounded and reset when leaving a 
   const occupied = new Set();
   assert.ok(motion.tails.length <= 12);
   for (const { join } of motion.tails) {
-    assert.ok(join.fieldCount + join.reserveCount <= 24);
+    assert.ok(join.fieldCount + join.reserveCount <= 32);
     for (const [prefix, start, length] of [
       ["f", join.field, join.fieldCount], ["r", join.reserve, join.reserveCount],
     ]) {

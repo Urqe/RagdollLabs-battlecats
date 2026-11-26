@@ -17,13 +17,13 @@ import { LEVEL_ONE, LEVEL_TWO } from "../src/levels.js";
 import { IMPACT_LIFE, gapShift, gapStrength } from "../src/formation.js";
 
 test("gate releases are ordered, bounded and start on the projectile crossing", () => {
-  const quick = waveProfile(20);
-  const broad = waveProfile(99);
-  const flood = waveProfile(999);
+  const quick = waveProfile(5);
+  const broad = waveProfile(25);
+  const flood = waveProfile(100);
   assert.ok(quick.count < broad.count && broad.count < flood.count);
   assert.ok(quick.spread < broad.spread && broad.laneOffset < flood.laneOffset);
-  assert.ok(flood.count <= 24);
-  assert.ok(waveDuration(quick) < 0.1);
+  assert.ok(flood.count <= 32);
+  assert.ok(waveDuration(quick) < 0.20);
   assert.ok(waveDuration(broad) > 0.2 && waveDuration(broad) < 0.35);
   assert.ok(waveDuration(flood) > 0.5 && waveDuration(flood) < 1);
 
@@ -75,9 +75,9 @@ for (const hz of [30, 60, 120]) {
     assert.ok(arrivals.length >= 3);
     assert.equal(
       arrivals.slice(0, 3).reduce((sum, q) => sum + q.count, 0),
-      2997,
+      300,
     );
-    assert.ok(arrivals[0].marchTime < waveDuration(waveProfile(999)));
+    assert.ok(arrivals[0].marchTime < waveDuration(waveProfile(100)));
     assert.ok(motion.tails.length <= 12);
     assert.ok(motion.falls.length <= 12);
   });
@@ -114,7 +114,7 @@ test("blue ranks ease outward from a new arrival lane at every tested frame rate
     motion.step(0, 0, 0, false);
     motion.receive("arrival", 0, { mult: 999, marchTime: 0.25, x: 329 });
     for (let frame = 1; frame <= hz / 2; frame++) {
-      motion.step(frame / hz, -11, 2997, false);
+      motion.step(frame / hz, -11, 300, false);
     }
     const { blueArmy, blueAnchor } = motion.contact;
     assert.ok(blueArmy.field > 0 && blueArmy.field < blueArmy.target.field);

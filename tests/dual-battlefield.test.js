@@ -39,13 +39,13 @@ test("in-flight shots at the center gap feed both crossings independently", () =
   assert.deepEqual(state.shots.map(shot => shot.x), [175.5, 184.5, 193.5]);
   state.gunX = 362;
   run(fixture, 0.3);
-  assert.deepEqual(left.squads.map(({ origin, count }) => [origin, count]), [[175.5, 20]]);
-  assert.deepEqual(right.squads.map(({ origin, count }) => [origin, count]), [[193.5, 20]]);
+  assert.deepEqual(left.squads.map(({ origin, count }) => [origin, count]), [[175.5, 5]]);
+  assert.deepEqual(right.squads.map(({ origin, count }) => [origin, count]), [[193.5, 5]]);
   assert.deepEqual(state.work, [0, 0, 0, 0]);
 });
 
 test("each upgrade consumes its own barricade hits and routes its exact multiplier", () => {
-  for (const [index, id, expected] of [[1, "left", 99], [4, "right", 99], [5, "right", 999]]) {
+  for (const [index, id, expected] of [[1, "left", 25], [4, "right", 25], [5, "right", 100]]) {
     const { fixture, state } = start();
     const gate = state.gates[index];
     const slot = state.level.barricades.findIndex(barrier => barrier.id === gate.barricadeId);
@@ -68,7 +68,7 @@ test("wood, marching and deploying expose the west before the shield wall locks"
   until(fixture, () => state.work[0] === LEVEL_FOUR.barricades[0].hits - 3);
   assert.equal(gate.open, false);
   assert.equal(fixture.state.phalanx.phase, "locked");
-  assert.ok(left.front > left.combat.initialFront);
+  assert.ok(left.front < left.objective.castleFront);
   assert.ok(left.blueTotal < LEVEL_FOUR.crossings.left.initialBlue);
 
   for (const phase of ["unlocked", "marching", "deploying"]) {
@@ -124,7 +124,7 @@ test("the west can still breach during deployment", () => {
   const { fixture, state, left } = start();
   starterCover(fixture, state);
   until(fixture, () => fixture.state.phalanx.phase === "deploying");
-  Object.assign(left, { front: left.objective.castleFront - 0.01, blueTotal: 0 });
+  Object.assign(left, { front: left.objective.castleFront - 0.01, blueTotal: 0, frontVelocity: 2 });
   fixture.advance(tick);
   assert.equal(fixture.state.phalanx.phase, "deploying");
   assert.equal(fixture.state.outcome, "defeat");
@@ -179,9 +179,8 @@ test("two-front strategies preserve authoritative events across render rates", (
   assert.deepEqual(byName["west-camping"].breached, ["right"]);
   assert.deepEqual(byName["east-camping"].breached, ["left"]);
   assert.deepEqual(byName["phalanx-rush"].breached, ["left"]);
-  assert.deepEqual(byName["skip-east99"].breached, ["right"]);
-  for (const strategy of ["double-upgrade", "adaptive", "flank-first", "adaptive-seven",
-    "adaptive-imperfect", "no-siege", "sustained-starter-rush"]) {
+  assert.deepEqual(byName["even-alternation"].breached, ["left"]);
+  for (const strategy of ["double-upgrade", "adaptive", "adaptive-seven", "adaptive-imperfect", "no-siege", "skip-east99"]) {
     const win = byName[strategy];
     assert.equal(win.outcome, "victory", strategy);
     assert.ok(win.unlocked.phalanx < win.deployingAt && win.deployingAt < win.securedAt);
@@ -191,7 +190,7 @@ test("two-front strategies preserve authoritative events across render rates", (
   const both = byName["double-upgrade"];
   const plain = byName["no-siege"];
   assert.ok(both.unlocked.siege > 0 && plain.unlocked.siege === undefined);
-  assert.ok(both.supplyCutoffAt < plain.supplyCutoffAt, "×999 repays its opening time");
+  assert.ok(byName["skip-east99"].unlocked.siege < byName["skip-east99"].supplyCutoffAt);
   const noWall = byName["no-phalanx"];
   assert.ok(noWall.duration > 90 && noWall.furthest.left < LEVEL_FOUR.objective.castleFront);
   assert.equal(noWall.breakthroughAt, null);

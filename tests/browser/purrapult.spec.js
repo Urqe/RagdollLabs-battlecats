@@ -21,7 +21,7 @@ test("Level 2 is available immediately and starting, leaving and replaying disca
   page,
   browserName,
 }) => {
-  const { aim, errors, hold } = await setup(page, browserName, false);
+  const { aim, errors } = await setup(page, browserName, false);
   await page.getByRole("button", { name: "Choose level" }).click();
   await expect(page.locator(".level-choice:disabled")).toHaveCount(6);
   await expect(select(page, LEVEL_ONE)).toBeEnabled();
@@ -49,7 +49,8 @@ test("Level 2 is available immediately and starting, leaving and replaying disca
   await select(page, LEVEL_TWO).click();
   await checkFresh(page, LEVEL_TWO);
 
-  const defeated = await hold(LEVEL_TWO.support.x, 18000);
+  await aim(LEVEL_TWO.support.x);
+  const defeated = await advanceUntil(page, state => state.mode === "end", 25, 300);
   await expect(page.locator("#resultTitle")).toHaveText(
     "The horde broke through",
   );
@@ -120,8 +121,8 @@ test("artillery-assisted defense wins Level 2 and persists its completion", asyn
       await mark("impact", "06-yarn-impact.png", s);
     }
     if (
-      s.finalActivated &&
-      s.support.damage > 18000 &&
+      s.gates[1].open &&
+      s.support.damage > 700 &&
       s.front < 285 &&
       !seen.has("counterattack")
     ) {
@@ -131,7 +132,7 @@ test("artillery-assisted defense wins Level 2 and persists its completion", asyn
   expect([...seen]).toEqual(["unlocked", "flight", "impact", "counterattack"]);
   expect(s.mode).toBe("victory");
   expect(s.redTotal).toBe(0);
-  expect(s.support.damage).toBeGreaterThan(25000);
+  expect(s.support.damage).toBeGreaterThan(1000);
   expect(s.support.shot).toBeNull();
   s = await advanceUntil(page, (state) => state.mode === "end", 3, 200);
   await expect(page.locator("#resultTitle")).toHaveText("The castle stands!");

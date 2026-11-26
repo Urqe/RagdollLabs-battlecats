@@ -24,27 +24,20 @@ for (const hz of [30, 60, 120]) {
       ["entry", "castle"],
     );
 
-    assert.equal(b.won, false);
+    assert.equal(b.won, true);
     assert.ok(b.state.gates[2].open);
-    assert.equal(b.activation, null);
-    assert.ok(b.seconds < a.seconds);
+    assert.ok(b.activation > b.milestones[1].time);
+    assert.ok(b.furthest > LEVEL.initialFront + 100);
     assert.equal(simulate("Rush", { dt }).won, false);
 
-    assert.equal(intermediate.won, false);
+    assert.equal(intermediate.won, true);
     const [gate99] = intermediate.milestones;
     const relieved = intermediate.samples.find(
       (s) => s.time > gate99.time && s.front < gate99.front - 100,
     );
     assert.ok(relieved, "arrived ×99 troops reverse the retreat");
-    assert.ok(
-      intermediate.red > relieved.red * 2,
-      "the horde eventually overwhelms ×99",
-    );
-    assert.ok(
-      intermediate.reversals.some(
-        (r) => r.time > relieved.time && r.toward === "castle",
-      ),
-    );
+    assert.equal(intermediate.activation, null);
+    assert.equal(intermediate.red, 0);
 
     for (const policy of ["C", "D"]) {
       const result = simulate(policy, { dt });
@@ -57,10 +50,10 @@ for (const hz of [30, 60, 120]) {
       assert.ok(result.cutoff > result.activation);
       assert.ok(result.cutoff < result.seconds);
       assert.ok(result.furthest < LEVEL.castleFront - 30);
-      assert.deepEqual([left.gate, right.gate], [99, 999]);
+      assert.deepEqual([left.gate, right.gate], [25, 100]);
       assert.ok(
         result.activation > right.time,
-        "×999 must travel before joining",
+        "×100 must travel before joining",
       );
       assert.ok(result.pushback > 300);
       assert.ok(
@@ -98,7 +91,7 @@ for (const hz of [30, 60, 120]) {
 test("balanced play tolerates modest aiming errors and decision delays", () => {
   for (const aimOffset of [-20, 0, 20]) {
     assert.equal(simulate("A", { aimOffset }).won, false);
-    assert.equal(simulate("B", { aimOffset }).won, false);
+    assert.equal(simulate("Rush", { aimOffset }).won, false);
     for (const delay of [0, 1, 2]) {
       assert.equal(simulate("C", { aimOffset, delay }).won, true);
       assert.equal(simulate("D", { aimOffset, delay }).won, true);

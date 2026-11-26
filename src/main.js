@@ -276,7 +276,7 @@ const siegeHud = ["siegeBlueCount", "siegeRedCount", "siegeLeft", "siegeRight"].
 function updateSiegeHud() {
   const { blue, red } = siegePopulation(dual.state);
   const { west, east } = siegeStatus(dual.state);
-  const values = [compactArmy.format(Math.floor(blue)), compactArmy.format(Math.ceil(red)), west, east];
+  const values = [compactArmy.format(Math.ceil(blue)), compactArmy.format(Math.ceil(red)), west, east];
   siegeHud.forEach((node, index) => {
     if (node.textContent !== values[index]) node.textContent = values[index];
   });
@@ -298,7 +298,7 @@ function updateHud() {
     if (warning.textContent !== message) warning.textContent = message;
   }
   const marching = state.squads.reduce((n, q) => n + q.count, 0);
-  el("blueCount").textContent = Math.floor(
+  el("blueCount").textContent = Math.ceil(
     state.blueTotal + marching,
   ).toLocaleString("en-US");
   el("redCount").textContent = Math.ceil(state.redTotal).toLocaleString(

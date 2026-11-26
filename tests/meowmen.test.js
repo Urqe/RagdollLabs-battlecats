@@ -57,9 +57,10 @@ for (const hz of [30, 60, 120]) {
     const balanced = simulate("balanced", hz);
     for (const run of [gates, late, early, balanced]) {
       assert.equal(run.result, true);
-      assert.equal(run.state.finalActivated, true);
       assert.equal(run.state.redEntryOpen, false);
     }
+    assert.equal(balanced.state.finalActivated, true);
+    assert.equal(early.state.finalActivated, false);
     assert.equal(gates.state.support.impacts, 0);
     assert.ok(late.state.support.damage > 0);
     assert.ok(early.openingFront > balanced.openingFront + 30);

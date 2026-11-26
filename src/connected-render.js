@@ -1,6 +1,6 @@
 import { createAirborneCats } from "./airborne-cats.js";
 import { FLAG_CAPTURE_TIME, FLAG_RAISE_TIME, mergeProgress, smoothStep, victoryAdvance } from "./army-movement.js";
-import { armyScale, encounterBalance, encounterOffset, fieldColumn, fieldRow, fieldSpacing } from "./army-visual.js";
+import { armyScale, CROSSING_LITERAL_ARMY, encounterBalance, encounterOffset, fieldColumn, fieldRow, fieldSpacing } from "./army-visual.js";
 import { siegeRoutes, westRearEntry } from "./connected-siege.js";
 import { createFormationDynamics, formationLag, rankReplenishment } from "./formation-dynamics.js";
 import { clamp, H, TAU, W } from "./config.js";
@@ -294,16 +294,17 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
       if (!red && !invert) updateReceiver(id, front, depth, 12, time);
       return;
     }
-    const { field, reserve } = armyScale(population, scale);
+    const { field, reserve } = armyScale(population, scale,
+      Math.min(CROSSING_LITERAL_ARMY, fieldLimit), fieldLimit);
     const side = (red ? -1 : 1) * (invert ? -1 : 1);
-    const fieldCount = Math.min(field, fieldLimit);
+    const fieldCount = field;
     const rows = fieldRow(fieldCount - 1) + 1;
     const recoil = Math.max(0, 1 - (time - local.pulse) / 0.17) * local.intensity;
     const pose = local.dynamics.pose;
     const step = Math.min((depth * 0.64) / rows, (red ? 8.1 : 8.8) - Math.max(0, -balance) * 1.9) * (1 - pose.compression * 0.17);
     const rearDepth = rows * step + 14;
     const reservePitch = Math.max(0, Math.min(10, (depth - rearDepth) / 14));
-    const budget = Math.min(reserveLimit, reserve + field - fieldCount);
+    const budget = Math.min(reserveLimit, reserve);
     const staging = intake > 0 && depth > 128 ? Math.floor(budget * 0.28 / 6) : 0;
     const reserveCount = budget - staging * 6;
     const gap = local.replenishmentX[Number(red)];
@@ -356,7 +357,7 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
         metrics.represented++;
         continue;
       }
-      soldier(drawX, y, red, row < 4 ? 5.35 : 4.55, i * 0.73);
+      soldier(drawX, y, red, row < 4 ? 5.65 : 4.8, i * 0.73);
     }
     if (!red && !invert) {
       const rear = reserveCount > 0
@@ -369,11 +370,15 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
   function column(cohort, time) {
     const flank = cohort.route === "encirclement";
     const transfer = cohort.route === "withdrawal" || cohort.route === "westRally";
-    const siege = cohort.multiplier === 999;
+    const siege = cohort.multiplier === 100;
     const { field, reserve } = armyScale(cohort.count, scale);
-    const groups = Math.min(flank ? 96 : transfer ? 31 : siege ? 13 : 8,
-      Math.ceil((field + reserve * 0.37) / (flank || transfer ? 5 : 13)));
-    const width = flank ? 8 : transfer ? 4 : siege ? 4 : 2;
+    const grouped = flank || (transfer && cohort.count > 30) || siege;
+    const batch = flank || siege ? 6 : grouped ? 4 : 1;
+    const represented = grouped ? field + reserve * 0.37
+      : Math.min(field, transfer ? 30 : 20);
+    const groups = Math.min(flank ? 62 : transfer ? 31 : siege ? 13 : 20,
+      Math.ceil(represented / batch));
+    const width = flank ? 8 : transfer || siege || cohort.count > 5 ? 4 : 2;
     const rows = Math.ceil(groups / width);
     const path = siegeRoutes[cohort.route];
     const endDistance = path[cohort.leg][2];
@@ -402,11 +407,11 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
       const x = point.x + point.sideX * spread + Math.sin(time * 16 + i) * 1.3 + lateral * blend;
       const strideY = point.y + point.sideY * spread + Math.cos(time * 16 + i) * 1.3 - blend * 12;
       const y = flank && cohort.leg === 1 ? Math.min(westRearEntry - 7, strideY) : strideY;
-      if (flank || transfer || siege) {
-        stamp(x, y, siege || flank ? 6 : 4, false, Math.floor(time * 12) + i,
+      if (grouped) {
+        stamp(x, y, Math.min(batch, Math.ceil(represented) - i * batch), false, Math.floor(time * 12) + i,
           flank ? 0.75 : siege ? 0.59 : 0.58);
       } else {
-        soldier(x, y, false, 4.6, i + Number(cohort.id));
+        soldier(x, y, false, 5.05, i + Number(cohort.id));
       }
     }
     if (cohort.dock) ctx.globalAlpha = 1;
@@ -556,9 +561,9 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     }
     const join = time - joinedAt;
     if (playing && join < 0.28) {
-      const reach = (12 + join * 73) * (joinedCount >= 999 ? 1.6 : 1);
+      const reach = (12 + join * 73) * (joinedCount >= 100 ? 1.6 : 1);
       ctx.globalAlpha = (1 - join / 0.28) * 0.78;
-      line(ctx, "#b7efff", joinedCount >= 999 ? 3 : 1.6,
+      line(ctx, "#b7efff", joinedCount >= 100 ? 3 : 1.6,
         [[eastContact[0] - reach, eastContact[1] + 4], [eastContact[0], eastContact[1] - 3],
           [eastContact[0] + reach, eastContact[1] + 4]]);
       ctx.globalAlpha = 1;

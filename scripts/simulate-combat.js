@@ -19,7 +19,7 @@ export function traceBattle(level, strategy, hz = 60, reaction = 0.55) {
       if (kind === "arrival") joined += value.count;
       if (rescue?.timing.switchAt === undefined) return;
       if (kind === "fire") fired ??= at;
-      if (kind === "multiply" && value === 99) {
+      if (kind === "multiply" && value === level.gates[1].mult) {
         spawned ??= at;
         spawnedAfterSwitch.add(game.state.squads.at(-1));
       }

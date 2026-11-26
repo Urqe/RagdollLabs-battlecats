@@ -6,7 +6,7 @@ import { clamp, TAU } from "./config.js";
 export const IMPACT_LIFE = 1.24;
 
 export function impactShape(impact, hit) {
-  const force = Math.min(1, Math.sqrt(hit.loss / 2400));
+  const force = Math.min(1, Math.sqrt(hit.loss / (hit.damageBudget ?? 2400)));
   impact.x = hit.x;
   impact.y = hit.y;
   impact.at = hit.at;
@@ -24,7 +24,7 @@ export function launchImpactCats(airborne, hit, front, army, random) {
   const remaining = Math.max(0, (army.population ?? hit.loss) - hit.loss);
   const { field } = armyScale(remaining);
   const tip = front - 6;
-  const step = Math.min((tip - 3) * 0.59 / Math.max(1, rowsAt(field)), 8.9);
+  const step = Math.min((tip - 3) * 0.59 / Math.max(1, rowsAt(field)), 10.6);
   const phase = (random() - 0.5) * 0.48;
   for (let i = 0; i < count; i++) {
     const angle = phase + i * TAU / count;

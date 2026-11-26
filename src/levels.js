@@ -13,16 +13,17 @@ const battlefield = Object.freeze({
 const objective = Object.freeze({ reinforcementCutoff: 100, castleFront: 690, flagY: 38 });
 const combat = Object.freeze({
   initialFront: 335,
-  initialRed: 2225,
-  redReinforcements: 150,
-  redReinforcementGrowth: 34.1,
-  maxRedReinforcements: 3200,
-  redPressurePerCat: 0.075,
-  frontage: 80000,
-  marchResistance: 1056,
-  maxRedLoss: 4400,
-  maxBlueLoss: 24000,
-  redLossPerBlue: 0.111,
+  initialBlue: 34,
+  initialRed: 78,
+  redReinforcements: 13.5,
+  redReinforcementGrowth: 3.069,
+  maxRedReinforcements: 288,
+  redPressurePerCat: 0.58,
+  frontage: 2400,
+  marchResistance: 82.368,
+  maxRedLoss: 343.2,
+  maxBlueLoss: 1872,
+  redLossPerBlue: 0.09324,
   redEngagementRatio: 8,
   blueLossPerRed: 0.013,
   blueContactLoss: 0.163,
@@ -60,8 +61,8 @@ function barricade(id, hits, message, hitY = 545) {
   return Object.freeze({ id, hits, hitY, message });
 }
 
-const leftWood = barricade("left-gate", 90, "×99 OPEN — AIM LEFT!");
-const rightWood = barricade("right-gate", 231, "×999 OPEN — AIM RIGHT!");
+const leftWood = barricade("left-gate", 90, "×25 OPEN — AIM LEFT!");
+const rightWood = barricade("right-gate", 231, "×100 OPEN — AIM RIGHT!");
 const supportWood = barricade("artillery", 36, "PURRAPULT UNLEASHED!");
 
 // Shared archer support defaults.
@@ -90,9 +91,9 @@ export const LEVEL_ONE = Object.freeze({
   objective,
   combat,
   gates: Object.freeze([
-    gate("starter", 210, 98, 20, "#399be9", 0),
-    gate("strong", 90, 96, 99, "#ffb740", 1, leftWood.id),
-    gate("final", 329, 106, 999, "#ffd561", 2, rightWood.id),
+    gate("starter", 210, 98, 5, "#399be9", 0),
+    gate("strong", 90, 96, 25, "#ffb740", 1, leftWood.id),
+    gate("final", 329, 106, 100, "#ffd561", 2, rightWood.id),
   ]),
   barricades: Object.freeze([leftWood, rightWood]),
   support: null,
@@ -105,11 +106,11 @@ export const LEVEL_TWO = Object.freeze({
   status: "implemented",
   battlefield: Object.freeze({ ...battlefield, startX: 157 }),
   objective,
-  combat: Object.freeze({ ...combat, redReinforcementGrowth: 38 }),
+  combat: Object.freeze({ ...combat, redReinforcementGrowth: 3.42 }),
   gates: Object.freeze([
-    gate("starter", 157, 76, 20, "#399be9", 0),
-    gate("strong", 62, 74, 99, "#ffb740", 1, leftWood.id),
-    gate("final", 259, 78, 999, "#ffd561", 2, rightWood.id),
+    gate("starter", 157, 76, 5, "#399be9", 0),
+    gate("strong", 62, 74, 25, "#ffb740", 1, leftWood.id),
+    gate("final", 259, 78, 100, "#ffd561", 2, rightWood.id),
   ]),
   barricades: Object.freeze([leftWood, rightWood, supportWood]),
   support: Object.freeze({
@@ -121,18 +122,18 @@ export const LEVEL_TWO = Object.freeze({
     reload: 2.4,
     flight: 0.94,
     openingDelay: 0.15,
-    damage: 3400,
+    damage: 235,
     radius: 54,
     targetDepth: 32,
     bandDepth: 100,
-    pocketFloor: 550,
+    pocketFloor: 38,
     pocketShare: 0.23,
   }),
 });
 
 const archerWood = barricade("archers", 30, "MEOWMEN BARRAGE STARTED!");
-const meowmenStrongWood = barricade("left-gate", 72, "×99 OPEN — AIM LEFT!");
-const meowmenFinalWood = barricade("right-gate", 225, "×999 OPEN — AIM RIGHT!");
+const meowmenStrongWood = barricade("left-gate", 72, "×25 OPEN — AIM LEFT!");
+const meowmenFinalWood = barricade("right-gate", 225, "×100 OPEN — AIM RIGHT!");
 
 export const LEVEL_THREE = Object.freeze({
   id: "meowmen",
@@ -141,18 +142,18 @@ export const LEVEL_THREE = Object.freeze({
   status: "implemented",
   battlefield: Object.freeze({ ...battlefield, startX: 234 }),
   objective,
-  combat: Object.freeze({ ...combat, redReinforcementGrowth: 55 }),
+  combat: Object.freeze({ ...combat, redReinforcementGrowth: 3.861 }),
   gates: Object.freeze([
-    gate("starter", 234, 76, 20, "#399be9", 0),
-    gate("strong", 144, 74, 99, "#ffb740", 1, meowmenStrongWood.id),
-    gate("final", 340, 84, 999, "#ffd561", 2, meowmenFinalWood.id),
+    gate("starter", 234, 76, 5, "#399be9", 0),
+    gate("strong", 144, 74, 25, "#ffb740", 1, meowmenStrongWood.id),
+    gate("final", 340, 84, 100, "#ffd561", 2, meowmenFinalWood.id),
   ]),
   barricades: Object.freeze([meowmenStrongWood, meowmenFinalWood, archerWood]),
   support: Object.freeze({
     ...ARCHER_SUPPORT,
     x: 54,
     width: 72,
-    damagePerArrow: 25,
+    damagePerArrow: 1,
     openingDelay: 0.1,
     reload: 0.05,
     flight: 0.19,
@@ -169,14 +170,14 @@ const crossingCombat = {
   maxFront: 520,
   spawnY: 547,
   blueAdvance: 6.5,
-  frontage: 6000,
-  marchResistance: 23.28,
-  maxRedLoss: 97,
-  maxBlueLoss: 900,
+  frontage: 960,
+  marchResistance: 3.7248,
+  maxRedLoss: 15.52,
+  maxBlueLoss: 144,
   redAdvance: 9,
   redPressurePerCat: 0.66,
-  redReinforcementGrowth: 2,
-  maxRedReinforcements: 100,
+  redReinforcementGrowth: 0.32,
+  maxRedReinforcements: 16,
   redLossPerBlue: 0.20,
   blueContactLoss: 0.12,
   reinforcementApproach: 16,
@@ -198,35 +199,35 @@ export const LEVEL_FOUR = Object.freeze({
   objective: crossingObjective,
   gates: Object.freeze([
     siegeGate("left", 38, 51, null, "phalanx"),
-    siegeGate("left", 96, 54, 99, "left"),
-    siegeGate("left", 155, 58, 20),
-    siegeGate("right", 214, 58, 20),
-    siegeGate("right", 280, 64, 99, "right"),
-    siegeGate("right", 362, 80, 999, "siege"),
+    siegeGate("left", 96, 54, 25, "left"),
+    siegeGate("left", 155, 58, 5),
+    siegeGate("right", 214, 58, 5),
+    siegeGate("right", 280, 64, 25, "right"),
+    siegeGate("right", 362, 80, 100, "siege"),
   ]),
   barricades: Object.freeze([
     barricade("phalanx", 132, "MEOWRTANS RELEASED", 570),
-    barricade("left", 30, "LEFT ×99 OPEN", 570),
-    barricade("right", 30, "RIGHT ×99 OPEN", 570),
-    barricade("siege", 90, "RIGHT ×999 OPEN", 570),
+    barricade("left", 30, "LEFT ×25 OPEN", 570),
+    barricade("right", 30, "RIGHT ×25 OPEN", 570),
+    barricade("siege", 51, "RIGHT ×100 OPEN", 570),
   ]),
   crossings: Object.freeze({
     left: Object.freeze({
-      combat: Object.freeze({ ...crossingCombat, initialFront: 335, initialRed: 570,
-        minFront: 265, frontage: 450, marchResistance: 19.92, maxBlueLoss: 340, maxRedLoss: 83, redAdvance: 12, blueContactLoss: 0.17,
-        redReinforcements: 15, redReinforcementGrowth: 5.1, maxRedReinforcements: 800 }),
-      objective: crossingObjective, marchSpeed: 175, initialBlue: 300,
+      combat: Object.freeze({ ...crossingCombat, initialFront: 335, initialRed: 81,
+        minFront: 265, frontage: 72, marchResistance: 3.1872, maxBlueLoss: 54.4, maxRedLoss: 13.28, redAdvance: 12, blueContactLoss: 0.17,
+        redReinforcements: 2.4, redReinforcementGrowth: 0.90, maxRedReinforcements: 128 }),
+      objective: crossingObjective, marchSpeed: 175, initialBlue: 38,
     }),
     right: Object.freeze({
-      combat: Object.freeze({ ...crossingCombat, initialFront: 350, initialRed: 660,
-        blueAdvance: 5.1, redAdvance: 10, redReinforcements: 39, redReinforcementGrowth: 3.05,
-        maxRedReinforcements: 290, marchResistance: 56.4, maxRedLoss: 235, redLossPerBlue: 0.17, redLossPerDefender: 3,
+      combat: Object.freeze({ ...crossingCombat, initialFront: 350, initialRed: 92,
+        blueAdvance: 5.1, redAdvance: 10, redReinforcements: 6.24, redReinforcementGrowth: 0.62,
+        maxRedReinforcements: 48, marchResistance: 9.024, maxRedLoss: 48, redLossPerBlue: 0.17, redLossPerDefender: 3,
         redPressurePerCat: 0.65, blueContactLoss: 0.075 }),
-      objective: crossingObjective, marchSpeed: 175, initialBlue: 615,
+      objective: crossingObjective, marchSpeed: 175, initialBlue: 48,
     }),
   }),
   phalanx: Object.freeze({ marchTime: 2.4, deployTime: 1.15, pushSpeed: 30, holdFront: 308,
-    deployPressure: 380, queueCapacity: 1700 }),
+    deployPressure: 60.8, queueCapacity: 272 }),
   support: null,
 });
 

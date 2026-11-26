@@ -82,6 +82,7 @@ test('empty or out-of-range army cannot launch; eliminated targets resolve witho
 test('scheduled cadence, aggregate damage and events agree at 30/60/120 Hz', () => {
   const results = [30, 60, 120].map(hz => {
     const { state, tick, events } = fixture();
+    state.redTotal = 600;
     for (let i = 1; i <= hz * 8; i++) tick(i / hz);
     assert.equal(state.support.shotsFired, 10);
     assert.equal(state.support.impacts, 10);

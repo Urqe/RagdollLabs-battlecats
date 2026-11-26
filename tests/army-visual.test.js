@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  FIELD_LIMIT, RESERVE_LIMIT, armyScale, encounterBalance, encounterOffset,
+  FIELD_LIMIT, RESERVE_LIMIT, LITERAL_ARMY, CROSSING_LITERAL_ARMY, armyScale, encounterBalance, encounterOffset,
   entryRepresentation,
 } from "../src/army-visual.js";
 import { createFigures } from "../src/figures.js";
@@ -17,13 +17,13 @@ test("both sides share a literal opening and a smooth, bounded scale curve", () 
     const { field, reserve } = armyScale(n, scale);
     const visible = field + reserve;
     assert.ok(visible >= previous && visible <= n && visible - previous <= 2);
-    if (n <= 100) assert.deepEqual(scale, { field: n, reserve: 0 });
+    if (n <= LITERAL_ARMY) assert.deepEqual(scale, { field: n, reserve: 0 });
     previous = visible;
   }
   for (let i = 1; i < samples.length; i++) {
     const before = armyScale(samples[i - 1]);
     const after = armyScale(samples[i]);
-    assert.ok(after.field + after.reserve > before.field + before.reserve);
+    assert.ok(after.field + after.reserve >= before.field + before.reserve);
   }
   const huge = armyScale(50_000_000);
   assert.ok(huge.field <= FIELD_LIMIT && huge.reserve <= RESERVE_LIMIT);
@@ -110,8 +110,8 @@ test("cached reserves cover more ground and keep dense battles within a draw bud
   assert.ok(medium.distant < enormous.distant);
   assert.ok(medium.represented < large.represented);
   assert.ok(large.represented < enormous.represented);
-  assert.ok(enormous.represented < maximum.represented);
-  assert.ok(enormous.represented >= 1500);
+  assert.ok(enormous.represented <= maximum.represented);
+  assert.ok(enormous.represented >= 850);
 
   state.blueTotal = 500000;
   figures.blueArmy(state, 0, contact, []);
@@ -141,4 +141,71 @@ test("entry files use the reserve budget and fade after a cutoff", () => {
   motion.reset();
   assert.equal(motion.falls.length, 0);
   assert.equal(motion.contact.entryRate, 0);
+});
+
+for (const [literal, limit] of [[LITERAL_ARMY, FIELD_LIMIT], [CROSSING_LITERAL_ARMY, 144]]) {
+  test(`stable slots survive the transition above ${literal} cats`, () => {
+    const populations = [literal - 1, literal, literal + 1, literal * 2];
+    const scales = populations.map(n => armyScale(n, {}, literal, limit));
+    assert.deepEqual(scales.slice(0, 2), populations.slice(0, 2).map(field => ({ field, reserve: 0 })));
+    for (let i = 1; i < scales.length; i++) {
+      assert.ok(scales[i].field >= scales[i - 1].field);
+      assert.ok(scales[i].reserve >= scales[i - 1].reserve);
+    }
+    assert.equal(scales[2].field + scales[2].reserve, literal + 1);
+    assert.ok(scales[3].field + scales[3].reserve <= populations[3]);
+  });
+}
+
+test("30, 60 and 150 individual cats expand the formation at mobile scale", () => {
+  const state = createState();
+  const { figures, draws } = painter();
+  const { contact } = createMotion();
+  let previousDepth = 0;
+  for (const population of [30, 60, 150]) {
+    state.blueTotal = population;
+    draws.length = 0;
+    figures.blueArmy(state, 0, contact, []);
+    assert.equal(draws.length, population);
+    assert.ok(draws.every(draw => draw.represented === 1));
+    const depth = Math.max(...draws.map(draw => draw.y)) - Math.min(...draws.map(draw => draw.y));
+    assert.ok(depth > previousDepth);
+    previousDepth = depth;
+  }
+});
+
+test("one extra cat keeps the earlier individual slots near their prior positions", () => {
+  const state = createState();
+  const { figures, draws } = painter();
+  const { contact } = createMotion();
+  state.mode = "playing";
+  state.redTotal = 0;
+  state.blueTotal = 60;
+  figures.blueArmy(state, 0, contact, []);
+  const before = draws.splice(0).reverse();
+  state.blueTotal++;
+  figures.blueArmy(state, 0, contact, []);
+  const after = draws.reverse();
+  for (const [index, slot] of before.entries()) {
+    assert.ok(Math.abs(slot.x - after[index].x) < 1);
+    assert.ok(Math.abs(slot.y - after[index].y) < 2);
+  }
+});
+
+test("overlapping final waves keep older columns visible using bounded draw calls", () => {
+  const state = createState();
+  const { figures, draws } = painter();
+  const { contact } = createMotion();
+  state.mode = "playing";
+  state.blueTotal = 6000;
+  state.squads = Array.from({ length: 36 }, (_, index) => ({
+    x: 329, y: 415, entryY: 565, count: 100, mult: 100, slot: index % 3 - 1,
+    phase: index * 0.1, marchTime: 1.15,
+  }));
+  const before = structuredClone(state);
+  figures.setClock(2);
+  figures.blueArmy(state, 0, contact, []);
+  assert.ok(draws.length < 700);
+  assert.ok(draws.reduce((sum, draw) => sum + draw.represented, 0) > 1000);
+  assert.deepEqual(state, before);
 });

@@ -62,14 +62,14 @@ test("visible wood, HUD progress and state change together on the final hit", ()
   });
   labels.length = 0;
   renderer.draw();
-  assert.ok(labels.includes("×99"));
+  assert.ok(labels.includes("×25"));
   assert.equal(
     labels.filter((t) => t === "SHOOT TO BREAK").length,
     1,
-    "only ×999 wood remains",
+    "only ×100 wood remains",
   );
 });
-test("marching ×999 cats do not activate combat or affect frontline before arrival", () => {
+test("marching ×100 cats do not activate combat or affect frontline before arrival", () => {
   const game = fixture(),
     s = game.state;
   const control = fixture();
@@ -77,7 +77,7 @@ test("marching ×999 cats do not activate combat or affect frontline before arri
   game.update(0.01);
   control.update(0.01);
   assert.equal(s.finalActivated, false);
-  assert.equal(s.blueTotal, 0);
+  assert.equal(s.blueTotal, control.state.blueTotal);
   assert.equal(s.front, control.state.front);
   assert.equal(s.redTotal, control.state.redTotal);
   s.front = 600;
@@ -90,7 +90,7 @@ test("marching ×999 cats do not activate combat or affect frontline before arri
   );
   game.update(0.15);
   assert.equal(s.finalActivated, true);
-  assert.ok(s.blueTotal > 900);
+  assert.ok(s.blueTotal > control.state.blueTotal + 90);
 });
 test("opening wood mid-volley consumes every sibling exactly once", () => {
   const { state: s } = fixture();
