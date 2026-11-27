@@ -1,0 +1,99 @@
+{
+  "browser": "webkit",
+  "version": "26.0",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "report": {
+    "1": {
+      "compound-wave": {
+        "time": 57.466666666664686,
+        "mode": "playing",
+        "active": {
+          "main": {
+            "blue": 519.6148791593605,
+            "red": 19977.926023990138,
+            "front": 384.6162341723532
+          }
+        },
+        "represented": {
+          "blue": {
+            "sprites": 329,
+            "reserve": 84,
+            "occupiedColumnBins": 36,
+            "occupiedRowBins": 23,
+            "atlasWidthPx": 17.529488665470094,
+            "atlasAreaPerViewport": 0.3075179995812699
+          },
+          "red": {
+            "sprites": 286,
+            "reserve": 1116,
+            "occupiedColumnBins": 22,
+            "occupiedRowBins": 21,
+            "atlasWidthPx": 15.960796794709667,
+            "atlasAreaPerViewport": 0.2250413589574232
+          }
+        },
+        "samples": 24,
+        "frameMs": [
+          54,
+          93
+        ],
+        "canvasMs": [
+          3,
+          28
+        ],
+        "usedJSHeapSize": null
+      }
+    },
+    "4": {
+      "encirclement": {
+        "time": 64.86666666666427,
+        "mode": "playing",
+        "wall": "secured",
+        "siege": "encirclement",
+        "active": {
+          "left": {
+            "blue": 0,
+            "red": 919.2207460287586,
+            "front": 308
+          },
+          "right": {
+            "blue": 1889.606376578849,
+            "red": 0,
+            "front": 115
+          }
+        },
+        "represented": {
+          "blue": {
+            "sprites": 304,
+            "reserve": 368,
+            "occupiedColumnBins": 32,
+            "occupiedRowBins": 17,
+            "atlasWidthPx": 15.297969924812028,
+            "atlasAreaPerViewport": 0.21789041106489984
+          },
+          "red": {
+            "sprites": 145,
+            "reserve": 174,
+            "occupiedColumnBins": 15,
+            "occupiedRowBins": 14,
+            "atlasWidthPx": 15.772695415134576,
+            "atlasAreaPerViewport": 0.11009744151127783
+          }
+        },
+        "samples": 24,
+        "frameMs": [
+          52,
+          78
+        ],
+        "canvasMs": [
+          2,
+          7
+        ],
+        "usedJSHeapSize": null
+      }
+    }
+  }
+}
