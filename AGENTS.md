@@ -28,6 +28,40 @@ The authoritative simulation still owns troops, damage, reinforcement ownership,
 
 Do not add base-building, 4X systems, alliances, hero inventories, equipment grinding, monetization, or unrelated progression without explicit scope.
 
+## Army Scale & Visual Progression
+
+SiegeDolls must combine individually recognizable soldiers with the spectacle of enormous armies.
+
+**Design principle: Start with individuals. End with an ocean of cats.**
+
+The desired visual progression is **small squad → recognizable formation → dense army → massive horde**.
+
+### Rendering principles
+
+- **Small armies:** Prefer one visible cat per authoritative soldier where legible and performant, with stable identities and individual reactions.
+- **Medium armies:** Preserve recognizable frontline cats while growing formation width, depth and density.
+- **Large armies:** Use bounded representative sprites, dense rear ranks and lightweight crowd rendering to communicate thousands of soldiers.
+- **Enormous armies:** Use layered, batched or cached visual representations to convey immense scale without independently simulating every soldier.
+
+Transitions must be continuous. Increasing population must not abruptly shrink a formation, erase visible soldiers or reduce perceived army size. When screen space saturates, show growth through density, depth, approaching waves and crowd motion. The renderer must not imply additional combat-effective soldiers beyond the authoritative population.
+
+**Authoritative population and rendered sprite count are different quantities.** Render as many individual cats as meaningfully improves readability at small scale; aggregate representation at larger scale without losing the visible sense of army growth. Keep combat authoritative and aggregate, with mobile-safe bounded rendering cost.
+
+### Multiplier progression
+
+Multiplier gates should create unmistakable visual growth, from a handful of identifiable cats to battlefield-filling hordes. Sequential, compounding gates may be introduced in an explicitly authorized milestone, where the output of one gate can pass through another (for example: **3 → ×99 → 297 → ×99 → 29,403 cats**). This example is illustrative, not a change to the game's current gates or a prescribed balance target. Require accurate population accounting, readable trajectories, deliberate balance and mobile performance validation.
+
+### Design priorities
+
+1. Preserve individuality at small scales.
+2. Make reinforcement waves visibly expand formations.
+3. Maintain readable frontline combat.
+4. Escalate toward spectacular, battlefield-filling hordes.
+5. Keep authoritative combat deterministic and aggregate.
+6. Maintain mobile performance through bounded rendering complexity.
+
+**The goal is not to minimize army populations. The goal is to maximize the perceived scale and satisfaction of army growth.**
+
 ## Combat presentation — Operation Flying Fur
 
 **Combat outcomes are deterministic. Combat presentation is gloriously exaggerated.** SiegeDolls should look like joyful, chaotic slapstick warfare: flying, spinning, bouncing and stumbling miniature cats, rapid arrow storms, and spectacular Purrapult knockbacks. Prioritize readable cause and effect and satisfying visual payoff—not realism.
