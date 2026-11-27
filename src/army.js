@@ -20,6 +20,8 @@ export function updateArmy(
     const arrived = marchSquad(q, state.front, combat, battlefield.marchSpeed, dt);
     crossRelayGates(state, q, previousY, state.front + combat.arrivalOffset, onEffect);
     if (arrived) {
+      if (state.blueTotal > Number.MAX_SAFE_INTEGER - q.count)
+        throw new RangeError("Unsafe active blue population");
       state.blueTotal += q.count;
       state.squads.splice(j, 1);
       onEffect?.("arrival", state.t, q, state.front);

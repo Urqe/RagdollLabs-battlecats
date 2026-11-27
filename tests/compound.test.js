@@ -1,10 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { crossRelayGates } from "../src/multipliers.js";
+import { createMultipliers, crossRelayGates } from "../src/multipliers.js";
 import { createBattleClock, createGame } from "../src/game.js";
 import { LEVEL_ONE, LEVEL_TWO } from "../src/levels.js";
 import { fire, updateProjectiles } from "../src/projectiles.js";
-import { createMultipliers } from "../src/multipliers.js";
 import { createAim } from "./helpers/strategies.js";
 
 const relay = { id: "relay", after: "starter", x: 210, width: 60, hitY: 500, mult: 25 };
@@ -114,4 +113,16 @@ test("compound combat, supply cutoff and victory match at 30, 60 and 120 Hz", ()
   const expected = battle(60);
   assert.deepEqual(battle(30), expected);
   assert.deepEqual(battle(120), expected);
+});
+
+test("arrival rejects an unsafe aggregate instead of rounding away soldiers", () => {
+  const game = createGame({ random: () => 0.5 });
+  game.reset();
+  const { state } = game;
+  state.nextShot = Infinity;
+  state.blueTotal = Number.MAX_SAFE_INTEGER;
+  state.squads.push({ x: 210, y: state.front + 15, count: 5, mult: 5, marchTime: 1 });
+  assert.throws(() => game.update(1 / 60), /Unsafe active blue population/);
+  assert.equal(state.blueTotal, Number.MAX_SAFE_INTEGER);
+  assert.equal(state.squads.length, 1);
 });

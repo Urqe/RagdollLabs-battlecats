@@ -84,6 +84,7 @@ try {
             if (upgrades.length) add("first-upgrade");
             if (tick === 1800) add("midgame");
             if (state.gates.at(-1).open) add("large-unlock");
+            if (state.squads.some(squad => squad.relay)) add("compound-wave");
             if (state.finalActivated || (dual && lanes.right.squads.some(s => s.multiplier === state.gates.at(-1).mult)))
               add("large-wave");
             if (stage().wall === "deploying") add("phalanx");
