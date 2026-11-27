@@ -19,6 +19,14 @@ The green relay now multiplies by five. Three shots give 300 cats at the right g
 
 Earlier intake pushed the line down to y=642 and held the first relay until 79.87 seconds. The selected setup reaches the relay at 57.47 seconds and puts 10,355 blue against 21,388 red at the same contact at 60.08 seconds. Doubling the relay from ×5 to ×10 added around 59,000 blue cats at peak with less than two seconds of extra time saved. Staying on ×25 after unlocking it can win in about 121 seconds. Camping on ×5 or rushing the right barricade still loses. The balanced strategy lost 9,468 blue and 37,912 red cats, compared with 15,394 blue and 12,963 red on the previous PR.
 
+| Cannon policy | Previous PR | Revision |
+| --- | --- | --- |
+| Stay on starter ×5 | Defeat, 53.13 s | Defeat, 61.98 s |
+| Rush right barricade | Defeat, 19.48 s | Defeat, 19.52 s |
+| Unlock ×25, then prioritize ×100 | Victory, 55.53 s | Victory, 54.63 s |
+| Alternate shorter defense and upgrade bursts | Victory, 96.68 s | Victory, 76.73 s |
+| Unlock and keep using ×25 | Victory, 43.37 s | Victory, 120.53 s |
+
 ### Visual comparison
 
 | Previous PR at 30,000 cats per side | Revision at the same population and contact line |
@@ -43,23 +51,23 @@ The level selector and one-finger cannon controls drive all five clips. Clips A�
 
 ### Review verification and performance
 
-All 25 Node test files passed, including compound accounting and the Levels 2–4 support mechanics and connected campaign. The strategy report is identical at 30, 60 and 120 Hz. The recorded Level 1 run reached victory in 77.13 game seconds. [Raw strategy and performance reports](https://github.com/Urqe/RagdollLabs-battlecats/tree/0f24bc8762d3a9e1c6f24869f97380ac3dcbef4b/measurements)
+All 25 Node test files passed, including compound accounting and the Levels 2–4 support mechanics and connected campaign. The strategy report is identical at 30, 60 and 120 Hz. All 18 Chromium browser checks passed across the portrait smoke, support, playthrough, pause and connected-battle suites. WebKit passed the balanced Level 1 playthrough, pause, portrait smoke and archer checks. The recorded Level 1 run reached victory in 77.13 game seconds. [Raw strategy and performance reports](https://github.com/Urqe/RagdollLabs-battlecats/tree/05d04b3eea0cfbcf89013e73bf9673032ad3b5e8/measurements)
 
-The tests below compare the previous PR head `9c5a029` with the revision at the same static contact geometry and population, at 390 × 844 and DPR 2. Each cell shows canvas draw p50/p95 and frame interval p50/p95 in milliseconds. These are short Linux browser samples with shared-host contention. WebKit collected fewer usable frames, with none at the previous build's 30-cat checkpoint in this run. Slow frame intervals in both engines limit what these timings establish. Physical iPhone Safari performance remains unverified.
+The tests below compare the previous PR head `9c5a029` with the revision at the same static contact geometry and population, at 390 × 844 and DPR 2. Each cell shows canvas draw p50/p95 and frame interval p50/p95 in milliseconds. The static profiles ran sequentially after the browser tests. Each checkpoint collected 18 samples. Headless Chromium sustained 16.7 ms frame intervals at 30,000 and 300,000 per side. Headless Linux WebKit reached 42/61 ms p50/p95 at 30,000 per side, in line with the previous PR's 42/62 ms. Physical iPhone Safari performance remains unverified.
 
 | Cats per side | Chromium previous | Chromium revision | WebKit previous | WebKit revision |
 | ---: | ---: | ---: | ---: | ---: |
-| 30 | 1/7.5 · 33.3/150 | 0.5/10.8 · 16.7/66.7 | — | 3/9 · 177/180 |
-| 100 | 1/5 · 33.3/83.4 | 0.7/9.5 · 16.8/50 | 23/23 · 610/610 | 3/17 · 199/245 |
-| 300 | 4.4/24.5 · 66.7/183.3 | 3.4/13.4 · 33.34/66.6 | 3/42 · 212/259 | 10/17 · 160/229 |
-| 1000 | 1.1/10.9 · 33.4/83.4 | 2.9/14.1 · 16.7/66.7 | 32/32 · 1002/1002 | 2/10 · 176/200 |
-| 3000 | 1.1/12.7 · 50/100 | 2/11.8 · 33.3/66.7 | 54/159 · 448/495 | 2/10 · 141/198 |
-| 10000 | 2.7/46.5 · 83.3/116.7 | 2/11.2 · 33.3/66.7 | 12/44 · 205/229 | 16/48 · 195/267 |
-| 30000 | 7.3/54.9 · 99.9/300 | 3.3/12.4 · 50.1/83.3 | 7/12 · 184/206 | 12/34 · 216/268 |
-| 100000 | 1.9/11.8 · 83.3/133.3 | 1.8/4.2 · 16.7/66.57 | 3/14 · 232/288 | 9/45 · 184/228 |
-| 300000 | 7.1/16 · 83.3/199.97 | 1.8/3.9 · 16.7/66.7 | 12/16 · 242/286 | 12/17 · 182/210 |
+| 30 | 0.5/1.7 · 16.7/16.77 | 0.5/1.6 · 16.7/16.8 | 1/4 · 24/50 | 1/3 · 22/50 |
+| 100 | 0.7/1.1 · 16.7/33.4 | 0.6/0.8 · 16.7/16.7 | 1/5 · 24/51 | 1/4 · 25/81 |
+| 300 | 1.2/1.8 · 16.7/16.8 | 1/1.5 · 16.7/16.8 | 2/3 · 30/53 | 1/2 · 26/54 |
+| 1000 | 1.4/1.9 · 16.7/16.7 | 1.1/1.7 · 16.7/16.7 | 2/5 · 29/56 | 2/5 · 28/55 |
+| 3000 | 1.2/3.1 · 16.7/16.7 | 1.3/1.8 · 16.7/16.7 | 2/2 · 34/54 | 2/6 · 33/60 |
+| 10000 | 1.3/2.8 · 16.7/16.7 | 1.9/2.9 · 16.7/33.3 | 2/6 · 34/55 | 2/6 · 36/59 |
+| 30000 | 1.5/4 · 16.7/16.7 | 1.6/2.1 · 16.7/16.7 | 4/6 · 42/62 | 3/6 · 42/61 |
+| 100000 | 2.2/7.5 · 16.7/50 | 1.6/2.6 · 16.7/16.7 | 3/8 · 38/66 | 3/6 · 36/61 |
+| 300000 | 1.7/3 · 16.7/16.7 | 1.7/2.1 · 16.7/16.7 | 3/6 · 40/61 | 3/7 · 41/58 |
 
-At 30,000 each, both builds submit 252 detailed cats and 1,348 reserve silhouettes per side. Approximate red/blue occupied area moves from 50,879/78,085 to 47,072/72,898 CSS px² at the static contact because the denser bands overlap. The change in coverage over time comes from the moving line and the reserve buildup in play. At 300,000 each the cap stays at 252 detailed cats and 1,560 reserve silhouettes per side. Chromium reported approximately 2.24/2.79 MB of JavaScript heap at the 30-cat checkpoint and 3.01/3.50 MB at 300,000 cats, previous/revision. WebKit supplied no heap measurement.
+At 30,000 each, both builds submit 252 detailed cats and 1,348 reserve silhouettes per side. Approximate red/blue occupied area moves from 50,879/78,085 to 47,072/72,898 CSS px² at the static contact because the denser bands overlap. The change in coverage over time comes from the moving line and the reserve buildup in play. At 300,000 each the cap stays at 252 detailed cats and 1,560 reserve silhouettes per side. Chromium reported approximately 2.24/2.81 MB of JavaScript heap at the 30-cat checkpoint and 3.09/3.69 MB at 300,000 cats, previous/revision. WebKit supplied no heap measurement.
 
 The relay and encirclement were also profiled at fixed-step gameplay checkpoints. Level 1 is matched by the first compound crossing, so the populations differ. Level 4 reaches the same state in both builds.
 
@@ -176,7 +184,7 @@ npm run dev
 CHROMIUM_PATH=/usr/bin/chromium node scripts/profile-ocean.js chromium test-results/ocean
 node scripts/profile-ocean.js webkit
 node scripts/compare-ocean.js 60
-node scripts/capture-arcade-combat.js test-results/ocean-gameplay a d f
+HIDE_HUD=1 node scripts/capture-arcade-combat.js test-results/ocean-gameplay a d f
 ```
 
 Set `SIEGE_URL` to the HTTP server of the unchanged baseline worktree to reproduce the matched profiles. For actual relay and flank checkpoints, run `PROFILE_LEVELS=1,4 PROFILE_CHECKPOINTS=compound-wave,encirclement node scripts/profile-army-individuality.js chromium`. Use `large-wave,encirclement` on the baseline and substitute `webkit` for WebKit.
