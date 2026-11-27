@@ -42,6 +42,7 @@ The desired visual progression is **small squad → recognizable formation → d
 - **Medium armies:** Preserve recognizable frontline cats while growing formation width, depth and density.
 - **Large armies:** Use bounded representative sprites, dense rear ranks and lightweight crowd rendering to communicate thousands of soldiers.
 - **Enormous armies:** Use layered, batched or cached visual representations to convey immense scale without independently simulating every soldier.
+- **Territorial crowd movement:** Large armies should read as continuous, living masses occupying battlefield space. Their visible boundaries must respond to authoritative frontline position, combat pressure, casualties and terrain. Victorious formations expand into vacated enemy territory; defeated formations compress and retreat. Dense rendering must communicate territorial conquest, not merely a larger population counter. Keep this a derived visual occupation field, not a second authoritative territory simulation.
 
 Transitions must be continuous. Increasing population must not abruptly shrink a formation, erase visible soldiers or reduce perceived army size. When screen space saturates, show growth through density, depth, approaching waves and crowd motion. The renderer must not imply additional combat-effective soldiers beyond the authoritative population.
 
