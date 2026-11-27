@@ -1,3 +1,4 @@
+import { crowdColumn, crowdRank, crowdReach, crowdSeam } from "./crowd-field.js";
 import { effectiveStrength } from "./lane-combat.js";
 import { TAU, clamp } from "./config.js";
 import { laneHalfWidth, polygon } from "./terrain.js";
@@ -74,9 +75,9 @@ function reserveAtlas(ownerDocument) {
         for (let i = 0; i < size; i++) {
           const x = (size - 0.5) * TILE_WIDTH + tileX(i, pose);
           const y = (team * TILE_POSES + pose + 0.5) * TILE_HEIGHT + tileY(i, pose);
-          ctx.setTransform(1.46, 0, 0, 1.46, x * TILE_RESOLUTION, y * TILE_RESOLUTION);
+          ctx.setTransform(1.08, 0, 0, 1.08, x * TILE_RESOLUTION, y * TILE_RESOLUTION);
           const tint = (team ? BLUE : RED) + Number((i + pose) % 4 === 0);
-          paintCat(ctx, colors[tint], pose, false, false);
+          paintCat(ctx, colors[tint], pose, true, false);
         }
       }
     }
@@ -197,14 +198,15 @@ export function createFigures(ctx, ownerDocument) {
     );
   }
 
-  function drawReserve(state, start, end, living, extent, red, gap, strength, fallPose, formation, release, casualty) {
+  function drawReserve(state, start, end, living, extent, red, gap, strength, fallPose, formation, release, casualty, mass, retreat) {
     if (!extent) return;
     const direction = red ? -1 : 1;
     const team = red ? 0 : 1;
-    const span = red ? Math.abs(end - start) : Math.min(270, Math.abs(end - start));
+    const available = (end - start) * direction;
+    const span = crowdReach(available, mass, retreat);
     const pitch = span / RESERVE_ROWS;
     const battleLine = state.front - (red ? 0 : advance(state, 0));
-    const depth = red ? 2.15 : 1.26;
+    const bend = 0.8 - 0.53 * smoothStep((mass - 400) / 10000);
     const cycle = Math.floor(clock * 7);
     let split = 0;
     let first = 0;
@@ -213,19 +215,19 @@ export function createFigures(ctx, ownerDocument) {
       const fraction = (row + 0.5) / RESERVE_ROWS;
       const march = red ? 0 : advance(state, 0.57 + fraction * 0.43);
       const lag = formationLag(formation, state.front, 0.74 + fraction * 0.26) * release;
-      const distance = span * (1 - (1 - fraction) ** depth);
-      const y = clamp(start + direction * distance + lag - march, 3, 710);
-      const half = laneHalfWidth(y) - 8;
+      const distance = crowdRank(span, row, RESERVE_ROWS, bend);
+      const y = clamp(start + direction * distance + lag - march, 10, 700);
+      const half = Math.min(laneHalfWidth(y - 11), laneHalfWidth(y), laneHalfWidth(y + 11)) - 12;
       // A column belongs to this band for its entire lifetime. The lane
       // changes its spacing, never its index or the next band's occupancy.
       const columns = 7 + 2 * Math.min(5, Math.floor(row / 3));
-      const step = Math.min(19.4 * (0.83 + y * 0.00065), half / ((columns - 1) / 2));
+      const compact = Math.min(20, half / ((columns - 1) / 2));
+      const spread = Math.min(24, half / ((columns - 1) / 2));
+      const step = compact + (spread - compact) * smoothStep((extent - 80) / 550);
       const size = clamp(step / 19.4, 0.42, 1.2);
       for (let col = 0; first < extent && col < columns; col++, first += RESERVE_GROUP) {
-        const side = (col % 2 ? 1 : -1) * Math.ceil(col / 2);
         const track = row * 29 + col;
-        const x = 210 + side * step + (row % 2 - 0.5) * 3
-          + spacingNoise[track] * 2.5;
+        const x = 210 + clamp(crowdColumn(col, row, step, clock), -half, half);
         const stride = Math.sin(clock * 6 + row * 0.71 + col * 0.46);
         const refill = row < 3 ? rankReplenishment(clock - casualty.at, 10 + row, Math.abs(x - casualty.x)) : 0;
         const cy = boundCatY(y + direction * (stride * Math.min(pitch * 0.23, 1.4) - refill),
@@ -313,6 +315,8 @@ export function createFigures(ctx, ownerDocument) {
     const recoil = initialized ? presentation.recoil : 0;
     const release = 1 - smoothStep(state.victoryElapsed / 0.38);
     const compression = initialized ? presentation.compression * release : 0;
+    const mass = initialized ? presentation.occupationMass : total;
+    const crowd = smoothStep((reserve - 25) / 450);
     const fallPose = initialized ? collapsePose(presentation.collapseAge) : 0;
     if (!fieldExtent && !reserveExtent) return;
     const side = red ? -1 : 1;
@@ -327,9 +331,10 @@ export function createFigures(ctx, ownerDocument) {
     const balance = encounterBalance(ownPressure, enemyPressure);
     const formation = contact.formation;
     const packed = (formation?.compression ?? 0) * release;
+    const retreat = Math.max(0, -balance) * Math.max(0, -pressure) * crowd;
     const step = Math.min(
       (reach * 0.59) / Math.max(1, rows),
-      10.6 - packed * (red ? 0.65 : 2.15) - compression * 0.76,
+      10.6 - packed * (red ? 0.65 : 2.15) - compression * 0.76 - crowd * 1.8,
     );
     const gapAmount = gapStrength(clock - gap?.at);
     const sinceCutoff = clock - (contact.cutoffAt ?? clock);
@@ -349,17 +354,19 @@ export function createFigures(ctx, ownerDocument) {
         remaining -= RESERVE_GROUP * (7 + 2 * Math.min(5, Math.floor(occupiedRows / 3)));
         occupiedRows++;
       }
-      const depth = Math.max(0, (occupiedRows - 0.5) / RESERVE_ROWS);
-      const rearSpread = Math.min(270, end - rear) * (1 - (1 - depth) ** 1.26);
+      const rearSpread = occupiedRows ? crowdRank(crowdReach(end - rear, mass, retreat),
+        occupiedRows - 1, RESERVE_ROWS, 0.8 - 0.53 * smoothStep((mass - 400) / 10000)) : 0;
       const target = (reserve > 0 ? rear + rearSpread : tip + rows * step + 8)
         + receiverLag - advance(state, 0.63);
       updateReceiver(target, state);
     }
     drawReserve(state, rear, end, reserve - entry, reserveExtent - entry,
-      red, gap, red ? gapAmount : 0, fallPose, formation, release, contact.exchanges[Number(!red)]);
+      red, gap, red ? gapAmount : 0, fallPose, formation, release, contact.exchanges[Number(!red)], mass, retreat);
     if (entry) drawEntry(entry, tip, contact.cutoffAt, gap, gapAmount);
 
     const engaged = total > 0 && opposing > 0 && state.mode === "playing";
+    const seamStrength = engaged ? smoothStep((Math.max(total, opposing) - 350) / 2000) : 0;
+    const seamWidth = laneHalfWidth(front);
     const shock = Math.max(0, 1 - contact.clashAge / 0.15) ** 2;
     const flush = Math.max(0, 1 - (clock - contact.surgeAt) / 0.68);
     const stress = red ? contact.red : contact.blue;
@@ -383,7 +390,9 @@ export function createFigures(ctx, ownerDocument) {
         const cheer = Math.sin(Math.PI * clamp(cheerTime / 0.55, 0, 1)) * 7;
         baseline = tip + side * row * step + lag - travel - cheer;
         lane = laneHalfWidth(baseline) - 6;
-        spacing = fieldSpacing(lane, row, field, 14);
+        const compact = fieldSpacing(lane, row, field, 14);
+        const full = lane / (row < 4 ? 4 + row : 8);
+        spacing = compact + (full - compact) * crowd;
         anchor = red ? 0 : (contact.blueAnchor - 210) * clamp((baseline - 275) / 320, 0, 0.32);
         stagger = row ? (row % 2 - 0.5) * Math.min(3, spacing * 0.4) : 0;
         lastRow = row;
@@ -402,7 +411,9 @@ export function createFigures(ctx, ownerDocument) {
       const opening = engaged && !fallen
         ? breakthroughOffset(clock, x, row, formation?.opening ?? 0, red) : 0;
       let displacement = 0;
-      const seam = engaged ? contactSeam(leadingY, x, contact, gap, gapAmount) : leadingY;
+      const liveSeam = crowdSeam(leadingY, (x - 210) / seamWidth, clock,
+        red ? -balance : balance, seamStrength);
+      const seam = engaged ? contactSeam(liveSeam, x, contact, gap, gapAmount) : leadingY;
       if (engaged && row < 4) {
         for (const exchange of contact.exchanges)
           displacement += exchangeOffset(exchange, clock, x, row, red);

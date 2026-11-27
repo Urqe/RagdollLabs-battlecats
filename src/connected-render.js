@@ -1,3 +1,4 @@
+import { crowdColumn, crowdRank, crowdReach, crowdSeam } from "./crowd-field.js";
 import { createAirborneCats } from "./airborne-cats.js";
 import { FLAG_CAPTURE_TIME, FLAG_RAISE_TIME, mergeProgress, smoothStep, victoryAdvance } from "./army-movement.js";
 import { armyScale, CROSSING_LITERAL_ARMY, encounterBalance, encounterOffset, fieldColumn, fieldRow, fieldSpacing } from "./army-visual.js";
@@ -303,7 +304,7 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     const pose = local.dynamics.pose;
     const step = Math.min((depth * 0.64) / rows, (red ? 8.1 : 8.8) - Math.max(0, -balance) * 1.9) * (1 - pose.compression * 0.17);
     const rearDepth = rows * step + 14;
-    const reservePitch = Math.max(0, Math.min(10, (depth - rearDepth) / 14));
+    const rearReach = crowdReach(depth - rearDepth, population, Math.max(0, -balance));
     const budget = Math.min(reserveLimit, reserve);
     const staging = intake > 0 && depth > 128 ? Math.floor(budget * 0.28 / 6) : 0;
     const reserveCount = budget - staging * 6;
@@ -318,13 +319,13 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     }
     for (let i = Math.ceil(reserveCount / 6) - 1; i >= 0; i--) {
       const row = Math.floor(i / 7), col = i % 7;
-      const d = Math.min(depth, rearDepth + row * reservePitch);
+      const d = Math.min(depth, rearDepth + crowdRank(rearReach, row, 14, 0.31));
       const offset = Math.sin(time * 7 + row * 0.9 + col * 0.4) * 1.8 + Math.sin(i * 4.1) * 3;
       const lag = formationLag(pose, front, 0.8 + row / 70);
       const y = front + side * clamp(d + offset + side * lag, 9, depth);
       const half = frontage(id, y);
-      const file = (col % 2 ? 1 : -1) * Math.ceil(col / 2);
-      const x = center(id, y) + file * half * 0.25 + (row % 2 ? 3 : -3);
+      const x = center(id, y) + clamp(crowdColumn(col, row, (half - 12) / 3, time),
+        -half + 12, half - 12);
       const refill = row < 3 ? rankReplenishment(sinceLoss, 10 + row, Math.abs(x - gap)) : 0;
       const shifted = y - side * Math.min(Math.abs(y - front) - 7, refill);
       stamp(x, shifted, Math.min(6, reserveCount - i * 6), red, Math.floor(time * 8) + i,
@@ -345,7 +346,9 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
       const lag = formationLag(pose, front, Math.min(0.8, row / 22));
       const refill = Math.min(step * 0.58,
         rankReplenishment(sinceLoss, row, Math.abs(x - gap)));
-      y = front + side * clamp(d - push - refill + stride + side * lag, 7, depth);
+      const seam = crowdSeam(front, (x - center(id, y)) / half, time,
+        red ? -balance : balance, opposing > 0 ? smoothStep((Math.max(population, opposing) - 180) / 700) : 0);
+      y = front + side * clamp(d - push - refill + stride + side * (lag + seam - front), 7, depth);
       const wall = frontage(id, y) - 5;
       const anchor = center(id, y);
       const drawX = clamp(x, anchor - wall, anchor + wall);
@@ -361,7 +364,7 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     }
     if (!red && !invert) {
       const rear = reserveCount > 0
-        ? rearDepth + Math.floor((Math.ceil(reserveCount / 6) - 1) / 7) * reservePitch
+        ? rearDepth + crowdRank(rearReach, Math.floor((Math.ceil(reserveCount / 6) - 1) / 7), 14, 0.31)
         : 8 + (rows - 1) * step;
       updateReceiver(id, front, depth, rear, time);
     }
