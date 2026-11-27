@@ -1,6 +1,80 @@
 # Milestone 24 — Ocean of Cats
 
-## Baseline and rendering
+## PR #38 review revision
+
+Level 1 still opens with 34 blue and 78 red cats. The red mobilization begins at 30 seconds, ramps in and out over eight seconds, and ends at 77 seconds or when blue cuts the supply route. Its extra intake peaks at 720 cats per second. The first 360 red cats count normally for contact. Contributions beyond the first ranks diminish logarithmically before the existing frontage curve applies. When blue earns a decisive advantage, the red casualty cap rises so displaced reserves can collapse before the battle becomes a cleanup grind. Losses still come from the existing aggregate attack. Levels 2–4 retain their combat settings.
+
+In dense corridor battles, interlaced detail ranks widen into the terrain-defined lane and overlap the first reserve ranks. Compression flows through staggered columns behind the live line in the direction of contact pressure. The displacement is at most 18 world units and is clipped at the battle line. Retreat shortens the reserve depth, while the moving line creates more space behind the advancing side. The renderer still uses the same bounded sprite and tile budgets. The narrower stone crossing constrains how broad the contact can get, and individual ranks become most readable again as the armies enter the yards.
+
+The green relay now multiplies by five. Three shots give 300 cats at the right gate and 1,500 after the downstream crossing. The relay opens with the existing barricade, and the wave fans outward from the crossing over about a third of a second. Its cat tiles follow the moving cohort and merge into the receiver on the existing travel schedule.
+
+| Balanced strategy | Outcome | Peak blue / red | Battle time |
+| --- | --- | ---: | ---: |
+| Previous PR, ×100 → ×3 | Victory | 68,281 / 3,495 | 89.55 s |
+| Staggered intake, ×100 → ×3 | Victory | 49,941 / 22,032 | 77.97 s |
+| Staggered intake, ×100 → ×5 | Victory | 75,407 / 21,389 | 75.78 s |
+| Staggered intake, ×100 → ×10 | Victory | 134,575 / 20,945 | 73.83 s |
+| Earlier intake, ×100 → ×5 | Victory | — / 28,592 | 97.30 s |
+| Staggered intake with full reserve pressure, ×100 → ×5 | Defeat | — | 56.30 s |
+
+Earlier intake pushed the line down to y=642 and held the first relay until 79.87 seconds. The selected setup reaches the relay at 57.47 seconds and puts 10,355 blue against 21,388 red at the same contact at 60.08 seconds. Doubling the relay from ×5 to ×10 added around 59,000 blue cats at peak with less than two seconds of extra time saved. Staying on ×25 after unlocking it can win in about 121 seconds. Camping on ×5 or rushing the right barricade still loses. The balanced strategy lost 9,468 blue and 37,912 red cats, compared with 15,394 blue and 12,963 red on the previous PR.
+
+### Visual comparison
+
+| Previous PR at 30,000 cats per side | Revision at the same population and contact line |
+| --- | --- |
+| ![Previous reserve layout](evidence/ocean-of-cats/review-baseline-30000.jpg) | ![Revised ranks and reserve layout](evidence/ocean-of-cats/review-selected-30000.jpg) |
+
+| Contested approach, game time 61 s | Blue takes the upper yard, game time 74 s |
+| --- | --- |
+| ![Red holds the upper field as blue gathers below](evidence/ocean-of-cats/review-contested.jpg) | ![Red contracts as blue fills the ground it vacated](evidence/ocean-of-cats/review-breakthrough.jpg) |
+
+The second pair comes from one uninterrupted Level 1 run with the HUD hidden. Red peaked at 22,299 cats in this recording. The line reversed near y=392 while blue reinforcements arrived and reached y=100 at victory. Red held the upper yard before the reversal. Blue passed through the crossing, spread onto the open approach and continued forward while the red footprint contracted toward the castle. Terrain and reinforcement gate labels remained visible.
+
+### Review recordings
+
+The level selector and one-finger cannon controls drive all five clips. Clips A–D are excerpts from E. Their timing is the original browser capture, which sometimes ran slower than game time on the shared host.
+
+- [A — The enormous red army](https://raw.githubusercontent.com/Urqe/RagdollLabs-battlecats/aa3af00e4066e664c26362b3bd02b40c3d7ed002/A-red-army.mp4)
+- [B — Two armies colliding](https://raw.githubusercontent.com/Urqe/RagdollLabs-battlecats/aa3af00e4066e664c26362b3bd02b40c3d7ed002/B-collision.mp4)
+- [C — Reinforcement and territorial conquest](https://raw.githubusercontent.com/Urqe/RagdollLabs-battlecats/aa3af00e4066e664c26362b3bd02b40c3d7ed002/C-territorial-conquest.mp4)
+- [D — Compound multiplication](https://raw.githubusercontent.com/Urqe/RagdollLabs-battlecats/aa3af00e4066e664c26362b3bd02b40c3d7ed002/D-compound-multiplication.mp4)
+- [E — Complete Level 1 victory](https://raw.githubusercontent.com/Urqe/RagdollLabs-battlecats/aa3af00e4066e664c26362b3bd02b40c3d7ed002/E-complete-victory.webm)
+
+### Review verification and performance
+
+All 25 Node test files passed, including compound accounting and the Levels 2–4 support mechanics and connected campaign. The strategy report is identical at 30, 60 and 120 Hz. The recorded Level 1 run reached victory in 77.13 game seconds. [Raw strategy and performance reports](https://github.com/Urqe/RagdollLabs-battlecats/tree/0f24bc8762d3a9e1c6f24869f97380ac3dcbef4b/measurements)
+
+The tests below compare the previous PR head `9c5a029` with the revision at the same static contact geometry and population, at 390 × 844 and DPR 2. Each cell shows canvas draw p50/p95 and frame interval p50/p95 in milliseconds. These are short Linux browser samples with shared-host contention. WebKit collected fewer usable frames, with none at the previous build's 30-cat checkpoint in this run. Slow frame intervals in both engines limit what these timings establish. Physical iPhone Safari performance remains unverified.
+
+| Cats per side | Chromium previous | Chromium revision | WebKit previous | WebKit revision |
+| ---: | ---: | ---: | ---: | ---: |
+| 30 | 1/7.5 · 33.3/150 | 0.5/10.8 · 16.7/66.7 | — | 3/9 · 177/180 |
+| 100 | 1/5 · 33.3/83.4 | 0.7/9.5 · 16.8/50 | 23/23 · 610/610 | 3/17 · 199/245 |
+| 300 | 4.4/24.5 · 66.7/183.3 | 3.4/13.4 · 33.34/66.6 | 3/42 · 212/259 | 10/17 · 160/229 |
+| 1000 | 1.1/10.9 · 33.4/83.4 | 2.9/14.1 · 16.7/66.7 | 32/32 · 1002/1002 | 2/10 · 176/200 |
+| 3000 | 1.1/12.7 · 50/100 | 2/11.8 · 33.3/66.7 | 54/159 · 448/495 | 2/10 · 141/198 |
+| 10000 | 2.7/46.5 · 83.3/116.7 | 2/11.2 · 33.3/66.7 | 12/44 · 205/229 | 16/48 · 195/267 |
+| 30000 | 7.3/54.9 · 99.9/300 | 3.3/12.4 · 50.1/83.3 | 7/12 · 184/206 | 12/34 · 216/268 |
+| 100000 | 1.9/11.8 · 83.3/133.3 | 1.8/4.2 · 16.7/66.57 | 3/14 · 232/288 | 9/45 · 184/228 |
+| 300000 | 7.1/16 · 83.3/199.97 | 1.8/3.9 · 16.7/66.7 | 12/16 · 242/286 | 12/17 · 182/210 |
+
+At 30,000 each, both builds submit 252 detailed cats and 1,348 reserve silhouettes per side. Approximate red/blue occupied area moves from 50,879/78,085 to 47,072/72,898 CSS px² at the static contact because the denser bands overlap. The change in coverage over time comes from the moving line and the reserve buildup in play. At 300,000 each the cap stays at 252 detailed cats and 1,560 reserve silhouettes per side. Chromium reported approximately 2.24/2.79 MB of JavaScript heap at the 30-cat checkpoint and 3.01/3.50 MB at 300,000 cats, previous/revision. WebKit supplied no heap measurement.
+
+The relay and encirclement were also profiled at fixed-step gameplay checkpoints. Level 1 is matched by the first compound crossing, so the populations differ. Level 4 reaches the same state in both builds.
+
+| Checkpoint | Chromium previous → revision | WebKit previous → revision |
+| --- | --- | --- |
+| Level 1 first compound wave | 5.3/11.4 · 49.9/83.4 → 6.7/44.1 · 66.7/100 | 4/8 · 52/94 → 3/28 · 54/93 |
+| Level 4 encirclement | 4.8/11.1 · 33.4/66.8 → 2/13.9 · 33.4/66.7 | 6/37 · 73/166 → 2/7 · 52/78 |
+
+At the first relay, red grows from 280 detailed sprites plus 264 reserve silhouettes to 286 plus 1,116. Blue has 329 detailed sprites and 84 reserve silhouettes at that revision checkpoint, including cohorts in transit. The later recording shows blue fill in as the chain arrives.
+
+## Original Milestone 24 submission
+
+The historical comparison below describes the first PR submission and its original ×3 relay.
+
+### Baseline and rendering
 
 The comparison starts at `05f50a2`, which includes the Milestone 23 renderer and the territorial crowd movement principle. Milestone 23 capped the corridor at 252 detailed slots and 720 reserve silhouettes per side. In the 30,000-versus-30,000 diagnostic, the red reserves covered a narrow block with a gap between it and the detailed ranks. Blue reached the width of the lower yard, but its rear formation ended partway through the yard. At 100,000 the fields hardly grew.
 
