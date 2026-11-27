@@ -120,6 +120,7 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
   s = await snapshot(page);
   expect(s.front).toBeLessThan(frontBefore - 80);
   expect(s.blueTotal).toBeGreaterThan(4000);
+  expect(s.squads.some(q => q.relay && q.count === 300 && q.gates.length === 2)).toBe(true);
   expect(s.redTotal).toBeLessThan(arrival.redTotal * 0.75);
   expect(s.redTotal).toBeGreaterThan(0);
   milestones.push({ event: "×100 counterattack", ...battlefield(s) });

@@ -483,10 +483,14 @@ export function createFigures(ctx, ownerDocument) {
 
   function travelPose(q, i, age, state) {
     const profile = waveProfile(q.mult);
-    const entryY = q.entryY ?? state.level.combat.spawnY;
-    const run = age - waveRelease(profile, i);
+    const entryY = q.relay?.y ?? q.entryY ?? state.level.combat.spawnY;
+    const relayAge = q.relay ? age - q.relay.at : 0;
+    const progress = q.relay ? relayAge + 0.20 : age;
+    const run = progress - waveRelease(profile, i) * (q.relay ? 0.58 : 1);
     if (run < 0) return false;
-    const rawY = waveY(entryY, run, state.level);
+    const rawY = q.relay
+      ? entryY - Math.max(0, run - 0.18) * state.level.battlefield.marchSpeed
+      : waveY(entryY, run, state.level);
     const push = clamp(run / profile.spread, 0, 1);
     const spread = push * (2 - push);
     const sway = spacingNoise[(i + Math.floor(q.phase * 31)) % spacingNoise.length];
@@ -496,9 +500,10 @@ export function createFigures(ctx, ownerDocument) {
     const y = boundCatY(receivingY(rawY, receivingRear, front, entryY)
       + (sway * 3 + stride * 1.4) * spread, front, false);
     const route = clamp((y - 242) / 270, 0, 1);
-    const offset = (q.slot || 0) * profile.laneOffset;
+    const offset = (q.slot || 0) * profile.laneOffset * (q.relay ? 1.35 : 1);
     const col = i % profile.cols;
-    const local = (col - (profile.cols - 1) / 2) * profile.spacing + sway * 6
+    const fan = q.relay ? 1 + smoothStep(relayAge / 0.28) * 0.65 : 1;
+    const local = (col - (profile.cols - 1) / 2) * profile.spacing * fan + sway * 6
       + (profile.cols > 2 ? (rank % 2 - 0.5) * profile.spacing * 0.64 : 0);
     const center = 210 + (q.x - 210 + offset * spread) * (1 - spread + spread * route ** 1.38);
     const half = laneHalfWidth(y) - 2;
@@ -525,7 +530,7 @@ export function createFigures(ctx, ownerDocument) {
     if (!travelPose(q, member, clock - q.born, state)) return 0;
     const entryY = q.entryY ?? state.level.combat.spawnY;
     if (starts[member] < 0) {
-      const clearOfGate = entryY - 46;
+      const clearOfGate = (q.relay?.y ?? entryY) - 28;
       if (traveller.y > clearOfGate && clock - q.at < 0.26) return 0;
       starts[member] = clock;
       if (traveller.y > clearOfGate || y > clearOfGate)
@@ -554,6 +559,20 @@ export function createFigures(ctx, ownerDocument) {
   function blueWave(q, age, state) {
     const limit = Math.min(waveProfile(q.mult).count, q.count);
     let alpha = 1;
+    if (q.relay) {
+      const ageAfterRelay = age - q.relay.at;
+      const tiles = Math.min(16, Math.floor((q.count - limit) / RESERVE_GROUP), Math.ceil(Math.log2(q.count / 100) * 7));
+      for (let i = tiles - 1; i >= 0; i--) {
+        if (!travelPose(q, i * 2, age, state)) continue;
+        const opacity = tailVisibility(q, i * 2) * smoothStep((ageAfterRelay - i * 0.012) / 0.18);
+        if (opacity <= 0) continue;
+        ctx.globalAlpha = alpha = opacity;
+        const y = Math.min(706, traveller.y + 10 + (i % 4) * 4);
+        const half = laneHalfWidth(y) - 12;
+        const x = 210 + clamp(traveller.x - 210 + (i % 3 - 1) * 9, -half, half);
+        drawReserveTile(x, y, RESERVE_GROUP, 1, (Math.floor(clock * 10) + i) % TILE_POSES, 0.95);
+      }
+    }
     for (let i = 0; i < limit; i++) {
       if (!travelPose(q, i, age, state)) break;
       if (q.painted & (1 << i)) continue;

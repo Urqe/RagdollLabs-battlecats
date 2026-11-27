@@ -63,6 +63,7 @@ function onEffect(kind, time, value, front, redLoss, blueLoss) {
   }
   if (kind === "arrival") return;
   if (kind === "multiply") sound.play(`gate${value}`);
+  else if (kind === "compound") sound.play("gate100");
   else if (kind === "break")
     sound.play(value === "catapult" ? "artilleryReady" : "gateUnlock");
   else sound.play(kind === "flagCapture" ? "victory" : kind);
@@ -167,7 +168,8 @@ function buildBarrierHud() {
     );
     const field = document.createElement("div");
     field.className = "stat";
-    field.textContent = `${gate.name} BARRIER`;
+    const relay = state.level.relayGates?.find(relay => relay.after === gate.id);
+    field.textContent = relay ? `${gate.name} → ×${relay.mult}` : `${gate.name} BARRIER`;
     const value = document.createElement("b");
     value.id = `gate${gate.mult}`;
     field.append(value);

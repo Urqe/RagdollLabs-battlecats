@@ -417,6 +417,29 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     ctx.restore();
   }
 
+  function relayGate(gate, clock) {
+    const enabled = state.gates.some(entry => entry.id === gate.after && entry.open) &&
+      (!gate.requires || state.gates.some(entry => entry.id === gate.requires && entry.open));
+    const age = clock - (state.relayFlashes[gate.id] ?? -Infinity);
+    const glow = clamp(1 - age / 0.24, 0, 1);
+    const { x, width, hitY: y } = gate;
+    const left = x - width / 2;
+    ctx.fillStyle = enabled ? "#39d9ad" : "#46605c";
+    ctx.fillRect(left, y - 5, width, 5);
+    ctx.fillRect(left, y - 36, 5, 32);
+    ctx.fillRect(left + width - 5, y - 36, 5, 32);
+    ctx.fillStyle = enabled ? "#146b60" : "#364845";
+    ctx.fillRect(left - 3, y - 41, width + 6, 19);
+    if (glow) {
+      ctx.globalAlpha = glow * 0.65;
+      ctx.strokeStyle = "#a6ffdd";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(left - age * 55, y - age * 50, width + age * 110, 7 + age * 28);
+      ctx.globalAlpha = 1;
+    }
+    label(`×${gate.mult}`, x, y - 32, 14, enabled ? "#edfff3" : "#b3c7bf", "#203f3a");
+  }
+
   function draw() {
     ctx.clearRect(0, 0, W, H);
     if (terrain?.width) ctx.drawImage(terrain, 0, 0, W, H);
@@ -449,6 +472,7 @@ export function createRenderer(state, canvas, motion = createMotion()) {
         drawArcherVolley(ctx, clock, motion.archers.launch, motion.archers.impact);
       }
     }
+    for (const gate of state.level.relayGates ?? []) relayGate(gate, clock);
     for (const gate of state.gates) drawGate(gate, gate.style);
     if (emplacement) {
       if (archerSupport) {

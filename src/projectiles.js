@@ -51,7 +51,7 @@ export function updateProjectiles(
     }
     shots.splice(j, 1);
     if (surface.open) {
-      spawnSquad(surface, shot.x, Math.min(previousY, hitY), shot.slot);
+      spawnSquad(surface, shot.x, Math.min(previousY, hitY), shot.slot, shot.volley);
     } else {
       hitBarricade(
         state,
@@ -74,8 +74,9 @@ export function updateProjectiles(
 }
 export function fire(state, sprinkle) {
   const { shotY } = state.level.battlefield;
+  const volley = state.nextVolley++;
   for (let i = -1; i <= 1; i++)
-    state.shots.push({ x: state.gunX + i * 9, y: shotY, slot: i });
+    state.shots.push({ x: state.gunX + i * 9, y: shotY, slot: i, volley });
   state.recoil = 1;
   sprinkle(state.gunX, shotY + 7, "#c7f5ff", 3);
 }

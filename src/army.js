@@ -1,3 +1,4 @@
+import { crossRelayGates } from "./multipliers.js";
 import { clamp } from "./config.js";
 import { updateDanger } from "./danger.js";
 import { advanceLaneCombat, marchSquad } from "./lane-combat.js";
@@ -15,7 +16,10 @@ export function updateArmy(
   const { combat, battlefield, objective } = state.level;
   for (let j = state.squads.length - 1; j >= 0; j--) {
     const q = state.squads[j];
-    if (marchSquad(q, state.front, combat, battlefield.marchSpeed, dt)) {
+    const previousY = q.y;
+    const arrived = marchSquad(q, state.front, combat, battlefield.marchSpeed, dt);
+    crossRelayGates(state, q, previousY, state.front + combat.arrivalOffset, onEffect);
+    if (arrived) {
       state.blueTotal += q.count;
       state.squads.splice(j, 1);
       onEffect?.("arrival", state.t, q, state.front);
@@ -27,7 +31,7 @@ export function updateArmy(
       );
       if (q.mult === state.level.gates.at(-1).mult && !state.finalActivated) {
         state.finalActivated = true;
-        notify(`×${q.mult} REINFORCEMENTS ARRIVED!`, 3);
+        notify(`${q.gates?.map(gate => "×" + gate.multiplier).join(" → ") ?? "×" + q.mult} REINFORCEMENTS ARRIVED!`, 3);
       }
     }
   }
