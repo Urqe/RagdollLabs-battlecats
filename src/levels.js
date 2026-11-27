@@ -90,14 +90,16 @@ export const LEVEL_ONE = Object.freeze({
   status: "implemented",
   battlefield,
   objective,
-  combat,
+  combat: Object.freeze({ ...combat,
+    redMobilization: Object.freeze({ frontRanks: 360, start: 30, duration: 47, rate: 720, collapseRate: 2200 }),
+  }),
   gates: Object.freeze([
     gate("starter", 210, 98, 5, "#399be9", 0),
     gate("strong", 90, 96, 25, "#ffb740", 1, leftWood.id),
     gate("final", 329, 106, 100, "#ffd561", 2, compoundWood.id),
   ]),
   relayGates: Object.freeze([
-    Object.freeze({ id: "right-relay", after: "final", x: 329, width: 91, hitY: 492, mult: 3 }),
+    Object.freeze({ id: "right-relay", after: "final", x: 329, width: 91, hitY: 492, mult: 5 }),
   ]),
   barricades: Object.freeze([leftWood, compoundWood]),
   support: null,

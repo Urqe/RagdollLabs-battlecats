@@ -68,7 +68,7 @@ test("frontage changes marginal strength and both casualty rates stay bounded", 
       assert.ok(Number.isFinite(pressure) && pressure > previous);
       previous = pressure;
       const losses = casualtyRates(n, n, rules);
-      assert.ok(losses.blue <= rules.maxBlueLoss && losses.red <= rules.maxRedLoss);
+      assert.ok(losses.blue <= rules.maxBlueLoss && losses.red <= rules.maxRedLoss + (rules.redMobilization?.collapseRate ?? 0));
     }
     const loss = casualtyRates(100000, 1000, rules);
     assert.ok(loss.red * dt < 1000);

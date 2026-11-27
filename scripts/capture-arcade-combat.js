@@ -34,6 +34,7 @@ async function capture(browser, plan) {
   const elapsed = () => (performance.now() - origin) / 1000;
   try {
     await page.goto(url);
+    if (process.env.HIDE_HUD) await page.addStyleTag({ content: "#hud { visibility: hidden }" });
     await page.locator("#chooseLevel").click();
     await page.locator(`[data-level="${plan.id}"]`).click();
     const box = await page.locator("#game").boundingBox();

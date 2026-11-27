@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { crowdColumn, crowdRank, crowdReach, crowdSeam } from "../src/crowd-field.js";
+import { crowdFlow, crowdColumn, crowdRank, crowdReach, crowdSeam } from "../src/crowd-field.js";
 import { armyScale, RESERVE_LIMIT } from "../src/army-visual.js";
 
 test("occupation deepens with population and contracts with pressure and terrain", () => {
@@ -33,4 +33,19 @@ test("local deformation follows the authoritative line and vanishes at terrain e
     }
   }
   assert.ok(Math.abs(crowdColumn(4, 5, 18, 1) - crowdColumn(4, 5, 18, 1 + 1 / 60)) < 0.1);
+});
+
+test("rank movement is bounded, reversible and delayed by depth", () => {
+  for (const lateral of [-1, 0, 1]) {
+    for (const depth of [0.1, 0.35, 0.7, 0.9]) {
+      const advance = crowdFlow(depth, lateral, 1, 1);
+      assert.ok(advance > 0 && advance <= 18);
+      assert.equal(crowdFlow(depth, lateral, 1, -1), -advance);
+      assert.equal(crowdFlow(depth, lateral, 1, 0), 0);
+      assert.ok(Math.abs(crowdFlow(depth, lateral, 1 + 1 / 60, 1) - advance) < 1);
+    }
+  }
+  assert.equal(crowdFlow(0, 0, 1, 1), 0);
+  assert.ok(Math.abs(crowdFlow(1, 0, 1, 1)) < 1e-10);
+  assert.notEqual(crowdFlow(0.25, 0, 1, 1), crowdFlow(0.75, 0, 1, 1));
 });

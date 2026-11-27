@@ -1,3 +1,4 @@
+import { redSupplyRate } from "../src/lane-combat.js";
 import { createGame } from "../src/game.js";
 import { LEVEL_ONE, LEVEL_TWO } from "../src/levels.js";
 import { createAim, createRescueAim } from "../tests/helpers/strategies.js";
@@ -51,7 +52,7 @@ export function traceBattle(level, strategy, hz = 60, reaction = 0.55) {
     // The cutoff tick can admit a fractional reserve before closing the entrance.
     const influx = redEntryOpen && !s.redEntryOpen
       ? Math.max(0, Math.min(1, (front - objective.reinforcementCutoff) / combat.reinforcementApproach))
-        * Math.min(combat.maxRedReinforcements, combat.redReinforcements + combat.redReinforcementGrowth * s.t)
+        * redSupplyRate(s.t, combat)
       : s.redEntryRate;
     const lostRed = Math.max(0, red + influx / hz - s.redTotal);
     if (arrived !== undefined && s.danger.velocity < 0) reversed ??= s.t;

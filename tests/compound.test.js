@@ -96,7 +96,7 @@ function battle(hz) {
     }
   }
   assert.equal(state.mode, "victory");
-  assert.ok(events.some(event => event.count === 300));
+  assert.ok(events.some(event => event.count === 500));
   assert.equal(state.redEntryOpen, false);
   const result = { state: structuredClone(state), events };
   game.reset();
