@@ -1,0 +1,325 @@
+{
+  "engine": "chromium",
+  "version": "156.0.8078.79",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "results": [
+    {
+      "population": 30,
+      "budget": {
+        "field": 30,
+        "reserve": 0
+      },
+      "samples": 18,
+      "canvasMs": [
+        0.5,
+        1.7
+      ],
+      "frameMs": [
+        16.7,
+        16.77
+      ],
+      "usedJSHeapSize": 2236885,
+      "sides": [
+        {
+          "sprites": 30,
+          "silhouettes": 0,
+          "widthPx": 122.20805277715088,
+          "depthPx": 37.99009485129293,
+          "occupiedPx": 4028.408163265306,
+          "density": 0.867687348624385
+        },
+        {
+          "sprites": 30,
+          "silhouettes": 0,
+          "widthPx": 148.47136432220847,
+          "depthPx": 38.44234358710244,
+          "occupiedPx": 5187.265306122449,
+          "density": 0.9088368034067366
+        }
+      ]
+    },
+    {
+      "population": 100,
+      "budget": {
+        "field": 100,
+        "reserve": 0
+      },
+      "samples": 18,
+      "canvasMs": [
+        0.7,
+        1.1
+      ],
+      "frameMs": [
+        16.7,
+        33.4
+      ],
+      "usedJSHeapSize": 2423977,
+      "sides": [
+        {
+          "sprites": 100,
+          "silhouettes": 0,
+          "widthPx": 123.67098143763397,
+          "depthPx": 85.03417641595139,
+          "occupiedPx": 7339.428571428572,
+          "density": 0.6979124265060291
+        },
+        {
+          "sprites": 100,
+          "silhouettes": 0,
+          "widthPx": 221.5850555861005,
+          "depthPx": 86.32114590702855,
+          "occupiedPx": 13795.91836734694,
+          "density": 0.7212618345111875
+        }
+      ]
+    },
+    {
+      "population": 300,
+      "budget": {
+        "field": 206,
+        "reserve": 41
+      },
+      "samples": 18,
+      "canvasMs": [
+        1.2,
+        1.8
+      ],
+      "frameMs": [
+        16.7,
+        16.8
+      ],
+      "usedJSHeapSize": 2973297,
+      "sides": [
+        {
+          "sprites": 206,
+          "silhouettes": 41,
+          "widthPx": 148.73556736000754,
+          "depthPx": 154.81439265515468,
+          "occupiedPx": 15451.428571428572,
+          "density": 0.6710308251211873
+        },
+        {
+          "sprites": 206,
+          "silhouettes": 41,
+          "widthPx": 295.58264300944006,
+          "depthPx": 155.52046091851346,
+          "occupiedPx": 32116.897959183672,
+          "density": 0.6986620100969282
+        }
+      ]
+    },
+    {
+      "population": 1000,
+      "budget": {
+        "field": 250,
+        "reserve": 155
+      },
+      "samples": 18,
+      "canvasMs": [
+        1.4,
+        1.9
+      ],
+      "frameMs": [
+        16.7,
+        16.7
+      ],
+      "usedJSHeapSize": 2498573,
+      "sides": [
+        {
+          "sprites": 250,
+          "silhouettes": 155,
+          "widthPx": 183.94237367918018,
+          "depthPx": 185.74718403566203,
+          "occupiedPx": 21245.714285714286,
+          "density": 0.6218237589061132
+        },
+        {
+          "sprites": 250,
+          "silhouettes": 155,
+          "widthPx": 316.5228925353027,
+          "depthPx": 189.54326592214343,
+          "occupiedPx": 40780.73469387755,
+          "density": 0.6797380171613001
+        }
+      ]
+    },
+    {
+      "population": 3000,
+      "budget": {
+        "field": 251,
+        "reserve": 291
+      },
+      "samples": 18,
+      "canvasMs": [
+        1.2,
+        3.1
+      ],
+      "frameMs": [
+        16.7,
+        16.7
+      ],
+      "usedJSHeapSize": 2498065,
+      "sides": [
+        {
+          "sprites": 251,
+          "silhouettes": 291,
+          "widthPx": 186.86469791431023,
+          "depthPx": 201.97031755587224,
+          "occupiedPx": 23784.163265306124,
+          "density": 0.6301922615671102
+        },
+        {
+          "sprites": 251,
+          "silhouettes": 291,
+          "widthPx": 317.0451898691556,
+          "depthPx": 209.61343233006826,
+          "occupiedPx": 43705.4693877551,
+          "density": 0.6576510394078916
+        }
+      ]
+    },
+    {
+      "population": 10000,
+      "budget": {
+        "field": 252,
+        "reserve": 794
+      },
+      "samples": 18,
+      "canvasMs": [
+        1.3,
+        2.8
+      ],
+      "frameMs": [
+        16.7,
+        16.7
+      ],
+      "usedJSHeapSize": 2854845,
+      "sides": [
+        {
+          "sprites": 252,
+          "silhouettes": 794,
+          "widthPx": 299.60151717006465,
+          "depthPx": 239.67917742658742,
+          "occupiedPx": 37966.36734693878,
+          "density": 0.5287187738108886
+        },
+        {
+          "sprites": 252,
+          "silhouettes": 794,
+          "widthPx": 314.03666526528076,
+          "depthPx": 255.69394968752542,
+          "occupiedPx": 59874.28571428572,
+          "density": 0.7456577511410407
+        }
+      ]
+    },
+    {
+      "population": 30000,
+      "budget": {
+        "field": 252,
+        "reserve": 1348
+      },
+      "samples": 18,
+      "canvasMs": [
+        1.5,
+        4
+      ],
+      "frameMs": [
+        16.7,
+        16.7
+      ],
+      "usedJSHeapSize": 2620861,
+      "sides": [
+        {
+          "sprites": 252,
+          "silhouettes": 1348,
+          "widthPx": 320.61298983584254,
+          "depthPx": 286.10580437148803,
+          "occupiedPx": 50879.34693877551,
+          "density": 0.5546688101770009
+        },
+        {
+          "sprites": 252,
+          "silhouettes": 1348,
+          "widthPx": 346.12739322533133,
+          "depthPx": 311.2633917727563,
+          "occupiedPx": 78084.89795918367,
+          "density": 0.7247747085077242
+        }
+      ]
+    },
+    {
+      "population": 100000,
+      "budget": {
+        "field": 252,
+        "reserve": 1558
+      },
+      "samples": 18,
+      "canvasMs": [
+        2.2,
+        7.5
+      ],
+      "frameMs": [
+        16.7,
+        50
+      ],
+      "usedJSHeapSize": 3569077,
+      "sides": [
+        {
+          "sprites": 252,
+          "silhouettes": 1558,
+          "widthPx": 322.1985925584683,
+          "depthPx": 297.87993158790965,
+          "occupiedPx": 55404.40816326531,
+          "density": 0.5772705945474411
+        },
+        {
+          "sprites": 252,
+          "silhouettes": 1558,
+          "widthPx": 346.12739322533133,
+          "depthPx": 325.19603614028233,
+          "occupiedPx": 82885.87755102041,
+          "density": 0.7363754905012159
+        }
+      ]
+    },
+    {
+      "population": 300000,
+      "budget": {
+        "field": 252,
+        "reserve": 1560
+      },
+      "samples": 18,
+      "canvasMs": [
+        1.7,
+        3
+      ],
+      "frameMs": [
+        16.7,
+        16.7
+      ],
+      "usedJSHeapSize": 3093257,
+      "sides": [
+        {
+          "sprites": 252,
+          "silhouettes": 1560,
+          "widthPx": 322.1985925584683,
+          "depthPx": 297.87993158790965,
+          "occupiedPx": 55404.40816326531,
+          "density": 0.5772705945474411
+        },
+        {
+          "sprites": 252,
+          "silhouettes": 1560,
+          "widthPx": 346.12739322533133,
+          "depthPx": 325.19603614028233,
+          "occupiedPx": 82885.87755102041,
+          "density": 0.7363754905012159
+        }
+      ]
+    }
+  ]
+}
