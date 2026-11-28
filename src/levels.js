@@ -62,7 +62,7 @@ function barricade(id, hits, message, hitY = 545) {
 }
 
 const leftWood = barricade("left-gate", 90, "×25 OPEN — AIM LEFT!");
-const rightWood = barricade("right-gate", 231, "×100 OPEN — AIM RIGHT!");
+const purrapultFinalWood = barricade("right-gate", 105, "×100 OPEN — AIM RIGHT!");
 const compoundWood = barricade("right-gate", 231, "CHAIN OPEN — AIM RIGHT!");
 const supportWood = barricade("artillery", 36, "PURRAPULT UNLEASHED!");
 
@@ -112,13 +112,20 @@ export const LEVEL_TWO = Object.freeze({
   status: "implemented",
   battlefield: Object.freeze({ ...battlefield, startX: 157 }),
   objective,
-  combat: Object.freeze({ ...combat, redReinforcementGrowth: 3.42 }),
+  combat: Object.freeze({
+    ...combat,
+    redReinforcementGrowth: 3.42,
+    maxRedReinforcements: 315,
+    redReinforcementEscalation: Object.freeze({ start: 20, growth: 12 }),
+    // Limit how fast melee can clear a thin red line while supply is open.
+    redLossPerDefender: 0.12,
+  }),
   gates: Object.freeze([
     gate("starter", 157, 76, 5, "#399be9", 0),
     gate("strong", 62, 74, 25, "#ffb740", 1, leftWood.id),
-    gate("final", 259, 78, 100, "#ffd561", 2, rightWood.id),
+    gate("final", 259, 78, 100, "#ffd561", 2, purrapultFinalWood.id),
   ]),
-  barricades: Object.freeze([leftWood, rightWood, supportWood]),
+  barricades: Object.freeze([leftWood, purrapultFinalWood, supportWood]),
   support: Object.freeze({
     id: "catapult",
     barricadeId: supportWood.id,

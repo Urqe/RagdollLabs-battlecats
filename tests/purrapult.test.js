@@ -6,7 +6,7 @@ import { createGame } from "../src/game.js";
 import { LEVELS, LEVEL_ONE, LEVEL_TWO, LEVEL_THREE, LEVEL_FOUR, playableLevel } from "../src/levels.js";
 import { readProgress, saveProgress } from "../src/progress.js";
 import { updateProjectiles } from "../src/projectiles.js";
-import { simulatePurrapult } from "./helpers/purrapult.js";
+import { PURRAPULT_STRATEGIES, simulatePurrapult } from "./helpers/purrapult.js";
 
 const noop = () => {};
 function fixture() {
@@ -197,32 +197,46 @@ test("the final artillery casualty can win, and an in-flight ball is discarded a
   assert.deepEqual(state.work, [0, 0, 0]);
 });
 
+const wins = new Set(["gates", "artillery-first", "gates-first"]);
+
 for (const hz of [30, 60, 120]) {
-  test(`Purrapult supports multiple ways to win at ${hz} Hz`, () => {
-    assert.equal(simulatePurrapult("passive", hz).won, false);
-    const rush = simulatePurrapult("artillery-rush", hz);
-    assert.equal(rush.won, false);
-    assert.ok(rush.artilleryLoss > 0);
-    const gates = simulatePurrapult("gates", hz);
-    assert.equal(gates.won, true);
-    assert.equal(gates.shots, 0);
-    for (const policy of ["artillery-first", "gates-first"]) {
-      const result = simulatePurrapult(policy, hz);
-      assert.equal(result.won, true);
-      assert.ok(result.firstImpact > result.unlocked);
-      assert.ok(result.artilleryLoss > 1000);
-      assert.ok(result.gateTimes.length >= 1);
-    }
-    const artillery = simulatePurrapult("artillery-first", hz);
-    assert.ok(artillery.furthest < gates.furthest - 40);
-    assert.ok(artillery.firstImpact - artillery.unlocked < 1.2);
-    assert.ok(artillery.artilleryLoss > 1400);
-    const inert = {
-      ...LEVEL_TWO,
-      support: { ...LEVEL_TWO.support, damage: 0 },
-    };
-    const withoutDamage = simulatePurrapult("artillery-first", hz, inert);
-    assert.ok(artillery.furthest < withoutDamage.furthest - 100);
-    assert.ok(!withoutDamage.won || artillery.seconds < withoutDamage.seconds - 15);
-  });
+  for (const schedule of ["C", "D"]) {
+    test(`Purrapult progression at ${hz} Hz, schedule ${schedule}`, () => {
+      const results = Object.fromEntries(PURRAPULT_STRATEGIES.map((policy) =>
+        [policy, simulatePurrapult(policy, hz, LEVEL_TWO, schedule)]));
+      for (const [policy, result] of Object.entries(results)) {
+        assert.equal(result.outcome, wins.has(policy) ? "victory" : "defeat", policy);
+        if (wins.has(policy)) {
+          assert.ok(result.gateTimes[1] < result.arrivals[100], policy);
+          assert.ok(result.finalCombat >= result.arrivals[100], policy);
+          assert.ok(result.finalCombat < result.cutoff && result.cutoff <= result.seconds, policy);
+        } else {
+          assert.equal(result.cutoff, null, policy);
+          assert.equal(result.arrivals[100], undefined, policy);
+          assert.equal(result.finalCombat, null, policy);
+          assert.equal(result.gateTimes[1] !== undefined, policy === "final-unused", policy);
+        }
+      }
+
+      assert.equal(results.gates.shots, 0);
+      assert.ok(results["artillery-rush"].artilleryLoss > 0);
+      for (const policy of ["artillery-first", "gates-first"]) {
+        const result = results[policy];
+        assert.ok(result.firstImpact > result.unlocked);
+        assert.ok(result.firstImpact - result.unlocked < 1.2);
+        assert.ok(result.artilleryLoss > 1000);
+      }
+
+      const hold = results["artillery-first-no-final"];
+      const frontAt = (time) => hold.samples.find((sample) => sample.time === time).front;
+      assert.ok(frontAt(40) < frontAt(30));
+      assert.ok(frontAt(60) > frontAt(40) + 25);
+
+      const inert = { ...LEVEL_TWO, support: { ...LEVEL_TWO.support, damage: 0 } };
+      const artillery = results["artillery-first"];
+      const withoutDamage = simulatePurrapult("artillery-first", hz, inert, schedule);
+      assert.ok(artillery.furthest < withoutDamage.furthest - 100);
+      assert.ok(artillery.cutoff < withoutDamage.cutoff - 15 || !withoutDamage.won);
+    });
+  }
 }
