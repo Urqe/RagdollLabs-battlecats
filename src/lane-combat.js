@@ -16,8 +16,10 @@ export function redStrength(population, combat) {
 }
 
 export function redSupplyRate(time, combat) {
+  const escalation = combat.redReinforcementEscalation;
+  const extra = escalation ? Math.max(0, time - escalation.start) * escalation.growth : 0;
   const ordinary = Math.min(combat.maxRedReinforcements,
-    combat.redReinforcements + combat.redReinforcementGrowth * time);
+    combat.redReinforcements + combat.redReinforcementGrowth * time + extra);
   const reserve = combat.redMobilization;
   if (!reserve) return ordinary;
   const age = time - reserve.start;

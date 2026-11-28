@@ -19,11 +19,11 @@ Level 1 asks when to stop reinforcing for a better gate. The Purrapult adds a se
 
 ## Battlefield
 
-One crossing connects the red mustering yard to the broad blue approach. From left to right, the blue approach has ×99, the open ×20 starter, ×999, and the Purrapult. Place the catapult in a visible side emplacement with its own aim footprint and wood. The emplacement has a separate aim footprint with room for all three projectiles. The arcing shot should be visible above the crowd without covering the front or the gate labels. Red still enters from the far side through one supply route.
+One crossing connects the red mustering yard to the broad blue approach. From left to right, the blue approach has ×25, the open ×5 starter, ×100, and the Purrapult. The catapult has its own barricade and aim footprint with room for all three projectiles. The arcing shot should be visible above the crowd without covering the front or the gate labels. Red still enters from the far side through one supply route.
 
-## Balance hypotheses
+## Multiplier progression
 
-At 30, 60, and 120 Hz, passive defense and rushing the artillery alone lost. Gate-only, artillery-first, and gate-first with later artillery all won. The early-artillery policy held the red frontline farther from the castle than the gate-only policy. Compared with Milestone 7, its 60 Hz run gained five impacts with about 3% more total artillery damage. It lost in a comparison run with the same aim schedule and zero artillery damage. The [balance note](../purrapult-balance.md) records timings, parameters, and media.
+The ×5 gate can hold the opening. ×25 reinforces the defense while the player works on another barricade. The Purrapult can steady the line while red supply builds. Sustained ×25 and artillery eventually give ground. Arriving ×100 waves can reverse the retreat, secure the supply route, and clear the remaining reds. Both gate-only and artillery-assisted routes won at 30, 60, and 120 Hz. [Balance note](../purrapult-balance.md)
 
 ## Implementation considerations
 

@@ -121,7 +121,7 @@ test("artillery-assisted defense wins Level 2 and persists its completion", asyn
       await mark("impact", "06-yarn-impact.png", s);
     }
     if (
-      s.gates[1].open &&
+      s.finalActivated &&
       s.support.damage > 700 &&
       s.front < 285 &&
       !seen.has("counterattack")
@@ -131,6 +131,8 @@ test("artillery-assisted defense wins Level 2 and persists its completion", asyn
   }
   expect([...seen]).toEqual(["unlocked", "flight", "impact", "counterattack"]);
   expect(s.mode).toBe("victory");
+  expect(s.redEntryOpen).toBe(false);
+  expect(s.finalActivated).toBe(true);
   expect(s.redTotal).toBe(0);
   expect(s.support.damage).toBeGreaterThan(1000);
   expect(s.support.shot).toBeNull();
