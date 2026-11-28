@@ -42,11 +42,29 @@ The desired visual progression is **small squad → recognizable formation → d
 - **Medium armies:** Preserve recognizable frontline cats while growing formation width, depth and density.
 - **Large armies:** Use bounded representative sprites, dense rear ranks and lightweight crowd rendering to communicate thousands of soldiers.
 - **Enormous armies:** Use layered, batched or cached visual representations to convey immense scale without independently simulating every soldier.
-- **Territorial crowd movement:** Large armies should read as continuous, living masses occupying battlefield space. Their visible boundaries must respond to authoritative frontline position, combat pressure, casualties and terrain. Victorious formations expand into vacated enemy territory; defeated formations compress and retreat. Dense rendering must communicate territorial conquest, not merely a larger population counter. Keep this a derived visual occupation field, not a second authoritative territory simulation.
+- **Territorial crowd movement:** Large armies should read as continuous, living masses occupying battlefield space. Their visible boundaries must respond to authoritative frontline position, combat pressure, casualties and terrain. Victorious formations expand into vacated enemy territory; defeated formations compress and retreat. Dense rendering must communicate territorial conquest, not merely a larger population counter. Keep this a derived visual occupation field, not a second authoritative territory simulation. Collective army motion must follow directional soldier movement and authoritative frontline changes, never artificial periodic displacement of entire formations.
 
 Transitions must be continuous. Increasing population must not abruptly shrink a formation, erase visible soldiers or reduce perceived army size. When screen space saturates, show growth through density, depth, approaching waves and crowd motion. The renderer must not imply additional combat-effective soldiers beyond the authoritative population.
 
 **Authoritative population and rendered sprite count are different quantities.** Render as many individual cats as meaningfully improves readability at small scale; aggregate representation at larger scale without losing the visible sense of army growth. Keep combat authoritative and aggregate, with mobile-safe bounded rendering cost.
+
+### Soldier Identity & Reinforcement Continuity
+
+**Armies are made of soldiers, not animated population textures.**
+
+The player must believe that cats created by multiplier gates are the same cats that march to battle, join a formation and eventually fight.
+
+- **Visible creation:** Multiplication produces recognizable soldiers and coherent formations, not merely counters, particles or crowd-density changes.
+- **Continuous journeys:** Reinforcement cohorts remain visually traceable from multiplier to battlefield. Their representatives must not disappear abruptly or teleport into existing ranks.
+- **Physical integration:** Arriving soldiers visibly join from a plausible direction and move into available positions. Existing soldiers must not spontaneously materialize to represent an arrival.
+- **Persistent identity:** Preserve stable visual representatives across spawning, travel, integration and frontline participation wherever practical. Large populations may use bounded representative groups, but their movements and handoffs must stay spatially continuous.
+- **Individual combat:** Frontline cats visibly attack, recoil, fall and replenish in response to authoritative combat events. Casualties correspond to real losses.
+- **Directional movement:** Formation displacement follows authoritative advance, retreat, reinforcement and casualty-driven replenishment. No synchronized sinusoidal oscillation of entire ranks or armies. Periodic animation belongs to individual gait, not collective territorial motion.
+- **Scale without anonymity:** Dense background formations support the illusion of a large population; they must never replace the visible journey of meaningful reinforcement waves.
+
+Keep combat deterministic and aggregate. Visual identity and movement must not require one authoritative agent or physics simulation per cat. Representative soldiers may stand for larger cohorts at high populations; do not imply additional effective troops or invent casualties.
+
+**Core acceptance principle:** A player should be able to follow a recognizable group of cats from a multiplier through travel, integration and frontline participation without an unexplained visual discontinuity.
 
 ### Multiplier progression
 
