@@ -1,8 +1,8 @@
-import { engagedArmor, ordinaryRed, redQuality } from "./pawtorians.js";
+import { ordinaryRed, redQuality } from "./pawtorians.js";
 import { armorDepth, armorExtent, armorPosition, PAWTORIAN_SLOT_START } from "./pawtorian-visual.js";
 import { crowdColumn, crowdRank, crowdReach, crowdSeam } from "./crowd-field.js";
 import { effectiveStrength, redStrength } from "./lane-combat.js";
-import { TAU, clamp } from "./config.js";
+import { TAU, W, clamp } from "./config.js";
 import { laneHalfWidth, polygon } from "./terrain.js";
 import { waveCount, waveProfile, waveRelease, waveY } from "./motion.js";
 import { exchangeOffset, exchangeSeam, formationLag, rankReplenishment } from "./formation-dynamics.js";
@@ -343,11 +343,10 @@ export function createFigures(ctx, ownerDocument) {
     return front + clamp(shift, -Math.min(8, Math.max(0, front - 18)), 8);
   }
 
-  function army(state, scale, red, front, contact, gap, flights) {
+  function army(state, scale, red, front, contact, gap, flights, project) {
     const total = red ? ordinaryRed(state) : state.blueTotal;
     const wave = red ? state.pawtorians : null;
-    const armored = engagedArmor(state);
-    const armorLead = armored > 0 ? front - state.level.pawtorians.contactOffset : wave?.y;
+    const armorLead = wave?.count ? pawtorianLead(state, project) : 0;
     const depthOccupiedByArmor = wave?.count
       ? armorDepth(armorExtent(wave.count, state.level.pawtorians.population)) : 0;
     const opposing = red ? state.blueTotal : state.redTotal;
@@ -529,14 +528,20 @@ export function createFigures(ctx, ownerDocument) {
     if (opacity !== 1) ctx.globalAlpha = 1;
   }
 
-  function redArmy(state, contact, gap, flights) {
+  function pawtorianLead(state, project) {
+    const offset = state.level.pawtorians.contactOffset;
+    const wave = state.pawtorians;
+    return (wave.arrivedAt !== null ? state.front : project(wave.y + offset)) - offset;
+  }
+
+  function redArmy(state, contact, gap, flights, project = y => y) {
     if (state.mode === "victory") return;
-    army(state, redScale, true, state.front, contact, gap, flights);
+    army(state, redScale, true, state.front, contact, gap, flights, project);
     const wave = state.pawtorians;
     if (!wave?.count) return;
     const config = state.level.pawtorians;
     const engaged = wave.arrivedAt !== null;
-    const lead = engaged ? state.front - config.contactOffset : wave.y;
+    const lead = pawtorianLead(state, project);
     const extent = armorExtent(wave.count, config.population);
     const gapAmount = engaged ? gapStrength(clock - gap?.at) : 0;
     for (let i = Math.ceil(extent) - 1; i >= 0; i--) {
@@ -596,6 +601,8 @@ export function createFigures(ctx, ownerDocument) {
     const spread = push * (2 - push);
     const noise = spacingNoise[(i + Math.floor(q.phase * 31)) % spacingNoise.length];
     const stride = Math.sin(run * 13 + i * 1.7);
+    // Even if combat already admitted this cohort, its visible route still
+    // starts at the real gate and docks at the projected blue ranks.
     const front = state.front - advance(state, 0);
     const rank = Math.floor(index / profile.cols);
     const shoulder = receivingRear + rank * 5 + (relayMember ? 5 : 0);
@@ -812,7 +819,7 @@ export function createFigures(ctx, ownerDocument) {
     ctx.globalAlpha = 1;
   }
 
-  function airborne(cats) {
+  function airborne(cats, redBoundary = Infinity) {
     for (const flight of cats) {
       if (!flight.visible) continue;
       const baseSize = flight.size ?? clamp(4.35 + flight.y * 0.0027, 4.35, 6.12);
@@ -820,6 +827,11 @@ export function createFigures(ctx, ownerDocument) {
       const x = (flight.drawX ?? flight.x) + flight.dx;
       const y = (flight.drawY ?? flight.y) + flight.dy;
       ctx.save();
+      if (flight.red && y + flight.rise + size * 2 >= redBoundary) {
+        ctx.beginPath();
+        ctx.rect(0, 0, W, redBoundary);
+        ctx.clip();
+      }
       ctx.globalAlpha = flight.alpha * (flight.coverage ?? 1);
       if (flight.rise > 6) ellipse(ctx, x, y + flight.rise + 3, 3.5, 1.4, "#20262c55");
       ctx.translate(x, y);

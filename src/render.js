@@ -1,3 +1,4 @@
+import { gateGroundEdge, retreatProjection } from "./retreat-presentation.js";
 import { FLAG_CAPTURE_TIME, FLAG_RAISE_TIME, smoothStep } from "./army-movement.js";
 import { H, TAU, W, clamp } from "./config.js";
 import {
@@ -69,6 +70,7 @@ export function createRenderer(state, canvas, motion = createMotion()) {
   if (terrain) terrain.width = 0;
   const figures = createFigures(ctx, canvas.ownerDocument);
   const pulses = new Float32Array(3);
+  const view = Object.create(state);
 
   function label(text, x, y, size, color, outline = "#242936") {
     ctx.font = `900 ${size}px system-ui`;
@@ -88,9 +90,9 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     const right = x + width / 2;
     polygon(ctx, "#27282c44", [
       left - 4,
-      557,
+      gateGroundEdge(gate),
       right + 5,
-      557,
+      gateGroundEdge(gate),
       right + 18,
       580,
       left + 8,
@@ -379,7 +381,7 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     ctx.restore();
   }
 
-  function contactEffects() {
+  function contactEffects(front) {
     const contact = motion.contact;
     const strike = state.t - contact.foughtAt;
     const isContact = contact.foughtAt >= 0 && strike < 0.13;
@@ -388,22 +390,23 @@ export function createRenderer(state, canvas, motion = createMotion()) {
       ctx.globalAlpha =
         (1 - strike / 0.13) * (contact.blue + contact.red) * 0.4;
       ctx.fillStyle = "#ffebc5";
-      const half = laneHalfWidth(state.front) * 0.65;
+      const half = laneHalfWidth(front) * 0.65;
       const x = 210 + Math.sin(contact.foughtAt * 13) * half;
       for (let i = -1; i <= 1; i++) {
         const spread = i * (5 + strike * 45);
-        ctx.fillRect(x + spread, state.front - i * 4 - strike * 22, 2.4, 3.6);
+        ctx.fillRect(x + spread, front - i * 4 - strike * 22, 2.4, 3.6);
       }
       ctx.restore();
     }
   }
 
   function relayGate(gate, clock) {
-    const enabled = state.gates.some(entry => entry.id === gate.after && entry.open) &&
+    const unlocked = state.gates.some(entry => entry.id === gate.after && entry.open) &&
       (!gate.requires || state.gates.some(entry => entry.id === gate.requires && entry.open));
     const age = clock - (state.relayFlashes[gate.id] ?? -Infinity);
     const glow = clamp(1 - age / 0.24, 0, 1);
     const { x, width, hitY: y } = gate;
+    const enabled = unlocked && (glow > 0 || state.front + state.level.combat.arrivalOffset < y);
     const left = x - width / 2;
     ctx.fillStyle = enabled ? "#39d9ad" : "#46605c";
     ctx.fillRect(left, y - 5, width, 5);
@@ -429,6 +432,8 @@ export function createRenderer(state, canvas, motion = createMotion()) {
       state.victoryElapsed / state.level.combat.victoryDuration;
     const surge = 1 - (1 - celebration) ** 2;
     const clock = state.t + state.victoryElapsed;
+    const projection = retreatProjection(state.level);
+    view.front = projection.front(state.front);
     const emplacement = state.level.support;
     const archerSupport = emplacement?.kind === "archers";
     const impactAge = clock - motion.impact.at;
@@ -443,11 +448,19 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     }
     if (state.mode === "playing") drawImpactGround(ctx, motion.impact, impactAge);
     const flights = state.mode === "playing" ? motion.airborne : null;
-    figures.redArmy(state, motion.contact, motion.impact, flights?.slots[1]);
-    figures.blueArmy(state, surge, motion.contact, motion.tails, motion.impact, flights?.slots[0]);
+    const nearGates = view.front + 24 >= projection.boundary;
+    if (nearGates) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, W, projection.boundary);
+      ctx.clip();
+    }
+    figures.redArmy(view, motion.contact, motion.impact, flights?.slots[1], projection.position);
+    if (nearGates) ctx.restore();
+    figures.blueArmy(view, surge, motion.contact, motion.tails, motion.impact, flights?.slots[0]);
     if (flights) {
       drawImpactBurst(ctx, motion.impact, impactAge);
-      figures.airborne(flights.active);
+      figures.airborne(flights.active, projection.boundary);
       if (archerSupport) {
         for (const hit of motion.archers.aftermath) drawArcherVolley(ctx, clock, null, hit);
         drawArcherVolley(ctx, clock, motion.archers.launch, motion.archers.impact);
@@ -475,7 +488,7 @@ export function createRenderer(state, canvas, motion = createMotion()) {
     supplyFlags();
     if (state.mode === "playing") figures.fallen(motion.falls);
     if (state.mode === "playing") {
-      contactEffects();
+      contactEffects(view.front);
       for (const gate of state.gates) brokenWood(gate);
       if (emplacement) brokenWood(emplacement, state.support.open);
       for (const shot of state.shots) figures.projectile(shot);
@@ -483,13 +496,20 @@ export function createRenderer(state, canvas, motion = createMotion()) {
         const wood = b.color === "#d48b4b" || b.color === "#e9b779";
         ctx.globalAlpha = clamp(b.life * 3, 0, 0.9);
         ctx.fillStyle = b.color;
-        ctx.fillRect(b.x, b.y, wood ? 4.5 : 2.6, wood ? 2.2 : 2.6);
+        const clash = b.color === "#df544b" || b.color === "#65baff";
+        // Arrival dust belongs where the wave is visible. The logical arrival
+        // can occur behind the gate during a retreat.
+        const arrival = b.color === "#64bbff";
+        const offset = state.level.combat.arrivalOffset;
+        const y = clash ? projection.position(b.y)
+          : arrival ? projection.position(b.y - offset) + offset : b.y;
+        ctx.fillRect(b.x, y, wood ? 4.5 : 2.6, wood ? 2.2 : 2.6);
       }
       ctx.globalAlpha = 1;
     }
     drawCannon(ctx, state);
     if (emplacement && !archerSupport && state.mode === "playing")
-      drawArtilleryShot(ctx, state);
+      drawArtilleryShot(ctx, state, projection.position);
     drawCaptureFlag();
   }
 
