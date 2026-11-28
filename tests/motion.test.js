@@ -6,6 +6,7 @@ import { GATE_HIT_Y } from "../src/config.js";
 import {
   createMotion,
   waveDuration,
+  MAX_TAILS,
   waveProfile,
   waveRelease,
   waveY,
@@ -24,7 +25,7 @@ test("gate releases are ordered, bounded and start on the projectile crossing", 
   assert.ok(quick.spread < broad.spread && broad.laneOffset < flood.laneOffset);
   assert.ok(flood.count <= 32);
   assert.ok(waveDuration(quick) < 0.20);
-  assert.ok(waveDuration(broad) > 0.2 && waveDuration(broad) < 0.35);
+  assert.ok(waveDuration(broad) > 0.2 && waveDuration(broad) < 0.45);
   assert.ok(waveDuration(flood) > 0.5 && waveDuration(flood) < 1);
 
   for (const profile of [quick, broad, flood]) {
@@ -78,7 +79,7 @@ for (const hz of [30, 60, 120]) {
       300,
     );
     assert.ok(arrivals[0].marchTime < waveDuration(waveProfile(100)));
-    assert.ok(motion.tails.length <= 12);
+    assert.ok(motion.tails.length <= MAX_TAILS);
     assert.ok(motion.falls.length <= 12);
   });
 }

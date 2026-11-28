@@ -12,12 +12,12 @@ export function createFormationDynamics() {
   const anchors = new Float64Array(RESPONSE.length);
   let origin, lastTime, lastFront, sampledFront, tick;
   let packed, oldPacked, pulse, oldPulse;
-  const pose = { anchors, compression: 0, drive: 0, opening: 0 };
+  const pose = { anchors, compression: 0, drive: 0 };
 
   function reset() {
     origin = null;
     packed = oldPacked = pulse = oldPulse = 0;
-    pose.compression = pose.drive = pose.opening = 0;
+    pose.compression = pose.drive = 0;
     anchors.fill(0);
   }
 
@@ -65,7 +65,6 @@ export function createFormationDynamics() {
     pose.drive = oldPulse + (pulse - oldPulse) * blend;
     for (let i = 0; i < anchors.length; i++)
       anchors[i] = previous[i] + (ranks[i] - previous[i]) * blend;
-    pose.opening = engaged ? pose.drive : 0;
     lastFront = front;
     lastTime = time;
   }
@@ -83,21 +82,6 @@ export function formationLag(pose, front, depth) {
   const left = index ? pose.anchors[index - 1] - front : 0;
   const right = index < 3 ? pose.anchors[index] - front : left;
   return clamp(left + (right - left) * (band - index), -MAX_LAG, MAX_LAG);
-}
-
-// An opening grows in one section, shifts slightly, then closes before
-// the next opens. Both teams bend in the same direction around the gap.
-export function breakthroughOffset(time, x, row, momentum, red) {
-  if (!momentum || row >= 6) return 0;
-  const cycle = time / 1.46;
-  const index = Math.floor(cycle);
-  const age = cycle - index;
-  const center = 210 + ((index * 37) % 77 - 38) + (age - 0.5) * 15;
-  const profile = Math.max(0, 1 - ((x - center) / 42) ** 2);
-  const envelope = (Math.sin(Math.PI * age)) ** 2;
-  const losing = red ? momentum > 0 : momentum < 0;
-  const depth = (1 - row / 6) ** 2;
-  return -momentum * envelope * profile * depth * (losing ? 15 : 7);
 }
 
 // A representative casualty opens a lane for one exchange. The shared seam

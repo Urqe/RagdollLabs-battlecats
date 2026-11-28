@@ -211,3 +211,23 @@ test("overlapping final waves keep older columns visible using bounded draw call
   assert.ok(draws.reduce((sum, draw) => sum + draw.represented, 0) > 1000);
   assert.deepEqual(state, before);
 });
+
+test("stationary reserve tile centers are constant over ten seconds", () => {
+  const state = createState();
+  const { figures, draws } = painter();
+  const motion = createMotion();
+  Object.assign(state, { mode: "playing", blueTotal: 10000, redTotal: 10000, front: 335 });
+  function frame(time) {
+    state.t = time;
+    motion.step(time, 0, state.blueTotal, state.redEntryOpen, state.level, state);
+    figures.setClock(time);
+    draws.length = 0;
+    figures.redArmy(state, motion.contact, motion.impact);
+    figures.blueArmy(state, 0, motion.contact, []);
+    return draws.filter(draw => draw.represented > 1).map(({ x, y }) => [x, y]);
+  }
+  frame(0);
+  const initial = frame(10);
+  assert.ok(initial.length > 50);
+  for (let time = 10.25; time <= 20; time += 0.25) assert.deepEqual(frame(time), initial);
+});

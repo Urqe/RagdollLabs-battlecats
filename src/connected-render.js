@@ -320,11 +320,11 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
     for (let i = Math.ceil(reserveCount / 6) - 1; i >= 0; i--) {
       const row = Math.floor(i / 7), col = i % 7;
       const d = Math.min(depth, rearDepth + crowdRank(rearReach, row, 14, 0.31));
-      const offset = Math.sin(time * 7 + row * 0.9 + col * 0.4) * 1.8 + Math.sin(i * 4.1) * 3;
+      const offset = Math.sin(i * 4.1) * 3;
       const lag = formationLag(pose, front, 0.8 + row / 70);
       const y = front + side * clamp(d + offset + side * lag, 9, depth);
       const half = frontage(id, y);
-      const x = center(id, y) + clamp(crowdColumn(col, row, (half - 12) / 3, time),
+      const x = center(id, y) + clamp(crowdColumn(col, row, (half - 12) / 3),
         -half + 12, half - 12);
       const refill = row < 3 ? rankReplenishment(sinceLoss, 10 + row, Math.abs(x - gap)) : 0;
       const shifted = y - side * Math.min(Math.abs(y - front) - 7, refill);
@@ -346,7 +346,7 @@ export function createConnectedPresentation(ctx, figures, state, battle) {
       const lag = formationLag(pose, front, Math.min(0.8, row / 22));
       const refill = Math.min(step * 0.58,
         rankReplenishment(sinceLoss, row, Math.abs(x - gap)));
-      const seam = crowdSeam(front, (x - center(id, y)) / half, time,
+      const seam = crowdSeam(front, (x - center(id, y)) / half,
         red ? -balance : balance, opposing > 0 ? smoothStep((Math.max(population, opposing) - 180) / 700) : 0);
       y = front + side * clamp(d - push - refill + stride + side * (lag + seam - front), 7, depth);
       const wall = frontage(id, y) - 5;

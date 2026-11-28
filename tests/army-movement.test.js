@@ -5,7 +5,7 @@ import { createState } from "../src/state.js";
 import { createFigures } from "../src/figures.js";
 import { LEVEL_ONE, LEVEL_TWO } from "../src/levels.js";
 import { fieldColumn, fieldRow, fieldSpacing } from "../src/army-visual.js";
-import { createMotion } from "../src/motion.js";
+import { createMotion, MAX_TAILS } from "../src/motion.js";
 import {
   FLAG_CAPTURE_TIME, mergeProgress, receivingY, victoryAdvance, victoryWaveVisibility,
 } from "../src/army-movement.js";
@@ -86,8 +86,7 @@ test("a small volley draws continuously at the arrival frame and gives each clai
   const after = probe.blue(state, motion).slice(-5);
   assert.deepEqual(after, before);
   const tail = motion.tails[0];
-  assert.equal(tail.join.field, 44);
-  assert.equal(tail.join.fieldCount, 5);
+  assert.deepEqual(motion.contact.reinforcements.field.slice(44, 49), tail.members);
 
   let previous = 44;
   for (let i = 1; i <= 37; i++) {
@@ -98,14 +97,39 @@ test("a small volley draws continuously at the arrival frame and gives each clai
     assert.ok(motion.contact.blueArmy.field <= state.blueTotal);
     previous = motion.contact.blueArmy.field;
     if (i === 10) {
-      assert.ok(tail.painted > 0 && tail.painted <= 31);
+      assert.ok(tail.members.some(member => member.painted));
       assert.ok(drawn.length <= 49);
     }
   }
   assert.equal(state.blueTotal, 49);
+  for (let i = 38; i <= 126; i++) {
+    state.t = 2 + i / 60;
+    step(motion, state, state.t);
+    probe.blue(state, motion);
+  }
+  assert.equal(motion.tails.length, 0);
+  assert.deepEqual(motion.contact.reinforcements.field.slice(44, 49), tail.members);
 });
 
-test("a receiving slot beyond an obstructed gate uses a complementary fade", () => {
+test("the relay adds representatives without resetting the first gate's cats", () => {
+  const state = createState();
+  const motion = createMotion();
+  const probe = renderProbe();
+  state.mode = "playing";
+  state.blueTotal = 0;
+  state.t = 2;
+  const q = wave(100, 329);
+  state.squads.push(q);
+  const before = probe.blue(state, motion);
+  assert.equal(before.length, 32);
+  q.relay = { y: 465, at: q.marchTime - 0.45 };
+  q.count = 500;
+  const after = probe.blue(state, motion);
+  assert.deepEqual(after.slice(0, before.length), before);
+  assert.equal(after.length, 48);
+});
+
+test("a representative beyond an obstructed gate travels to its receiving slot", () => {
   const state = createState();
   state.mode = "playing";
   state.front = 536;
@@ -121,13 +145,20 @@ test("a receiving slot beyond an obstructed gate uses a complementary fade", () 
   motion.receive("arrival", state.t, q, state.front);
   step(motion, state, state.t);
   const tail = motion.tails[0];
-  for (let i = 1; i <= 23; i++) {
+  const observed = [];
+  for (let i = 1; i <= 100; i++) {
     state.t = 2 + i / 60;
     step(motion, state, state.t);
     probe.blue(state, motion);
+    const { x, y } = tail.members[0];
+    if (x !== undefined) observed.push([x, y]);
   }
-  assert.ok(tail.join.remote & 1);
-  assert.ok(tail.join.started[0] >= 2.26);
+  assert.ok(observed.length > 40);
+  assert.ok(tail.members[0].settled);
+  for (let i = 1; i < observed.length; i++) {
+    assert.ok(Math.hypot(observed[i][0] - observed[i - 1][0],
+      observed[i][1] - observed[i - 1][1]) <= 135 / 60 + 1e-8);
+  }
 });
 
 test("overlapping ×25 and ×100 handoffs stay bounded and reset when leaving a level", () => {
@@ -142,19 +173,12 @@ test("overlapping ×25 and ×100 handoffs stay bounded and reset when leaving a 
     motion.receive("arrival", 0.1, q, state.front);
   }
   step(motion, state, 0.1);
-  const occupied = new Set();
-  assert.ok(motion.tails.length <= 12);
-  for (const { join } of motion.tails) {
-    assert.ok(join.fieldCount + join.reserveCount <= 32);
-    for (const [prefix, start, length] of [
-      ["f", join.field, join.fieldCount], ["r", join.reserve, join.reserveCount],
-    ]) {
-      for (let i = start; i < start + length; i++) {
-        assert.ok(!occupied.has(prefix + i));
-        occupied.add(prefix + i);
-      }
-    }
-  }
+  const { field, reserve } = motion.contact.reinforcements;
+  const occupied = [...field, ...reserve].filter(Boolean);
+  assert.ok(motion.tails.length <= MAX_TAILS);
+  assert.equal(new Set(occupied).size, occupied.length);
+  assert.ok(reserve.filter(Boolean).length <= 144);
+  assert.ok(motion.tails.every(q => q.members.length <= 32));
   motion.reset();
   assert.equal(motion.tails.length, 0);
   assert.equal(motion.contact.formation, null);
@@ -252,6 +276,7 @@ test("artillery and casualties preserve continuous slot geometry and opposing si
   Object.assign(state, { mode: "playing", front: 250, blueTotal: 3100, redTotal: 9000 });
   step(motion, state, 0);
   let previous;
+  let lastMembers;
   for (let i = 1; i <= 100; i++) {
     state.t = i / 60;
     const velocity = i < 45 ? 23 : -26;
@@ -269,11 +294,18 @@ test("artillery and casualties preserve continuous slot geometry and opposing si
     assert.ok(blue.every(({ y }) => y > state.front));
     // The lowest-index blue sprites are painted last in stable slot order.
     const frontRank = blue.slice(-5);
+    const members = motion.contact.reinforcements.field.slice(0, 5);
     if (previous) frontRank.forEach(({ x, y }, slot) => {
+      const index = frontRank.length - 1 - slot;
+      if (members[index] !== lastMembers[index]) {
+        assert.ok(members[index].moving);
+        return;
+      }
       assert.ok(Math.abs(x - previous[slot].x) < 3);
       assert.ok(Math.abs(y - previous[slot].y) < 5.5);
     });
     previous = frontRank;
+    lastMembers = members;
   }
   assert.equal(motion.impact.loss, 3000);
   assert.equal(motion.contact.blueArmy.population, 2650);
@@ -282,7 +314,7 @@ test("artillery and casualties preserve continuous slot geometry and opposing si
   step(motion, state, state.t);
   assert.equal(motion.contact.foughtAt, -Infinity);
   const occupation = probe.blue(state, motion);
-  motion.contact.formation.opening = -1;
+  motion.contact.formation.drive = -1;
   assert.deepEqual(probe.blue(state, motion), occupation);
   motion.reset();
   state.level = LEVEL_ONE;
