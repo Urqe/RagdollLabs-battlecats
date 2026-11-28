@@ -244,8 +244,38 @@ export const LEVEL_FOUR = Object.freeze({
   support: null,
 });
 
+const pawtorianSupportWood = barricade("artillery", 27, "PURRAPULT UNLEASHED!");
+const pawtorianWood = barricade("right-gate", 123, "CHAIN OPEN — AIM RIGHT!");
+
+export const LEVEL_FIVE = Object.freeze({
+  ...LEVEL_TWO,
+  id: "pawtorians",
+  number: 5,
+  title: "The Pawtorians",
+  combat: Object.freeze({ ...LEVEL_TWO.combat,
+    redReinforcementEscalation: Object.freeze({ start: 28, growth: 9 }),
+    maxRedReinforcements: 395,
+    maxRedLoss: 660,
+    blueAdvance: 20,
+    redLossPerDefender: 0.16,
+  }),
+  relayGates: Object.freeze([
+    Object.freeze({ id: "right-relay", after: "final", x: 259, width: 78, hitY: 523, mult: 5 }),
+  ]),
+  barricades: Object.freeze([leftWood, pawtorianWood, pawtorianSupportWood]),
+  pawtorians: Object.freeze({
+    spawnAt: 20,
+    entryY: 33,
+    marchSpeed: 27,
+    contactOffset: 9,
+    population: 1500,
+    effectiveness: 2.7,
+    meleeDamageTaken: 0.42,
+    artilleryExposure: 2,
+  }),
+});
+
 const candidates = [
-  ["pawtorians", "The Pawtorians"],
   ["clawlossus", "The Clawlossus"],
   ["cavalpurry", "The Cavalpurry"],
   ["catastrophe", "The Great Catastrophe"],
@@ -258,8 +288,9 @@ export const LEVELS = Object.freeze([
   LEVEL_TWO,
   LEVEL_THREE,
   LEVEL_FOUR,
+  LEVEL_FIVE,
   ...candidates.map(([id, title], index) =>
-    Object.freeze({ id, title, number: index + 5, status: "proposed" }),
+    Object.freeze({ id, title, number: index + 6, status: "proposed" }),
   ),
 ]);
 

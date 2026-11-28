@@ -1,3 +1,4 @@
+import { removeRed } from "./pawtorians.js";
 import { clamp } from "./config.js";
 import { updateArchers } from "./archers.js";
 
@@ -28,15 +29,25 @@ export function updateArtillery(state, onEffect) {
       0,
       1,
     );
-    const loss = Math.min(
+    const budget = Math.min(
       state.redTotal,
       config.damage * coverage,
       config.pocketFloor + state.redTotal * config.pocketShare,
     );
-    state.redTotal -= loss;
+    const previousArmorLoss = state.pawtorians?.artillery.armored ?? 0;
+    const loss = removeRed(state, budget, "artillery");
     support.damage += loss;
     support.impacts++;
     support.impact = { x: shot.x, y: shot.y, at: t, loss, damageBudget: config.damage, opening: support.impacts === 1 };
+    if (state.pawtorians) {
+      const wave = state.pawtorians;
+      support.impact.armor = {
+        loss: wave.artillery.armored - previousArmorLoss,
+        remaining: wave.count,
+        population: level.pawtorians.population,
+        lead: front - level.pawtorians.contactOffset,
+      };
+    }
     if (loss > 0) onEffect?.("artilleryImpact", t, support.impact);
     return;
   }

@@ -4,15 +4,17 @@ import { resolve } from "node:path";
 import { chromium } from "@playwright/test";
 import { createAim } from "../tests/helpers/strategies.js";
 import { purrapultAim } from "../tests/helpers/purrapult.js";
-import { LEVEL_TWO } from "../src/levels.js";
+import { pawtorianAim } from "../tests/helpers/pawtorians.js";
+import { LEVEL_TWO, LEVEL_FIVE } from "../src/levels.js";
 
 const args = process.argv.slice(2);
 const purrapult = args.includes("--purrapult");
+const pawtorians = args.includes("--pawtorians");
 const output = resolve(
   args.find((arg) => !arg.startsWith("--")) ?? "test-results/motion",
 );
 await mkdir(output, { recursive: true });
-const browser = await chromium.launch();
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
 const context = await browser.newContext({
   viewport: { width: 390, height: 844 },
   isMobile: true,
@@ -32,24 +34,33 @@ const victoryFrame = resolve(output, "victory-frame.png");
 let master;
 try {
   await page.goto("http://127.0.0.1:4173");
-  await page.addStyleTag({
+  if (!pawtorians) await page.addStyleTag({
     content: "#hud, #banner { visibility: hidden !important; }",
   });
-  if (purrapult) {
+  if (purrapult || pawtorians) {
     await page.locator("#chooseLevel").click();
-    await page.locator(`[data-level="${LEVEL_TWO.id}"]`).click();
+    const level = pawtorians ? LEVEL_FIVE : LEVEL_TWO;
+    await page.locator(`[data-level="${level.id}"]`).click();
   } else {
     await page.locator("#play").click();
   }
   marks.start = elapsed();
   const box = await page.locator("#game").boundingBox();
   const client = await context.newCDPSession(page);
-  const aim = purrapult ? purrapultAim("artillery-first") : createAim("C");
+  const aim = pawtorians ? state => pawtorianAim("gates-support", state)
+    : purrapult ? purrapultAim("artillery-first") : createAim("C");
   const snapshot = () =>
     page.evaluate(async () => (await import("/src/main.js")).getSnapshot());
   let target = (await snapshot()).gunX;
   while (elapsed() < 140) {
     const state = await snapshot();
+    if (pawtorians) {
+      if (state.pawtorians.spawnedAt !== null) marks.vanguard ??= elapsed();
+      if (state.pawtorians.arrivedAt !== null) marks.offensive ??= elapsed();
+      if (state.support.impact?.armor?.loss > 0) marks.armorImpact ??= elapsed();
+      if (state.squads.some(cohort => cohort.count === 500)) marks.chain ??= elapsed();
+      if (!state.redEntryOpen) marks.cutoff ??= elapsed();
+    }
     if (state.support?.open) marks.unlocked ??= elapsed();
     if (state.support?.shot) marks.launch ??= elapsed();
     if (state.support?.impact?.loss > 0) marks.impact ??= elapsed();
@@ -151,7 +162,9 @@ function clip(name, segments, ending = null) {
     throw new Error(`FFmpeg failed for ${name}`, { cause: result.error });
 }
 
-if (purrapult) {
+if (pawtorians) {
+  clip("level-5-pawtorians.mp4", [[Math.max(0, marks.start - 0.4), marks.result + 0.35]]);
+} else if (purrapult) {
   clip("a-purrapult-impact.mp4", [[marks.unlocked - 0.25, marks.impact + 1.8]]);
 } else {
   const gateCuts = [

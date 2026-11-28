@@ -1,3 +1,4 @@
+import { marchPawtorians, redCleared } from "./pawtorians.js";
 import { crossRelayGates } from "./multipliers.js";
 import { clamp } from "./config.js";
 import { updateDanger } from "./danger.js";
@@ -38,9 +39,12 @@ export function updateArmy(
     }
   }
 
+  marchPawtorians(state, dt);
   const previousFront = state.front;
+  const previousArmorLoss = state.pawtorians?.melee.armored ?? 0;
   const { redLost, blueLost } = advanceLaneCombat(state, combat, objective, state.t, dt);
-  if (!state.redEntryOpen && state.redTotal === 0) {
+  const armorLoss = (state.pawtorians?.melee.armored ?? 0) - previousArmorLoss;
+  if (redCleared(state)) {
     end(true);
     return;
   }
@@ -49,7 +53,7 @@ export function updateArmy(
     return;
   }
 
-  state.redRecentLoss += redLost;
+  state.redRecentLoss += Math.max(0, redLost - armorLoss);
   state.blueRecentLoss += blueLost;
   state.nextCombatEffect -= dt;
   if (state.nextCombatEffect <= 0) {

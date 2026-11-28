@@ -14,9 +14,9 @@ SiegeDolls is a mobile-first arcade strategy game about miniature cats taking si
 
 ## Development status
 
-Level 1 is the playable regression baseline. Level 2 adds yarn-ball artillery, Level 3 adds the Meowmen, and Level 4 turns two crossings into one asymmetric castle siege. Every implemented level stays available from the menu. The five merged milestones established modular JavaScript and CI, deterministic aim strategies and browser playthroughs, escalating frontline pressure, a wider battlefield and short victory sequence, then combat motion and optional sound. [Level 1 design](levels/level-01.md) · [Balance, tests, and recordings](level-1-balance.md)
+Level 1 is the playable regression baseline. Level 2 adds yarn-ball artillery, Level 3 adds the Meowmen, and Level 4 turns two crossings into one asymmetric castle siege, and Level 5 introduces an armored red vanguard. Every implemented level stays available from the menu. The five merged milestones established modular JavaScript and CI, deterministic aim strategies and browser playthroughs, escalating frontline pressure, a wider battlefield and short victory sequence, then combat motion and optional sound. [Level 1 design](levels/level-01.md) · [Balance, tests, and recordings](level-1-balance.md)
 
-**Implemented** means playable. **Next** identifies the current implementation candidate. **Proposed** means a preliminary design. **Under review** flags a decision or missing evidence that needs attention. **Deferred** records an intentional postponement. Titles and mechanics for Levels 5–10 are provisional.
+**Implemented** means playable. **Next** identifies the current implementation candidate. **Proposed** means a preliminary design. **Under review** flags a decision or missing evidence that needs attention. **Deferred** records an intentional postponement. Titles and mechanics for Levels 6–10 are provisional.
 
 ## Levels 1–10
 
@@ -26,7 +26,7 @@ Level 1 is the playable regression baseline. Level 2 adds yarn-ball artillery, L
 | 2 | [The Purrapult](levels/level-02.md) | Implemented | Unlock a yarn-ball catapult. Shared level definitions, direct-hit wood, and simulation-owned artillery are in place. |
 | 3 | [The Meowmen](levels/level-03.md) | Implemented | Unlock cat archers for steady ranged support. |
 | 4 | [A Tale of Two Tails](levels/level-04.md) | Implemented | Reinforce two bottlenecks with one cannon, secure the west with the Meowrtan Phalanx, redeploy its infantry through the rear junction, and encircle the remaining horde after breaking through in the east. |
-| 5 | [The Pawtorians](levels/level-05.md) | Proposed | Armored red cats make shot timing and support choice matter. Needs a readable mixed horde and distinct damage interactions. |
+| 5 | [The Pawtorians](levels/level-05.md) | Implemented | A finite armored vanguard breaks the opening defense. Optional artillery wears it down before compounded blue waves retake the field. |
 | 6 | [The Clawlossus](levels/level-06.md) | Proposed | A siege tower gives the player a moving target for concentrated damage. Builds on direct-hit targets and clear enemy threat states. |
 | 7 | [The Cavalpurry](levels/level-07.md) | Proposed | Mounted blue cats charge periodically. Depends on a readable support windup and clear frontline impact. |
 | 8 | [The Great Catastrophe](levels/level-08.md) | Proposed | Coordinated attacks across multiple fronts. Depends on a successful two-crossing playtest and readable attack warnings. |
@@ -64,7 +64,7 @@ A candidate future special encounter could unlock a **Royal Armory** after costl
 
 9. **Milestone 20 · Combat continuity and battlefield polish.** Keep the east horde visible during reinforcement, restore army and tactical status, and give the shield push and the rear attack authoritative contact lines. [Presentation evidence](level-4-presentation.md#milestone-20--diagnosing-the-empty-east-front)
 
-Treat Levels 5–10 as candidates. Use playtest results from the support levels and the two crossings before planning mixed units or combined encounters.
+Treat Levels 6–10 as candidates. Use playtest results from the support levels and the two crossings before planning mixed units or combined encounters.
 
 ## Open questions and review
 
