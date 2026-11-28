@@ -3,7 +3,7 @@ import { clamp } from "./config.js";
 export const LITERAL_ARMY = 150;
 export const CROSSING_LITERAL_ARMY = 112;
 export const FIELD_LIMIT = 252;
-export const RESERVE_LIMIT = 720;
+export const RESERVE_LIMIT = 1560;
 export const RESERVE_GROUP = 6;
 export const RESERVE_ROWS = 25;
 export const ENTRY_LIMIT = 30;
@@ -43,7 +43,8 @@ export function armyScale(population, scale = {}, literal = LITERAL_ARMY, limit 
   scale.reserve = Math.min(count - scale.field, Math.ceil(
     110 * -Math.expm1(-extra / 520) +
     230 * -Math.expm1(-extra / 3600) +
-    380 * -Math.expm1(-extra / 18000),
+    380 * -Math.expm1(-extra / 18000) +
+    840 * -Math.expm1(-Math.max(0, extra - 3000) / 15000),
   ));
   return scale;
 }

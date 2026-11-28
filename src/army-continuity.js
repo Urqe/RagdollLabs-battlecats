@@ -4,6 +4,7 @@ import { armyScale, fieldRow, FIELD_LIMIT, LITERAL_ARMY } from "./army-visual.js
 export function createArmyPresentation() {
   return {
     population: null,
+    occupationMass: 0,
     target: {},
     field: 0,
     reserve: 0,
@@ -18,6 +19,7 @@ export function createArmyPresentation() {
 
 export function resetArmyPresentation(army) {
   army.population = null;
+  army.occupationMass = 0;
   army.field = army.reserve = army.fieldExtent = army.reserveExtent = 0;
   army.rows = army.recoil = army.compression = 0;
   army.collapseAge = Infinity;
@@ -40,12 +42,14 @@ export function stepArmyPresentation(army, population, dt, easeSmallArrivals = f
   army.population = population;
 
   if (before === null) {
+    army.occupationMass = population;
     army.field = army.fieldExtent = field;
     army.reserve = army.reserveExtent = reserve;
     army.rows = rowsAt(field);
     return;
   }
 
+  army.occupationMass = settle(army.occupationMass, population, dt, 0.38);
   const oldField = army.field;
   const oldReserve = army.reserve;
   const loss = Math.max(0, (before - population) / Math.max(1, before));

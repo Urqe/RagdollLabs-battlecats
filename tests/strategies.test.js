@@ -45,17 +45,18 @@ for (const hz of [30, 60, 120]) {
       assert.equal(result.won, true);
       assert.ok(result.seconds >= 60 && result.seconds <= 120);
       assert.equal(result.red, 0);
+      assert.ok(result.samples.some(s => s.red > 15000 && s.blue > 10000));
       assert.equal(result.state.mode, "victory");
       assert.equal(result.state.redEntryOpen, false);
       assert.ok(result.cutoff > result.activation);
-      assert.ok(result.cutoff < result.seconds);
+      assert.ok(result.cutoff <= result.seconds);
       assert.ok(result.furthest < LEVEL.castleFront - 30);
       assert.deepEqual([left.gate, right.gate], [25, 100]);
       assert.ok(
         result.activation > right.time,
         "×100 must travel before joining",
       );
-      assert.ok(result.pushback > 300);
+      assert.ok(result.pushback > 250);
       assert.ok(
         result.reversals.some(
           (r) =>

@@ -5,11 +5,33 @@ export function effectiveStrength(population, frontage) {
   return (population / (1 + Math.sqrt(1 + population / frontage))) * 2;
 }
 
+function redEngagedPopulation(population, combat) {
+  const reserve = combat.redMobilization;
+  if (!reserve || population <= reserve.frontRanks) return population;
+  return reserve.frontRanks + reserve.frontRanks * Math.log1p((population - reserve.frontRanks) / reserve.frontRanks);
+}
+
+export function redStrength(population, combat) {
+  return effectiveStrength(redEngagedPopulation(population, combat), combat.frontage) * combat.redPressurePerCat;
+}
+
+export function redSupplyRate(time, combat) {
+  const ordinary = Math.min(combat.maxRedReinforcements,
+    combat.redReinforcements + combat.redReinforcementGrowth * time);
+  const reserve = combat.redMobilization;
+  if (!reserve) return ordinary;
+  const age = time - reserve.start;
+  return ordinary + reserve.rate * clamp(age / 8, 0, 1) * clamp((reserve.duration - age) / 8, 0, 1);
+}
+
 export function casualtyRates(blue, red, combat) {
-  const contact = Math.min(blue, red);
-  const engagedRed = Math.min(red, contact * combat.redEngagementRatio);
+  const redInReach = redEngagedPopulation(red, combat);
+  const contact = Math.min(blue, redInReach);
+  const engagedRed = Math.min(redInReach, contact * combat.redEngagementRatio);
+  const reserveCapacity = combat.redMobilization
+    ? combat.redMobilization.collapseRate * clamp((blue - redStrength(red, combat)) / 8500, 0, 1) : 0;
   return {
-    red: Math.min(combat.maxRedLoss, blue * combat.redLossPerBlue),
+    red: Math.min(combat.maxRedLoss + reserveCapacity, blue * combat.redLossPerBlue),
     blue: Math.min(combat.maxBlueLoss ?? Infinity,
       engagedRed * combat.blueLossPerRed + contact * combat.blueContactLoss),
   };
@@ -24,7 +46,7 @@ export function marchSquad(squad, front, combat, marchSpeed, dt) {
 
 function advanceFront(state, combat, dt, blueSupport) {
   const blue = effectiveStrength(state.blueTotal, combat.frontage) + blueSupport;
-  const red = effectiveStrength(state.redTotal, combat.frontage) * combat.redPressurePerCat;
+  const red = redStrength(state.redTotal, combat);
   state.bluePressure = blue;
   state.redPressure = red;
 
@@ -61,12 +83,7 @@ export function advanceLaneCombat(state, combat, objective, time, dt, blueSuppor
         1,
       )
     : 0;
-  state.redEntryRate =
-    access *
-    Math.min(
-      combat.maxRedReinforcements,
-      combat.redReinforcements + combat.redReinforcementGrowth * time,
-    );
+  state.redEntryRate = access * redSupplyRate(time, combat);
   const redArrived = state.redEntryRate * dt;
   state.redTotal += redArrived;
 

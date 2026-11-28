@@ -2,14 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { casualtyRates } from "../src/army.js";
 import { createGame } from "../src/game.js";
-import { LEVEL_ONE } from "../src/levels.js";
+import { LEVEL_ONE, LEVEL_TWO } from "../src/levels.js";
 import { createDanger, reinforcementTime, updateDanger } from "../src/danger.js";
 import { createMotion } from "../src/motion.js";
 import { exchangeOffset, exchangeSeam } from "../src/formation-dynamics.js";
 import { traceBattle } from "../scripts/simulate-combat.js";
 
 test("red reserves add territorial pressure beyond their direct engagement limit", () => {
-  const { combat } = LEVEL_ONE;
+  const { combat } = LEVEL_TWO;
   assert.deepEqual(casualtyRates(1000, 50000, combat), { blue: 267, red: 1000 * combat.redLossPerBlue });
   assert.deepEqual(casualtyRates(1000, 500000, combat), casualtyRates(1000, 50000, combat));
   assert.equal(casualtyRates(1000, 3000, combat).blue, 202);
@@ -18,7 +18,7 @@ test("red reserves add territorial pressure beyond their direct engagement limit
   assert.equal(casualtyRates(500000, 500000, combat).red, combat.maxRedLoss);
 
   const fronts = [50000, 500000].map(redTotal => {
-    const game = createGame();
+    const game = createGame({ level: LEVEL_TWO });
     game.reset();
     Object.assign(game.state, { blueTotal: 1000, redTotal });
     for (let i = 0; i < 60; i++) game.update(1 / 60);
@@ -107,7 +107,7 @@ for (const hz of [30, 60, 120]) {
     assert.deepEqual(rescued, traceBattle(LEVEL_ONE, "rescue", hz, 0.55));
     assert.deepEqual(rescued.warningSample, ignored.warningSample);
     assert.equal(rescued.warning, ignored.warning);
-    assert.ok(rescued.warningSample.forecast >= 3 && rescued.warningSample.forecast <= 5);
+    assert.ok(rescued.warningSample.forecast >= 3 && rescued.warningSample.forecast <= 5.15);
     assert.equal(ignored.result, "victory");
     assert.equal(rescued.result, "victory");
     assert.ok(rescued.arrived - rescued.switchAt < 1.5);

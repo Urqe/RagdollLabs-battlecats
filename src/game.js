@@ -39,8 +39,8 @@ export function createGame({
   }
 
   const { spawnSquad } = createMultipliers(state, sprinkle, random);
-  function multiply(gate, x, y, slot) {
-    spawnSquad(gate, x, y, slot);
+  function multiply(gate, x, y, slot, volley) {
+    spawnSquad(gate, x, y, slot, volley);
     onEffect?.("multiply", state.t, gate.mult);
   }
   function reset(nextLevel = state.level, mode = "playing") {

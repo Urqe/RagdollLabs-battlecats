@@ -260,7 +260,7 @@ test("surviving red ranks open and refill a local pocket at each refresh rate", 
   const plot = createFigures(
     {
       drawImage(atlas, sx, sy, sw, sh, x, y, w, h) {
-        positions.push([x + w / 2, y + h / 2]);
+        positions.push([x + w / 2, y + h / 2, sh === 32 ? sx / 48 + 1 : 1]);
       },
     },
     { createElement: () => ({ getContext: () => atlasContext }) },
@@ -270,7 +270,8 @@ test("surviving red ranks open and refill a local pocket at each refresh rate", 
   const displaced = positions.splice(0);
   plot.redArmy(state, motion.contact);
   const inside = ([x, y]) => Math.abs(x - impact.x) < 14 && Math.abs(y - impact.y) < 11;
-  assert.equal(displaced.length, positions.length);
+  const represented = draws => draws.reduce((total, pose) => total + pose[2], 0);
+  assert.equal(represented(displaced), represented(positions));
   assert.ok(positions.some(inside));
   assert.ok(displaced.filter(inside).length < positions.filter(inside).length);
   state.redTotal = 1500;

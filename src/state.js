@@ -59,6 +59,8 @@ export function createState(level = LEVEL_ONE) {
     work,
     recoil,
     shots,
+    nextVolley: 0,
+    relayFlashes: {},
     squads,
     burst,
     finalActivated,

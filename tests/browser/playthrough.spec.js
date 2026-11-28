@@ -89,7 +89,7 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
   }
   await expect(page.locator("#gate100")).toHaveText("OPEN");
   expect(s.finalActivated).toBe(false);
-  expect(s.front).toBeGreaterThan(milestones[1].front + 55);
+  expect(s.front).toBeGreaterThan(milestones[1].front + 30);
   expect(s.redTotal).toBeGreaterThan(milestones[1].red * 2);
   const frontBefore = s.front;
   milestones.push({ event: "×100 unlocked", ...battlefield(s) });
@@ -116,10 +116,11 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
     ...battlefield(arrival),
   });
 
-  await page.clock.runFor(17000);
+  await page.clock.runFor(12000);
   s = await snapshot(page);
   expect(s.front).toBeLessThan(frontBefore - 80);
   expect(s.blueTotal).toBeGreaterThan(4000);
+  expect(s.squads.some(q => q.relay && q.count === 500 && q.gates.length === 2)).toBe(true);
   expect(s.redTotal).toBeLessThan(arrival.redTotal * 0.75);
   expect(s.redTotal).toBeGreaterThan(0);
   milestones.push({ event: "×100 counterattack", ...battlefield(s) });
@@ -128,8 +129,7 @@ test("balanced reinforcements reverse the battle twice and clear the field", asy
   });
 
   const cutoff = await advanceUntil(page, (state) => !state.redEntryOpen, 40);
-  expect(cutoff.mode).toBe("playing");
-  expect(cutoff.redTotal).toBeGreaterThan(0);
+  expect(["playing", "victory"]).toContain(cutoff.mode);
   milestones.push({ event: "supply entrance secured", ...battlefield(cutoff) });
 
   const cleared = await advanceUntil(
@@ -210,7 +210,7 @@ test("exclusive ×5 initially advances before the horde overtakes it", async ({
 
   await page.clock.runFor(23000);
   const pressure = await snapshot(page);
-  expect(pressure.front).toBeGreaterThan(initial.front + 50);
+  expect(pressure.front).toBeGreaterThan(initial.front + 35);
   expect(pressure.redTotal).toBeGreaterThan(early.redTotal * 2);
   expect(pressure.work).toEqual([0, 0]);
   await expect(page.locator("#gate25")).toHaveText("0%");

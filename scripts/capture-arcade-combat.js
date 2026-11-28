@@ -34,6 +34,7 @@ async function capture(browser, plan) {
   const elapsed = () => (performance.now() - origin) / 1000;
   try {
     await page.goto(url);
+    if (process.env.HIDE_HUD) await page.addStyleTag({ content: "#hud { visibility: hidden }" });
     await page.locator("#chooseLevel").click();
     await page.locator(`[data-level="${plan.id}"]`).click();
     const box = await page.locator("#game").boundingBox();
@@ -51,6 +52,8 @@ async function capture(browser, plan) {
         const left = s.dual?.lanes.left;
         marks.push({ videoTime: elapsed(), t: s.t, mode: s.mode, gunX: s.gunX,
           blue: left?.blueTotal ?? s.blueTotal, red: left?.redTotal ?? s.redTotal,
+          front: s.front, frontVelocity: s.frontVelocity,
+          relay: s.relayFlashes, chainedInTransit: s.squads.filter(q => q.relay).reduce((total, q) => total + q.count, 0),
           leftFront: left?.front, leftVelocity: left?.frontVelocity,
           eastFront: s.dual?.lanes.right.front, phase: s.dual?.phalanx.phase,
           siege: s.dual?.siege.phase, supportDamage: s.support?.damage });

@@ -22,7 +22,7 @@ The red horde starts larger and recruits faster as the siege goes on. Switch bet
 
 1. **Middle ×5:** Open from the start. Every incoming cat through the gate becomes five. Three shots become a marching squad of **15 blue cats**. Use it to gain early ground before the horde grows.
 2. **Left ×25 barricade:** Aim your cannon directly at the wood barrier instead of producing reinforcements. Each hit damages it, and a progress indicator shows your work. Once broken, fire through the ×25 gate to reclaim ground before the horde surges again.
-3. **Right ×100 barricade:** Takes more hits to break. Again you must personally aim at the wood, temporarily sacrificing reinforcements. Once open, send three cats through the gate to produce a **300-cat** counterattack per volley.
+3. **Right ×100 barricade:** Takes more hits to break. Again you must personally aim at the wood, temporarily sacrificing reinforcements. Once open, send three cats through the gate to produce 300 cats per volley at the first gate. The downstream **×5** relay expands a full crossing to **1,500 cats** before they reach combat. [Ocean of Cats design and evidence](docs/ocean-of-cats.md)
 
 Cats do not instantly teleport to the front. Each gate creates a visible **marching formation** that moves toward the enemy; their combat strength is added when the formation reaches combat. Large squads render representative soldiers with their total still accounted for in the battle simulation. [Army scale and rendering](docs/army-scale-individuality.md)
 

@@ -205,7 +205,9 @@ test("overlapping final waves keep older columns visible using bounded draw call
   const before = structuredClone(state);
   figures.setClock(2);
   figures.blueArmy(state, 0, contact, []);
-  assert.ok(draws.length < 700);
+  const assembledCalls = FIELD_LIMIT + Math.ceil(armyScale(state.blueTotal).reserve / 6);
+  const travelCalls = 6 * 32 + (state.squads.length - 6) * Math.ceil(32 / 6);
+  assert.ok(draws.length <= assembledCalls + travelCalls);
   assert.ok(draws.reduce((sum, draw) => sum + draw.represented, 0) > 1000);
   assert.deepEqual(state, before);
 });

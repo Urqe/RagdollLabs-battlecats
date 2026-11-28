@@ -63,6 +63,7 @@ function barricade(id, hits, message, hitY = 545) {
 
 const leftWood = barricade("left-gate", 90, "×25 OPEN — AIM LEFT!");
 const rightWood = barricade("right-gate", 231, "×100 OPEN — AIM RIGHT!");
+const compoundWood = barricade("right-gate", 231, "CHAIN OPEN — AIM RIGHT!");
 const supportWood = barricade("artillery", 36, "PURRAPULT UNLEASHED!");
 
 // Shared archer support defaults.
@@ -89,13 +90,18 @@ export const LEVEL_ONE = Object.freeze({
   status: "implemented",
   battlefield,
   objective,
-  combat,
+  combat: Object.freeze({ ...combat,
+    redMobilization: Object.freeze({ frontRanks: 360, start: 30, duration: 47, rate: 720, collapseRate: 2200 }),
+  }),
   gates: Object.freeze([
     gate("starter", 210, 98, 5, "#399be9", 0),
     gate("strong", 90, 96, 25, "#ffb740", 1, leftWood.id),
-    gate("final", 329, 106, 100, "#ffd561", 2, rightWood.id),
+    gate("final", 329, 106, 100, "#ffd561", 2, compoundWood.id),
   ]),
-  barricades: Object.freeze([leftWood, rightWood]),
+  relayGates: Object.freeze([
+    Object.freeze({ id: "right-relay", after: "final", x: 329, width: 91, hitY: 492, mult: 5 }),
+  ]),
+  barricades: Object.freeze([leftWood, compoundWood]),
   support: null,
 });
 

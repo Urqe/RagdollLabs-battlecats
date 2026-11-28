@@ -1,4 +1,4 @@
-import { effectiveStrength } from "./lane-combat.js";
+import { effectiveStrength, redStrength } from "./lane-combat.js";
 
 
 const FORECAST_INTERVAL = 0.2;
@@ -50,8 +50,8 @@ export function updateDanger(state, dt, lossRate, velocity) {
       survival += q.count / danger.lossRate;
     }
   }
-  const { frontage, redPressurePerCat } = level.combat;
-  const enemyAdvantage = effectiveStrength(redTotal, frontage) * redPressurePerCat >
+  const { frontage } = level.combat;
+  const enemyAdvantage = redStrength(redTotal, level.combat) >
     effectiveStrength(blueTotal, frontage);
   const exposed = state.squads.length === 0 || blueTotal > 0;
   // A gap alone does not lose the game. With troops marching and the castle
