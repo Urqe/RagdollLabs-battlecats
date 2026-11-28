@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createGame } from "../src/game.js";
+import { createBattleClock, createGame } from "../src/game.js";
 import { createState } from "../src/state.js";
 import { createFigures } from "../src/figures.js";
 import { LEVEL_ONE, LEVEL_TWO } from "../src/levels.js";
@@ -349,4 +349,173 @@ test("opposing field sprites respect the shared lane seam during an exchange", (
     }
   }
   assert.equal(s.front, 280);
+});
+
+function saturatedFixture(occupied = 144, population = 30000) {
+  const state = createState();
+  Object.assign(state, { mode: "playing", blueTotal: population, redTotal: 30000, front: 335, t: 2 });
+  const motion = createMotion();
+  const probe = renderProbe();
+  step(motion, state, state.t);
+  const { reinforcements, blueArmy } = motion.contact;
+  if (occupied) {
+    const seed = { ...wave(100), born: 0 };
+    reinforcements.admit(seed, occupied, blueArmy.target.field, blueArmy.target.reserve, blueArmy.target);
+    for (const member of seed.members) member.settled = true;
+  }
+  probe.blue(state, motion);
+  function receive(count = 3) {
+    for (let slot = 0; slot < count; slot++) {
+      const q = { ...wave(100, 329), slot: slot % 3 - 1, count: 500,
+        relay: { y: 486, at: 0.8 } };
+      state.blueTotal += q.count;
+      motion.receive("arrival", state.t, q, state.front);
+    }
+    step(motion, state, state.t);
+    return motion.tails.slice(-count);
+  }
+  function draw(dt = 1 / 60) {
+    state.t += dt;
+    step(motion, state, state.t);
+    return probe.blue(state, motion);
+  }
+  return { state, motion, reinforcements, receive, draw };
+}
+
+for (const vacancies of [0, 3]) {
+  test(`compound arrival completes at the occupied rank with ${vacancies} detailed vacancies`, () => {
+    const fixture = saturatedFixture(144 - vacancies);
+    const { state, motion, reinforcements } = fixture;
+    const arrivals = fixture.receive();
+    const members = arrivals.flatMap(q => q.members);
+    const receiving = members.filter(m => !m.assigned);
+    assert.equal(state.blueTotal, 31500);
+    assert.equal(members.length, 144);
+    assert.equal(receiving.length, 144 - vacancies);
+    assert.equal(reinforcements.reserve.filter(Boolean).length, 144);
+
+    const before = new Map();
+    const docking = new Set();
+    for (let frame = 0; frame < 150; frame++) {
+      fixture.draw();
+      for (const member of receiving) {
+        if (member.x === undefined) continue;
+        const previous = before.get(member);
+        if (previous)
+          assert.ok(Math.hypot(member.x - previous.x, member.y - previous.y) <= 135 / 60 + 1e-8);
+        before.set(member, { x: member.x, y: member.y });
+        if (member.docked && !member.settled) docking.add(member);
+        if (!member.aggregatedAt) continue;
+        assert.ok(docking.has(member));
+        assert.ok(member.y <= member.cohort.relay.y - 10);
+        assert.equal(member.retired, undefined);
+      }
+    }
+    assert.ok(receiving.every(member => member.settled && member.aggregatedAt > member.cohort.at));
+    assert.equal(motion.tails.length, 0);
+  });
+}
+
+test("overlapping saturated cohorts drain, hold during pause, and reuse a casualty vacancy", () => {
+  const fixture = saturatedFixture();
+  const { state, motion, reinforcements } = fixture;
+  const waves = [];
+  for (let volley = 0; volley < 8; volley++) {
+    waves.push(...fixture.receive());
+    fixture.draw();
+  }
+  const member = waves[0].members[0];
+  const pause = { x: member.x, y: member.y, settled: member.settled };
+  for (let i = 0; i < 4; i++) fixture.draw(0);
+  assert.deepEqual({ x: member.x, y: member.y, settled: member.settled }, pause);
+
+  const oldFront = reinforcements.field[0];
+  state.blueTotal -= 10;
+  motion.receive("clash", state.t, 210, state.front, 0, 10);
+  fixture.draw();
+  assert.ok(oldFront.retired);
+  assert.notEqual(reinforcements.field[0], oldFront);
+  const newWave = fixture.receive();
+  assert.equal(newWave.flatMap(q => q.members).filter(m => m.assigned).length, 1);
+  const positions = [...reinforcements.field, ...reinforcements.reserve].filter(Boolean);
+  assert.equal(new Set(positions).size, positions.length);
+
+  for (let i = 0; i < 150; i++) fixture.draw();
+  assert.equal(motion.tails.length, 0);
+  assert.ok(waves.every(q => q.members.every(m => m.settled)));
+  fixture.receive();
+  motion.reset();
+  state.level = LEVEL_TWO;
+  assert.equal(motion.tails.length, 0);
+  assert.ok(reinforcements.reserve.every(m => m === null));
+});
+
+test("spillover batches on the inbound route while already integrating cohorts keep their places", () => {
+  const fixture = saturatedFixture();
+  const { state, motion } = fixture;
+  for (let i = 0; i < MAX_TAILS / 3; i++) fixture.receive();
+  fixture.draw();
+  const oldest = motion.tails[0];
+  fixture.receive();
+  assert.equal(motion.tails.length, MAX_TAILS);
+  assert.equal(motion.tails[0], oldest);
+  assert.ok(motion.tails.some(q => q.grouped && q.overflow > 0));
+  for (let i = 0; i < 150; i++) fixture.draw();
+  assert.equal(motion.tails.length, 0);
+  assert.equal(state.blueTotal, 30000 + 500 * (MAX_TAILS + 3));
+});
+
+test("saturated receiving and render frequency leave fixed-tick authority identical", () => {
+  function play(hz, draw) {
+    const motion = createMotion();
+    const arrivals = [];
+    const game = createGame({ random: () => 0.5, onEffect(kind, time, value, ...args) {
+      if (draw) motion.receive(kind, time, value, ...args);
+      if (kind === "arrival") arrivals.push([time, value.count]);
+    } });
+    game.reset();
+    const { state } = game;
+    Object.assign(state, { blueTotal: 30000, redTotal: 10000, front: 365, gunX: 329 });
+    state.gates[2].open = true;
+    const clock = createBattleClock(step => {
+      if (state.mode === "playing") game.update(step);
+    });
+    const probe = draw ? renderProbe() : null;
+    let integrated = false;
+    for (let frame = 0; frame < hz * 20 && state.mode === "playing"; frame++) {
+      const front = state.front;
+      clock.advance(1 / hz);
+      if (!probe) continue;
+      motion.step(state.t, (state.front - front) * hz, state.blueTotal, state.redEntryOpen, state.level, state);
+      probe.blue(state, motion);
+      integrated ||= motion.tails.some(q => q.members.some(m => m.aggregatedAt !== undefined));
+    }
+    if (draw) assert.ok(integrated);
+    assert.ok(arrivals.filter(([, count]) => count === 500).length > 3);
+    assert.equal(state.mode, "victory");
+    return { state, arrivals };
+  }
+  const authority = play(60, false);
+  for (const hz of [30, 60, 120]) assert.deepEqual(play(hz, true), authority);
+});
+
+test("an older grouped wave starts receiving at its last rendered stamp", () => {
+  const fixture = saturatedFixture();
+  const { state, motion } = fixture;
+  const baseline = fixture.draw(0).length;
+  const q = { ...wave(100, 329), count: 500, marchTime: 0.65, relay: { y: 492, at: 0.55 } };
+  state.squads.push(q);
+  fixture.draw(0);
+  for (let i = 0; i < 6; i++) state.squads.push({ ...q, phase: i });
+  q.marchTime = 1.74;
+  const [stamp] = fixture.draw(0).slice(baseline);
+  assert.ok(stamp);
+
+  state.squads.shift();
+  state.blueTotal += q.count;
+  motion.receive("arrival", state.t, q, state.front);
+  fixture.draw(0);
+  const firstPacket = motion.tails[0].members.slice(0, 6);
+  const midpoint = coordinate => firstPacket.reduce((sum, member) => sum + member[coordinate], 0) / firstPacket.length;
+  assert.ok(Math.hypot(midpoint("x") - stamp.x, midpoint("y") - stamp.y) < 1);
 });

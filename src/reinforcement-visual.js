@@ -1,64 +1,69 @@
 import { FIELD_LIMIT, RESERVE_LIMIT, fieldColumn, fieldRow } from "./army-visual.js";
 
-const DETAILED_RESERVES = 144;
+export const DETAILED_RESERVES = 144;
 
 export const DETAILED_WAVES = 6;
+export const RECEIVING_DETAIL_LIMIT = 36;
 
 export function createReinforcementVisual() {
   const field = Array(FIELD_LIMIT).fill(null);
   const reserve = Array(RESERVE_LIMIT).fill(null);
+  let reserveOwners = 0;
+  let fieldCapacity = 0;
+  let reserveCapacity = 0;
 
   function reset() {
     field.fill(null);
     reserve.fill(null);
+    reserveOwners = fieldCapacity = reserveCapacity = 0;
   }
 
   function setCapacity(target) {
-    for (let i = target.field; i < field.length; i++) if (field[i]) retire(field, i);
-    for (let i = target.reserve; i < reserve.length; i++) if (reserve[i]) retire(reserve, i);
+    for (let i = target.field; i < fieldCapacity; i++) releaseSlot(field, i);
+    for (let i = target.reserve; i < reserveCapacity; i++) releaseSlot(reserve, i);
+    fieldCapacity = target.field;
+    reserveCapacity = target.reserve;
   }
 
-  function retire(slots, index) {
-    slots[index].settled = true;
-    slots[index].retired = true;
+  function releaseSlot(slots, index) {
+    const member = slots[index];
+    if (!member) return;
     slots[index] = null;
+    if (slots === reserve) reserveOwners--;
+    // A cat that hasn't reached its rank still has a journey to complete.
+    if (member.settled) member.retired = true;
+    else member.assigned = false;
   }
 
   function admit(cohort, count, fromField, fromReserve, target) {
     cohort.members = Array.from({ length: count }, (_, index) => ({
       cohort, index, assigned: false, settled: false,
     }));
-    const freeField = Math.max(0, target.field - fromField);
-    const freeReserve = Math.max(0, target.reserve - fromReserve);
-    const reserveStart = freeReserve >= count - freeField
-      ? fromReserve : Math.max(0, target.reserve - DETAILED_RESERVES);
     let f = fromField;
-    let r = reserveStart;
+    let r = Math.max(0, Math.min(fromReserve, target.reserve - DETAILED_RESERVES));
     for (const member of cohort.members) {
       while (f < target.field && field[f]) f++;
-      while (r < target.reserve && reserve[r]) r++;
-      if (f < target.field) field[f++] = member;
-      else if (r < target.reserve) reserve[r++] = member;
-      else continue;
+      if (f < target.field) {
+        field[f++] = member;
+      } else if (reserveOwners < DETAILED_RESERVES) {
+        while (r < target.reserve && reserve[r]) r++;
+        if (r >= target.reserve) break;
+        reserve[r++] = member;
+        reserveOwners++;
+      } else break;
       member.assigned = true;
     }
-    let detailed = 0;
-    for (let i = reserve.length - 1; i >= 0; i--) {
-      const member = reserve[i];
-      if (member && ++detailed > DETAILED_RESERVES) {
-        if (member.settled) retire(reserve, i);
-        else {
-          member.assigned = false;
-          reserve[i] = null;
-        }
-      }
-    }
+    fieldCapacity = Math.max(fieldCapacity, target.field);
+    reserveCapacity = Math.max(reserveCapacity, target.reserve);
   }
 
   function replenish(slot, fieldCount, reserveCount, remaining = fieldCount) {
     if (slot >= fieldCount) return null;
     const casualty = field[slot];
-    if (casualty) retire(field, slot);
+    if (casualty) {
+      releaseSlot(field, slot);
+      casualty.settled = casualty.retired = true;
+    }
     const column = fieldColumn(slot);
     let previous = slot;
     for (let next = slot + 1; next < fieldCount; next++) {
@@ -73,11 +78,12 @@ export function createReinforcementVisual() {
       field[fieldCount - 1] = null;
       return casualty;
     }
-    const recruit = reserve.findIndex(member => member?.settled);
+    const recruit = reserve.findIndex((member, index) => index < reserveCount && member?.settled);
     field[previous] = recruit < 0 ? null : reserve[recruit];
-    if (recruit >= 0 && recruit < reserveCount) {
+    if (recruit >= 0) {
       field[previous].moving = true;
       reserve[recruit] = null;
+      reserveOwners--;
     }
     return casualty;
   }

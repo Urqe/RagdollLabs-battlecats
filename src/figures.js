@@ -8,7 +8,7 @@ import { gapShift, gapStrength } from "./formation.js";
 import {
   FLAG_CAPTURE_TIME, receivingY, smoothStep, victoryAdvance, victoryWaveVisibility,
 } from "./army-movement.js";
-import { approachFormation, DETAILED_WAVES } from "./reinforcement-visual.js";
+import { approachFormation, DETAILED_WAVES, RECEIVING_DETAIL_LIMIT } from "./reinforcement-visual.js";
 import { collapsePose, retirementOpacity, rowsAt, slotCoverage } from "./army-continuity.js";
 import {
   LITERAL_ARMY,
@@ -153,6 +153,14 @@ export function createFigures(ctx, ownerDocument) {
   const lastWavePoses = new WeakMap();
   let waveTails = [];
   let waveVisibility = 1;
+  const receivingBands = Array.from({ length: RESERVE_ROWS }, () => ({
+    x: new Float64Array(17), y: new Float64Array(17), count: 0,
+  }));
+  const receivingGroup = [];
+  const receivingX = new Float64Array(5);
+  const receivingYByColumn = new Float64Array(5);
+  let receivingRows = 0;
+  let receivingDetails = 0;
   let receivingRear = 0;
   let receiverTime = -Infinity;
   let clock = 0;
@@ -184,8 +192,8 @@ export function createFigures(ctx, ownerDocument) {
     }
   }
 
-  function drawReserveTile(x, y, count, team, pose, scale, flatten = 0) {
-    const height = TILE_HEIGHT * scale * (1 - flatten * 0.42);
+  function drawReserveTile(x, y, count, team, pose, scale, flatten = 0, depthScale = scale) {
+    const height = TILE_HEIGHT * depthScale * (1 - flatten * 0.42);
     ctx.drawImage(
       stamps,
       (count - 1) * TILE_WIDTH_PX,
@@ -225,12 +233,19 @@ export function createFigures(ctx, ownerDocument) {
       const spread = Math.min(24, half / ((columns - 1) / 2));
       const step = compact + (spread - compact) * smoothStep((extent - 80) / 550);
       const size = clamp(step / 19.4, 0.42, 1.2);
+      const band = red ? null : receivingBands[row];
+      if (band) band.count = 0;
       for (let col = 0; first < extent && col < columns; col++, first += RESERVE_GROUP) {
         const track = row * 29 + col;
         const x = 210 + clamp(crowdColumn(col, row, step), -half, half);
         const refill = row < 3 ? rankReplenishment(clock - casualty.at, 10 + row, Math.abs(x - casualty.x)) : 0;
         const cy = boundCatY(y - direction * refill,
           battleLine, red, 2 + TILE_HEIGHT * size / 2);
+        if (band && first < living) {
+          band.x[band.count] = x;
+          band.y[band.count++] = cy;
+          receivingRows = row + 1;
+        }
         const group = Math.min(Math.ceil(extent - first), RESERVE_GROUP);
         const pose = (cycle + row + col) % TILE_POSES;
         const exposed = strength && split < SPLIT_LIMIT && first < living
@@ -497,6 +512,11 @@ export function createFigures(ctx, ownerDocument) {
       : 0;
   }
 
+  function waveTint(q, index) {
+    if (q.mult === 100 && index % 4 === 0) return BRIGHT_BLUE;
+    return index % 5 === 4 ? DARK_BLUE : BLUE;
+  }
+
   function travelPose(q, i, age, state) {
     const profile = waveProfile(q.mult);
     const relayMember = i >= profile.count && q.relay;
@@ -525,7 +545,7 @@ export function createFigures(ctx, ownerDocument) {
     const half = laneHalfWidth(y) - 2;
     traveller.x = clamp(center + local * spread * (0.66 + route * 0.34), 210 - half, 210 + half);
     traveller.y = y;
-    traveller.tint = q.mult === 100 && i % 4 === 0 ? BRIGHT_BLUE : i % 5 === 4 ? DARK_BLUE : BLUE;
+    traveller.tint = waveTint(q, i);
     traveller.phase = q.phase + i * 0.91;
     traveller.size = clamp(3.95 + y * 0.0039, 3.8, 6.15);
     return true;
@@ -542,69 +562,168 @@ export function createFigures(ctx, ownerDocument) {
       member.size = size;
       return member;
     }
-    if (member.x === undefined) {
-      const prior = lastWavePoses.get(q.source)?.[member.index];
-      if (!travelPose(q, member.index, clock - q.born, state)) return null;
-      member.x = prior?.x ?? traveller.x;
-      member.y = prior?.y ?? traveller.y;
-      member.tint = traveller.tint;
-      member.phase = traveller.phase;
-      member.size = traveller.size;
+    if (!startJoin(state, member)) return null;
+    if (approachFormation(member, x, y, frameStep)) {
+      member.settled = true;
+      member.cohort = null;
     }
-    const distance = Math.hypot(x - member.x, y - member.y);
-    // Let the last ranks finish leaving the gate before they turn into the
-    // receiving file. Once close, the same representative owns its slot.
-    const entry = q.relay?.y ?? q.entryY ?? state.level.combat.spawnY;
-    if (!member.settled && member.y > entry - 28 && distance > 32 &&
-        travelPose(q, member.index, clock - q.born, state) && traveller.y < member.y) {
-      x = traveller.x;
-      y = traveller.y;
-    }
-    const reached = approachFormation(member, x, y, frameStep);
-    if (reached && distance <= 32) member.settled = true;
     member.size += (size - member.size) * (1 - Math.exp(-frameStep * 7));
     member.painted = true;
     return member;
   }
 
-  function blueWave(q, age, state) {
-    const source = q.source ?? q;
+  function startJoin(state, member) {
+    if (member.x !== undefined) return true;
+    const q = member.cohort;
+    const prior = lastWavePoses.get(q.source)?.[member.index];
+    if (!prior && !travelPose(q, member.index, clock - q.born, state)) return false;
+    member.x = prior?.x ?? traveller.x;
+    member.y = prior?.y ?? traveller.y;
+    member.tint = waveTint(q, member.index);
+    member.phase = q.phase + member.index * 0.91;
+    member.size = clamp(3.95 + member.y * 0.0039, 3.8, 6.15);
+    return true;
+  }
+
+  function receivingBand(q) {
+    // The deepest occupied band ahead of the gate is accessible from the
+    // incoming lane. During a retreat the army can extend past the gates.
+    const gate = q.relay?.y ?? q.entryY ?? Infinity;
+    for (let i = receivingRows - 1; i >= 0; i--) {
+      const band = receivingBands[i];
+      if (band.count && (band.y[0] <= gate - 10 || i === 0)) return band;
+    }
+    return null;
+  }
+
+  function receivingTargets(q, columns) {
+    const band = receivingBand(q);
+    for (let column = 0; column < columns; column++) {
+      const laneX = (q.x ?? 210) + (column - 2) * 7;
+      let x = 210;
+      let y = receivingRear - 6;
+      let closest = Infinity;
+      for (let i = 0; band && i < band.count; i++) {
+        const distance = Math.abs(band.x[i] - laneX);
+        if (distance >= closest) continue;
+        closest = distance;
+        x = band.x[i];
+        y = band.y[i];
+      }
+      receivingX[column] = x;
+      receivingYByColumn[column] = y;
+    }
+  }
+
+  function receiveMember(state, member, column) {
+    if (!startJoin(state, member)) return false;
+    member.receivingAt ??= clock;
+    const x = receivingX[column];
+    const y = receivingYByColumn[column];
+    // Compress the file outside the occupied rank before entering it. A
+    // representative completes only on contact with the live rank geometry.
+    if (!member.docked) {
+      const outsideY = Math.min(708, y + 15 + column);
+      if (approachFormation(member, x, outsideY, frameStep)) {
+        member.docked = true;
+        member.dockedAt = clock;
+      }
+    } else if (approachFormation(member, x, y, frameStep)) {
+      member.aggregatedAt = clock;
+      member.settled = true;
+      return false;
+    }
+    return true;
+  }
+
+  function drawReceiving(state, q) {
+    const columns = waveProfile(q.mult).cols;
+    const marchedGrouped = lastWavePoses.get(q.source)?.grouped;
+    receivingTargets(q, columns);
+    for (let start = 0; start < q.members.length; start += RESERVE_GROUP) {
+      receivingGroup.length = 0;
+      let x = 0, y = 0, docked = 0;
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      const end = Math.min(start + RESERVE_GROUP, q.members.length);
+      for (let i = start; i < end; i++) {
+        const member = q.members[i];
+        if (member.assigned || member.settled || !receiveMember(state, member, member.index % columns)) continue;
+        receivingGroup.push(member);
+        x += member.x;
+        y += member.y;
+        docked += Number(member.docked);
+        minX = Math.min(minX, member.x);
+        maxX = Math.max(maxX, member.x);
+        minY = Math.min(minY, member.y);
+        maxY = Math.max(maxY, member.y);
+      }
+      const count = receivingGroup.length;
+      if (!count) continue;
+      x /= count;
+      y /= count;
+      const compressed = docked === count && maxX - minX <= 24 && maxY - minY <= 16;
+      const packet = 1 << (start / RESERVE_GROUP);
+      if (stamps && (compressed || marchedGrouped || q.grouped || (q.packed & packet) ||
+        receivingDetails + count > RECEIVING_DETAIL_LIMIT)) {
+        q.packed = (q.packed ?? 0) | packet;
+        const overflowWidth = (q.overflow ?? 0) / 16;
+        const width = clamp((maxX - minX + 12 + overflowWidth) / TILE_WIDTH, 0.83, 1.9);
+        const depth = clamp((maxY - minY + 10) / TILE_HEIGHT, 0.83, 1.55);
+        drawReserveTile(x, y, count, 1, Math.floor(clock * 9 + q.phase + start) % TILE_POSES,
+          width, 0, depth);
+      } else {
+        receivingDetails += count;
+        for (const member of receivingGroup)
+          cat(member.x, member.y, member.tint, member.size, member.phase);
+      }
+    }
+  }
+
+  function wavePoses(source) {
     let poses = lastWavePoses.get(source);
     if (!poses) lastWavePoses.set(source, poses = []);
+    return poses;
+  }
+
+  function blueWave(q, age, state) {
+    const poses = wavePoses(q.source ?? q);
+    if (!q.members) poses.grouped = false;
     for (let i = 0; i < waveCount(q); i++) {
       const member = q.members?.[i];
-      if (member?.painted || member?.retired) continue;
+      if (member && (!member.assigned || member.painted || member.settled)) continue;
       if (!travelPose(q, i, age, state)) continue;
-      // Over-budget representatives reach the shoulder before yielding to
-      // grouped reserves. Assigned cats are drawn once, by their destination.
-      const fade = member && !member.assigned
-        ? smoothStep((clock - q.at - 0.7) / 0.5) : 0;
-      if (fade >= 1) {
-        member.settled = true;
-        continue;
-      }
-      const prior = poses[i] ?? (poses[i] = {});
-      prior.x = traveller.x;
-      prior.y = traveller.y;
-      ctx.globalAlpha = waveVisibility * (1 - fade);
+      saveWavePose(poses, i, traveller.x, traveller.y);
+      ctx.globalAlpha = waveVisibility;
       cat(traveller.x, traveller.y, traveller.tint, traveller.size, traveller.phase);
     }
     ctx.globalAlpha = 1;
   }
 
+  function saveWavePose(poses, i, x, y) {
+    const prior = poses[i] ?? (poses[i] = {});
+    prior.x = x;
+    prior.y = y;
+  }
+
   function groupedWave(q, age, state) {
     if (!stamps) return blueWave(q, age, state);
+    const poses = wavePoses(q);
+    poses.grouped = true;
     const count = waveCount(q);
+    const stride = Math.floor(clock * 12 + q.phase) % TILE_POSES;
     for (let i = 0; i < count; i += RESERVE_GROUP) {
       if (!travelPose(q, i, age, state)) continue;
-      drawReserveTile(traveller.x, traveller.y, Math.min(count - i, RESERVE_GROUP), 1,
-        Math.floor(clock * 12 + q.phase) % TILE_POSES, 0.84);
+      const size = Math.min(count - i, RESERVE_GROUP);
+      for (let j = 0; j < size; j++) saveWavePose(poses, i + j,
+        traveller.x + tileX(j, stride) * 0.84, traveller.y + tileY(j, stride) * 0.84);
+      drawReserveTile(traveller.x, traveller.y, size, 1, stride, 0.84);
     }
   }
 
   function blueArmy(state, _surge, contact, tails, gap, flights) {
     waveTails = state.mode === "end" ? [] : tails;
     waveVisibility = victoryWaveVisibility(state.victoryElapsed, state.level.combat.victoryDuration);
+    receivingRows = receivingDetails = 0;
     fieldJoins = state.mode === "end" ? null : contact.reinforcements?.field;
     reserveJoins = state.mode === "end" ? null : contact.reinforcements?.reserve;
     for (const q of waveTails) for (const member of q.members ?? []) member.painted = false;
@@ -618,7 +737,13 @@ export function createFigures(ctx, ownerDocument) {
       if (index < grouped && q.count >= 100) groupedWave(q, age, state);
       else blueWave(q, age, state);
     }
-    for (const q of waveTails) blueWave(q, clock - q.born, state);
+    for (const q of waveTails) {
+      blueWave(q, clock - q.born, state);
+      if (!q.members) continue;
+      ctx.globalAlpha = waveVisibility;
+      drawReceiving(state, q);
+    }
+    ctx.globalAlpha = 1;
   }
 
   function airborne(cats) {

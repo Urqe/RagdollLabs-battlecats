@@ -65,7 +65,9 @@ export function waveY(entryY, age, level = LEVEL_ONE) {
 
 const FALL_LIFE = 0.38;
 const MAX_FALLS = 12;
-export const MAX_TAILS = 18;
+// At most three squads per volley. Leave room for overlapping journeys
+// between both gate planes and the rear formation at the fastest fire rate.
+export const MAX_TAILS = 48;
 
 export const waveCount = (cohort) => Math.min(cohort.count,
   waveProfile(cohort.mult).count + (cohort.relay ? 16 : 0));
@@ -232,7 +234,7 @@ export function createMotion(onReversal = () => {}) {
     }
     for (let i = tails.length - 1; i >= 0; i--) {
       const q = tails[i];
-      if (q.members?.every(member => member.settled) || q.until <= clock) tails.splice(i, 1);
+      if (q.members?.every(member => member.settled)) tails.splice(i, 1);
     }
     while (falls.length && falls[0].at + FALL_LIFE <= clock) falls.shift();
     if (battle?.mode === "end") tails.length = 0;
@@ -386,9 +388,28 @@ export function createMotion(onReversal = () => {}) {
       if ((contact.blueArmy.population ?? 0) < 115)
         contact.blueAnchorTarget = value.x ?? 210;
       const age = value.marchTime;
-      if (tails.length === MAX_TAILS) tails.shift();
+      if (tails.length === MAX_TAILS) {
+        // At exceptional load, grow an approaching column from the same
+        // route without evicting any cats already on their way into ranks.
+        let closest;
+        let score = Infinity;
+        for (const q of tails) {
+          const distance = Math.abs((q.x ?? 210) - (value.x ?? 210))
+            + Math.abs((q.slot ?? 0) - (value.slot ?? 0)) * 10
+            + (q.mult === value.mult && Boolean(q.relay) === Boolean(value.relay) ? 0 : 420)
+            + (q.members?.every(member => member.assigned || member.settled) ? 420 : 0)
+            + (time - q.at) * 104;
+          if (distance < score) {
+            score = distance;
+            closest = q;
+          }
+        }
+        closest.grouped = true;
+        closest.overflow = Math.min(48, (closest.overflow ?? 0) + waveCount(value));
+        return;
+      }
       tails.push({
-        ...value, source: value, born: time - age, at: time, until: time + 8,
+        ...value, source: value, born: time - age, at: time, grouped: tails.length >= MAX_TAILS - 12,
       });
     }
     if (kind === "clash") {

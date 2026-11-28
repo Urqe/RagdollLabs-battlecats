@@ -12,11 +12,11 @@ Army occupation still follows the live contact line, terrain width, troop mass a
 
 A marching representative is identified by its cohort object and member index. It keeps its tint and gait phase through arrival and while occupying a resident slot. Existing representatives retain their paths at the relay. Sixteen additional representatives per projectile cohort release from the relay plane, so a full compound volley can carry 144 detailed cats when all three squads have detail. The simulation still credits 500 cats per projectile and 1,500 per volley.
 
-The arrival event supplies an immutable snapshot of the route and a reference to the marching cohort. Only the presentation keeps a cache of the last drawn world position. Arrivals claim new field slots first and reserve slots behind them. When field capacity has saturated, the reserve allocator uses available rear slots. A claimed slot draws its owner once, from its last marching pose toward its destination at up to 135 world units per second. Reaching the destination ends integration and the representative retains the slot. The eight-second tail limit is a safety cap for outstanding drawing work.
+The arrival event supplies an immutable snapshot of the route and a reference to the marching cohort. Only the presentation keeps a cache of the last drawn world position. Arrivals claim new field slots first and reserve slots behind them. When field capacity has saturated, the reserve allocator uses available rear slots. A claimed slot draws its owner once, from its last marching pose toward its destination at up to 135 world units per second. Reaching the destination ends integration and the representative retains the slot. Completed residents retain their pose without retaining the temporary cohort.
 
 Blue field representatives keep their last world positions. An authoritative loss opens a file and the cats behind that vacancy move up from their previous positions. A named reserve can take the last place in that file. Existing red reactions and localized replenishment still respond to real losses. Flying Fur, artillery, and archer flight and retirement effects continue to use their existing simulation events.
 
-The shared single-corridor renderer uses at most 252 field slots and 1,560 reserve places per side. Most reserve places are batched in stamps of six. Blue may detail up to 144 reserve owners. Up to 18 arrived cohorts remain eligible for tail drawing. The six newest approaching cohorts are eligible for detailed marching cats, and older distant high-multiplier cohorts can use stamps. A ×5 cohort uses five representatives and ×25 uses 25. Army size and combat are still computed exclusively from aggregate state.
+The shared single-corridor renderer uses at most 252 field slots and 1,560 reserve places per side. Most reserve places are batched in stamps of six. Blue may detail up to 144 reserve owners. The saturated receiving layer keeps up to 48 arrived cohorts in flight. The six newest approaching cohorts are eligible for detailed marching cats, and older distant high-multiplier cohorts can use stamps. A ×5 cohort uses five representatives and ×25 uses 25. Army size and combat are still computed exclusively from aggregate state.
 
 ## Portrait evidence
 
@@ -46,7 +46,7 @@ The baseline full run covers early squads around 0:02, growing ranks around 0:05
 
 ## Canvas performance
 
-The table compares Milestone 24 at `da5e382` with this revision. Each cell gives draw p50/p95 and frame interval p50/p95 in milliseconds. Measurements used headless Chromium 156 and Linux WebKit at 390 × 844, DPR 2, with 18 frame samples per row. Populations are per side. The overlap fixture starts at 10,000 per side with two compound volleys marching and another volley just credited. It updates presentation while sampling. The short samples characterize this environment and show some variation in tail latency.
+The table compares Milestone 24 at `da5e382` with the original PR #40 head at `4c15a0e`. Each cell gives draw p50/p95 and frame interval p50/p95 in milliseconds. Measurements used headless Chromium 156 and Linux WebKit at 390 × 844, DPR 2, with 18 frame samples per row. Populations are per side. The overlap fixture starts at 10,000 per side with two compound volleys marching and another volley just credited. It updates presentation while sampling. The short samples characterize this environment and show some variation in tail latency.
 
 | Cats per side | Chromium before | Chromium after | WebKit before | WebKit after | Detailed cats + reserve silhouettes per side |
 | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -65,4 +65,56 @@ Run `node scripts/profile-ocean.js chromium` and `node scripts/profile-ocean.js 
 
 ## Known limitations
 
-At saturated capacity some representatives join batched reserves at the shoulder. Tracking a particular cat becomes harder amid several overlapping volleys. The Level 4 renderer shares the stationary crowd geometry and keeps its own established transfer routes and receiving blend. It does not share the single-corridor persistent roster. Levels 2–3 clips show the support mechanics in action, and the browser suite covers their victory behavior. Physical iPhone Safari performance remains unverified.
+Tracking a particular cat becomes harder amid several overlapping volleys. At the cohort limit, packets share an existing column on a nearby route. That fallback preserves the column’s visible motion at the cost of individual traceability. The Level 4 renderer shares the stationary crowd geometry and keeps its own established transfer routes and receiving blend. It does not share the single-corridor persistent roster. Levels 2–3 clips show the support mechanics in action, and the browser suite covers their victory behavior. Physical iPhone Safari performance remains unverified.
+
+## Saturated receiving final review
+
+### Reproduction and diagnosis
+
+From the normal Level 1 selector, use the balanced touch strategy in `scripts/capture-arcade-combat.js` and keep aiming at ×100 after the compound route opens. The same strategy takes blue past 10,000 and 30,000 while successive 1,500-cat volleys are still arriving.
+
+At roughly 30,000 active blue cats in the baseline, 7,500 compound reinforcements were still travelling. The 18 tracked arrival squads held 864 visual members. 148 were flagged as assigned, 716 had no slot, and 230 of the unassigned members had already completed the fade. The old renderer began fading unassigned cats 0.7 seconds after the authoritative arrival and hid them at 1.2 seconds regardless of position. New slot claims could also displace existing owners to enforce the detail budget. Once the 18-tail limit was reached, admitting a new tail dropped the oldest. These limits affected presentation only.
+
+The correction reserves detailed places without evicting current owners. An unassigned cat takes its last rendered marching position into the receiving layer. The renderer finds the deepest occupied reserve band accessible ahead of the gate and aligns incoming files with actual occupied tile centers. If retreat has pushed all the reserve bands beyond the gate, the frontmost reserve band remains the destination. Each file compresses outside its destination and then walks into it. Aggregation completes at the live rank position, so a cat can stay in the approach for as long as it needs to reach the army.
+
+The receiving and roster paths are exclusive. Assigned cats draw through their slot when its geometry is available. Until then they continue in the travelling pass. Unassigned cats leave the travelling pass for the receiving layer and enter the existing reserve representation only on contact. A casualty vacancy can promote a settled reserve owner and open a detailed place for a later arrival. A renderer capacity reduction returns an unsettled soldier to the receiving path from its current position. The authoritative arrival, strength, casualties and outcome continue to use the original fixed-tick simulation.
+
+Extending the old opacity timer would still tie disappearance to age, which varies independently of the distance to the army. Growing the resident detail budget would eventually hit a new ceiling. Instead, up to 36 receiving cats draw individually per frame and the rest use packets of at most six silhouettes. A packed stamp follows the packet's center and compresses with its bounds. An already-batched marching cohort starts at its last drawn stamp instead of reverting to an older detailed position. Up to 48 projectile cohorts can be in handoff at once, with at most 48 member poses each. At the cap, additional cohorts increase packet occupancy on a nearby inbound route. Existing handoffs keep their places. The detailed resident reserve cap remains 144. Completed resident cats release their references to the transitory cohorts.
+
+### Gameplay review
+
+These recordings use the normal level selector and single-finger cannon drag at 390 × 844, DPR 2 with the population HUD hidden. The fixed run won at 77.08 game seconds. At the threshold sample around 31,246 active blue cats, 7,500 compound cats were still marching and 203 unassigned representatives were physically receiving. The older head had no spatial receiving phase.
+
+| Baseline at 31,295 blue | Corrected at 31,246 blue |
+| --- | --- |
+| ![Baseline saturated compound arrival](evidence/living-reinforcements/saturated-before.jpg) | ![Corrected compound columns moving into the blue reserve flank](evidence/living-reinforcements/saturated-after.jpg) |
+
+- **A, baseline saturated arrival.** [Continuous approach, arrival and advance at the old head](evidence/living-reinforcements/saturated-before.mp4)
+- **B and C, corrected arrival and repeated compound volleys.** The matched clip crosses 10,000 and 30,000 active blue cats with several 1,500-cat volleys in flight. The same sequence starts around 1:02 in the full recording. [Corrected saturated clip](evidence/living-reinforcements/saturated-after.mp4)
+- **D, casualty replenishment during integration.** Watch 1:06–1:15 at the contact line while columns keep entering the blue flank. [Contact and reinforcement](evidence/living-reinforcements/saturated-victory.mp4#t=66,75)
+- **E, uninterrupted victory.** [Level 1 from selector through the victory result](evidence/living-reinforcements/saturated-victory.mp4)
+
+### Tests and performance
+
+The final review tests cover ordinary ×5 slot ownership, three available reserve slots, full saturation, overlapping and over-budget arrivals, casualty vacancies, frozen presentation time, reset and switching level. A rendered 30,000-cat battle and an authority-only battle produce identical full game states and arrival events at 30, 60 and 120 Hz. The broader strategy reports match the prior PR head byte for byte. All 25 Node test files, six focused Chromium checks and five focused WebKit checks passed.
+
+The matched benchmark starts with 10,000 or 30,000 blue cats, 30,000 red cats and all 144 detailed reserve places claimed. Six overlapping compound volleys add exactly 9,000 authoritative cats while lane combat advances. It compares `4c15a0e` with the final review revision in Chromium 156 and Linux WebKit 27.2 at 390 × 844, DPR 2. Each cell shows Canvas draw p50/p95 and frame interval p50/p95 in milliseconds over 150 frames. The Level 4 checkpoint uses 24 frames at encirclement.
+
+| Scenario | Chromium before | Chromium after | WebKit before | WebKit after |
+| --- | ---: | ---: | ---: | ---: |
+| 10,000 blue, six compound volleys | 2.2/4.9 · 16.7/16.8 | 1.8/4.2 · 16.7/16.8 | 2/5 · 28/54 | 2/4 · 24/48 |
+| 30,000 blue, six compound volleys | 2.3/5.5 · 16.7/33.3 | 1.8/5.1 · 16.7/16.8 | 2/8 · 63/78 | 1/4 · 25/45 |
+| Level 4 encirclement | 0.9/1.2 · 16.7/16.7 | 1/1.3 · 16.7/16.7 | 1/1 · 19/62 | 1/2 · 19/42 |
+
+The browser-independent counts below use the same fixed timeline. Receiving counts include poses drawn in packets. Peak individual figures count blue sprites across the battle. The object count is the number of live roster and tail records, deduplicated by identity. Cached draw positions and shared buffers are separate. Each test started with at most 864 travelling silhouette places across 18 projectile cohorts.
+
+| Blue starting population | Peak individual sprites | Peak receiving poses | Peak roster and tail records | Members aggregated at contact | Capacity retirements in tracked cohorts | Last cohort completes | Chromium JS heap |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 10,000 | 1,113 → 703 | 0 → 500 | 1,134 → 1,226 | 0 → 861 | 37 → 0 | 1.55 s after arrival | 6.50 → 6.39 MB |
+| 30,000 | 1,197 → 696 | 0 → 502 | 1,189 → 1,178 | 0 → 862 | 10 → 0 | 1.38 s after arrival | 5.48 → 7.40 MB |
+
+Approach time from the authoritative arrival to the outside of the receiving rank was 0.40/0.77 s p50/p95 in both tests. The move through the compressed file into the rank took 0.13/0.17 s at 10,000 and 0.15/0.17 s at 30,000. All 18 corrected cohorts completed and the queue drained. After 3.5 simulated seconds the older head still tracked 9 or 17 cohorts, respectively. Both revisions credited identical population and resolved identical losses in the sampled combat interval. Level 4 represented 304 blue detailed figures and 368 blue reserve silhouettes on both revisions. WebKit did not expose heap measurements.
+
+The earlier 77 ms WebKit p95 came from the short 18-sample overlap fixture. In the matched rerun of that fixture, p95 went from 52 ms to 67 ms. The longer active-combat fixture improved at both sizes. These scenarios exercise different load and duration, and the short fixture remains sensitive to frame-scheduling spikes. Physical iPhone Safari performance remains unverified.
+
+Run `node scripts/profile-saturated-receiving.js chromium` or `node scripts/profile-saturated-receiving.js webkit` for the active-combat fixture. Set `SIEGE_URL` to the server running the revision to measure. For the connected regression, run `PROFILE_LEVELS=4 PROFILE_CHECKPOINTS=encirclement node scripts/profile-army-individuality.js webkit` or substitute `chromium`.
