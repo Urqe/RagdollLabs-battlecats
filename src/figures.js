@@ -1,18 +1,17 @@
-import { crowdFlow, crowdColumn, crowdRank, crowdReach, crowdSeam } from "./crowd-field.js";
+import { crowdColumn, crowdRank, crowdReach, crowdSeam } from "./crowd-field.js";
 import { effectiveStrength, redStrength } from "./lane-combat.js";
 import { TAU, clamp } from "./config.js";
 import { laneHalfWidth, polygon } from "./terrain.js";
-import { waveProfile, waveRelease, waveY } from "./motion.js";
-import { breakthroughOffset, exchangeOffset, exchangeSeam, formationLag, rankReplenishment } from "./formation-dynamics.js";
+import { waveCount, waveProfile, waveRelease, waveY } from "./motion.js";
+import { exchangeOffset, exchangeSeam, formationLag, rankReplenishment } from "./formation-dynamics.js";
 import { gapShift, gapStrength } from "./formation.js";
 import {
-  FLAG_CAPTURE_TIME, mergeProgress, receivingY, smoothStep, victoryAdvance, victoryWaveVisibility,
+  FLAG_CAPTURE_TIME, receivingY, smoothStep, victoryAdvance, victoryWaveVisibility,
 } from "./army-movement.js";
+import { approachFormation, DETAILED_WAVES, RECEIVING_DETAIL_LIMIT } from "./reinforcement-visual.js";
 import { collapsePose, retirementOpacity, rowsAt, slotCoverage } from "./army-continuity.js";
 import {
-  FIELD_LIMIT,
   LITERAL_ARMY,
-  RESERVE_LIMIT,
   RESERVE_GROUP,
   RESERVE_ROWS,
   armyScale,
@@ -148,14 +147,24 @@ export function createFigures(ctx, ownerDocument) {
   const stamps = reserveAtlas(ownerDocument);
   const redScale = {};
   const blueScale = {};
-  const fieldJoins = new Uint16Array(FIELD_LIMIT);
-  const reserveJoins = new Uint16Array(RESERVE_LIMIT);
+  let fieldJoins;
+  let reserveJoins;
   const traveller = {};
+  const lastWavePoses = new WeakMap();
   let waveTails = [];
   let waveVisibility = 1;
+  const receivingBands = Array.from({ length: RESERVE_ROWS }, () => ({
+    x: new Float64Array(17), y: new Float64Array(17), count: 0,
+  }));
+  const receivingGroup = [];
+  const receivingX = new Float64Array(5);
+  const receivingYByColumn = new Float64Array(5);
+  let receivingRows = 0;
+  let receivingDetails = 0;
   let receivingRear = 0;
   let receiverTime = -Infinity;
   let clock = 0;
+  let frameStep = 0;
   function cat(x, y, tint, size, phase, flatten = 0, stride = 1) {
     const detail = !flatten && size >= 4.25;
     const pose = detail ? Math.floor(clock * (stride > 1.5 ? 26 : 13) + phase) & 3 : 4;
@@ -183,8 +192,8 @@ export function createFigures(ctx, ownerDocument) {
     }
   }
 
-  function drawReserveTile(x, y, count, team, pose, scale, flatten = 0) {
-    const height = TILE_HEIGHT * scale * (1 - flatten * 0.42);
+  function drawReserveTile(x, y, count, team, pose, scale, flatten = 0, depthScale = scale) {
+    const height = TILE_HEIGHT * depthScale * (1 - flatten * 0.42);
     ctx.drawImage(
       stamps,
       (count - 1) * TILE_WIDTH_PX,
@@ -198,13 +207,12 @@ export function createFigures(ctx, ownerDocument) {
     );
   }
 
-  function drawReserve(state, start, end, living, extent, red, gap, strength, fallPose, formation, release, casualty, mass, retreat, momentum) {
+  function drawReserve(state, start, end, living, extent, red, gap, strength, fallPose, formation, release, casualty, mass, retreat) {
     if (!extent) return;
     const direction = red ? -1 : 1;
     const team = red ? 0 : 1;
     const available = (end - start) * direction;
     const span = crowdReach(available, mass, retreat);
-    const pitch = span / RESERVE_ROWS;
     const battleLine = state.front - (red ? 0 : advance(state, 0));
     const bend = 0.8 - 0.53 * smoothStep((mass - 400) / 10000);
     const cycle = Math.floor(clock * 7);
@@ -225,14 +233,19 @@ export function createFigures(ctx, ownerDocument) {
       const spread = Math.min(24, half / ((columns - 1) / 2));
       const step = compact + (spread - compact) * smoothStep((extent - 80) / 550);
       const size = clamp(step / 19.4, 0.42, 1.2);
+      const band = red ? null : receivingBands[row];
+      if (band) band.count = 0;
       for (let col = 0; first < extent && col < columns; col++, first += RESERVE_GROUP) {
         const track = row * 29 + col;
-        const x = 210 + clamp(crowdColumn(col, row, step, clock), -half, half);
-        const stride = Math.sin(clock * 6 + row * 0.71 + col * 0.46);
+        const x = 210 + clamp(crowdColumn(col, row, step), -half, half);
         const refill = row < 3 ? rankReplenishment(clock - casualty.at, 10 + row, Math.abs(x - casualty.x)) : 0;
-        const flow = crowdFlow(0.24 + fraction * 0.76, (x - 210) / half, clock, momentum);
-        const cy = boundCatY(y + direction * (stride * Math.min(pitch * 0.23, 1.4) - refill - flow),
+        const cy = boundCatY(y - direction * refill,
           battleLine, red, 2 + TILE_HEIGHT * size / 2);
+        if (band && first < living) {
+          band.x[band.count] = x;
+          band.y[band.count++] = cy;
+          receivingRows = row + 1;
+        }
         const group = Math.min(Math.ceil(extent - first), RESERVE_GROUP);
         const pose = (cycle + row + col) % TILE_POSES;
         const exposed = strength && split < SPLIT_LIMIT && first < living
@@ -240,8 +253,8 @@ export function createFigures(ctx, ownerDocument) {
           && Math.abs(cy - gap.y) < gap.radiusY * 2.15 + TILE_HEIGHT / 2;
         if (exposed) split++;
         let joining = false;
-        if (!red && waveTails.length) {
-          for (let i = 0; i < group; i++) joining ||= reserveJoins[first + i] !== 0;
+        if (!red && reserveJoins) {
+          for (let i = 0; i < group; i++) joining ||= Boolean(reserveJoins[first + i]);
         }
         const allLiving = !joining && !exposed && living >= first + group;
         const allFallen = living <= first && extent >= first + group;
@@ -264,9 +277,15 @@ export function createFigures(ctx, ownerDocument) {
             battleLine, red);
           const alpha = fallen ? retirementOpacity(living, extent, slot, fallPose) : coverage;
           const tint = red ? (fallen ? DARK_RED : RED) : (fallen ? DARK_BLUE : BLUE);
-          const remaining = !red && coverage && reserveJoins[slot]
-            ? joinSlot(state, reserveJoins[slot], px, shifted, 3.2 * size, alpha)
-            : alpha;
+          const member = !red && reserveJoins?.[slot];
+          if (member) {
+            const visual = joinSlot(state, member, px, shifted, 4.45);
+            if (visual) {
+              ctx.globalAlpha = waveVisibility;
+              cat(member.x, member.y, visual.tint, visual.size, visual.phase);
+            }
+          }
+          const remaining = member ? 0 : alpha;
           if (remaining > 0) {
             ctx.globalAlpha = remaining;
             cat(px, shifted, tint, 3.2 * size, i, fallen ? 0.06 + fallPose * 0.94 : 0);
@@ -365,7 +384,7 @@ export function createFigures(ctx, ownerDocument) {
       updateReceiver(target, state);
     }
     drawReserve(state, rear, end, reserve - entry, reserveExtent - entry,
-      red, gap, red ? gapAmount : 0, fallPose, formation, release, contact.exchanges[Number(!red)], mass, retreat, momentum);
+      red, gap, red ? gapAmount : 0, fallPose, formation, release, contact.exchanges[Number(!red)], mass, retreat);
     if (entry) drawEntry(entry, tip, contact.cutoffAt, gap, gapAmount);
 
     const engaged = total > 0 && opposing > 0 && state.mode === "playing";
@@ -407,7 +426,7 @@ export function createFigures(ctx, ownerDocument) {
       const bandY = baseline + side * (band - row) * step * dense;
       const bandHalf = laneHalfWidth(bandY) - 7;
       const widePitch = bandHalf / 12;
-      const wide = crowdColumn(i % 25, band, widePitch, clock) * 1.015;
+      const wide = crowdColumn(i % 25, band, widePitch) * 1.015;
       const x = 210 + clamp(offset + (wide - offset) * dense, -bandHalf, bandHalf);
       const local = 1 - clamp(Math.abs(x - contact.clashX) / 40, 0, 1);
       const bump = engaged && !fallen
@@ -415,12 +434,10 @@ export function createFigures(ctx, ownerDocument) {
           local * shock * stress * 2.7 - flush * pressure * 1.3 + recoil * 5) * 0.72
         : 0;
       const cadence = (row || marching) && !fallen
-        ? Math.sin(clock * (marching ? 17 : 11) + rank * 0.6 - row * 0.59 + spacingNoise[i] * 0.9)
+        ? Math.sin(clock * (marching ? 17 : 11) + spacingNoise[i] * TAU)
           * Math.min(marching ? 1.7 : gait, step * 0.24) : 0;
-      const opening = engaged && !fallen
-        ? breakthroughOffset(clock, x, row, formation?.opening ?? 0, red) : 0;
       let displacement = 0;
-      const liveSeam = crowdSeam(leadingY, (x - 210) / seamWidth, clock,
+      const liveSeam = crowdSeam(leadingY, (x - 210) / seamWidth,
         red ? -balance : balance, seamStrength);
       const seam = engaged ? contactSeam(liveSeam, x, contact, gap, gapAmount) : leadingY;
       if (engaged && row < 4) {
@@ -436,9 +453,7 @@ export function createFigures(ctx, ownerDocument) {
         const refill = rankReplenishment(clock - loss.at, row, Math.abs(x - loss.x));
         displacement -= side * Math.min(step * 0.58, refill);
       }
-      const rankFlow = crowdFlow((row + 1) / Math.max(1, rows + 2) * 0.65,
-        (x - 210) / bandHalf, clock, momentum);
-      const y = bandY + opening + displacement - side * (bump + rankFlow) + cadence
+      const y = bandY + displacement - side * bump + cadence
         + spacingNoise[i] * Math.min(1.2, step * 0.2);
       const displaced = fallen ? y + side * fallPose * (3 + recoil * 7)
         : y + gapShift(x, y, gap, red ? gapAmount : 0, i);
@@ -447,17 +462,22 @@ export function createFigures(ctx, ownerDocument) {
       const wall = laneHalfWidth(within) - 6;
       const drawX = clamp(x, 210 - wall, 210 + wall);
       let alpha = fallen ? retirementOpacity(field, fieldExtent, i, fallPose) : coverage;
-      if (!red && coverage && fieldJoins[i]) {
-        alpha = joinSlot(state, fieldJoins[i], drawX, within, size, alpha);
-        opacity = ctx.globalAlpha;
+      let member = !red && fieldJoins?.[i];
+      if (!red && fieldJoins && coverage && !member) {
+        member = fieldJoins[i] = { x: drawX, y: within, size,
+          tint: i % 5 === 4 ? DARK_BLUE : BLUE, phase: i * 0.71, settled: true };
       }
+      const visual = member && joinSlot(state, member, drawX, within, size);
+      if (member?.cohort) alpha = visual ? waveVisibility : 0;
+      const px = visual ? member.x : drawX;
+      const py = visual ? member.y : within;
       const flight = flights?.[i];
       if (flight && coverage && alpha > 0 && clock >= flight.at) {
         // Substitute the living slot with its animated pose for this draw.
         // Support reactions lift off at the strike and reunite with the moving rank.
         const blend = flight.fromImpact ? smoothStep((clock - flight.at) / flight.flight) : 1;
-        flight.drawX = flight.x + (drawX - flight.x) * blend;
-        flight.drawY = flight.y + (within - flight.y) * blend;
+        flight.drawX = flight.x + (px - flight.x) * blend;
+        flight.drawY = flight.y + (py - flight.y) * blend;
         flight.size = size;
         flight.coverage = alpha;
         flight.visible = true;
@@ -465,8 +485,8 @@ export function createFigures(ctx, ownerDocument) {
       }
       if (alpha > 0) {
         if (alpha !== opacity) ctx.globalAlpha = opacity = alpha;
-        cat(drawX, within, (red ? RED : BLUE) + Number(fallen || i % 5 === 4),
-          size, i * 0.71, fallen ? 0.06 + fallPose * 0.94 : 0, gait);
+        cat(px, py, visual?.tint ?? (red ? RED : BLUE) + Number(fallen || i % 5 === 4),
+          visual?.size ?? size, visual?.phase ?? i * 0.71, fallen ? 0.06 + fallPose * 0.94 : 0, gait);
       }
     }
     if (opacity !== 1) ctx.globalAlpha = 1;
@@ -492,161 +512,238 @@ export function createFigures(ctx, ownerDocument) {
       : 0;
   }
 
+  function waveTint(q, index) {
+    if (q.mult === 100 && index % 4 === 0) return BRIGHT_BLUE;
+    return index % 5 === 4 ? DARK_BLUE : BLUE;
+  }
+
   function travelPose(q, i, age, state) {
     const profile = waveProfile(q.mult);
-    const entryY = q.relay?.y ?? q.entryY ?? state.level.combat.spawnY;
-    const relayAge = q.relay ? age - q.relay.at : 0;
-    const progress = q.relay ? relayAge + 0.20 : age;
-    const run = progress - waveRelease(profile, i) * (q.relay ? 0.58 : 1);
+    const relayMember = i >= profile.count && q.relay;
+    const index = relayMember ? i - profile.count : i;
+    const entryY = relayMember ? q.relay.y : q.entryY ?? state.level.combat.spawnY;
+    const run = (relayMember ? age - q.relay.at : age) - waveRelease(profile, index);
     if (run < 0) return false;
-    const rawY = q.relay
-      ? entryY - Math.max(0, run - 0.18) * state.level.battlefield.marchSpeed
-      : waveY(entryY, run, state.level);
+    const speed = state.level.battlefield.marchSpeed;
+    const rawY = relayMember ? entryY - run * speed : waveY(entryY, run, state.level);
     const push = clamp(run / profile.spread, 0, 1);
     const spread = push * (2 - push);
-    const sway = spacingNoise[(i + Math.floor(q.phase * 31)) % spacingNoise.length];
-    const rank = Math.floor(i / profile.cols);
+    const noise = spacingNoise[(i + Math.floor(q.phase * 31)) % spacingNoise.length];
     const stride = Math.sin(run * 13 + i * 1.7);
     const front = state.front - advance(state, 0);
-    const y = boundCatY(receivingY(rawY, receivingRear, front, entryY)
-      + (sway * 3 + stride * 1.4) * spread, front, false);
+    const rank = Math.floor(index / profile.cols);
+    const shoulder = receivingRear + rank * 5 + (relayMember ? 5 : 0);
+    const y = boundCatY(receivingY(rawY, shoulder, front, entryY)
+      + (noise * 3 + stride * 1.4) * spread, front, false);
     const route = clamp((y - 242) / 270, 0, 1);
-    const offset = (q.slot || 0) * profile.laneOffset * (q.relay ? 1.35 : 1);
-    const col = i % profile.cols;
-    const fan = q.relay ? 1 + smoothStep(relayAge / 0.33) * 1.55 : 1;
-    const local = (col - (profile.cols - 1) / 2) * profile.spacing * fan + sway * 6
+    const offset = (q.slot || 0) * profile.laneOffset;
+    const col = index % profile.cols;
+    const fan = relayMember ? 1.55 : 1;
+    const local = (col - (profile.cols - 1) / 2) * profile.spacing * fan + noise * 6
       + (profile.cols > 2 ? (rank % 2 - 0.5) * profile.spacing * 0.64 : 0);
     const center = 210 + (q.x - 210 + offset * spread) * (1 - spread + spread * route ** 1.38);
     const half = laneHalfWidth(y) - 2;
     traveller.x = clamp(center + local * spread * (0.66 + route * 0.34), 210 - half, 210 + half);
     traveller.y = y;
-    traveller.tint = q.mult === 100 && (i % 4 === 0 || run < 0.09) ? BRIGHT_BLUE : BLUE;
+    traveller.tint = waveTint(q, i);
     traveller.phase = q.phase + i * 0.91;
     traveller.size = clamp(3.95 + y * 0.0039, 3.8, 6.15);
     return true;
   }
 
-  function tailVisibility(q, index) {
-    if (q.at === undefined) return waveVisibility;
-    const profile = waveProfile(q.mult);
-    const clearGate = q.born + waveRelease(profile, index) + 0.29;
-    const fadeAt = Math.max(q.at + 0.14, clearGate);
-    return waveVisibility * (1 - smoothStep((clock - fadeAt) / 0.34));
+  function joinSlot(state, member, x, y, size) {
+    const q = member.cohort;
+    if (!q) {
+      if (!member.moving || approachFormation(member, x, y, frameStep)) {
+        member.x = x;
+        member.y = y;
+        member.moving = false;
+      }
+      member.size = size;
+      return member;
+    }
+    if (!startJoin(state, member)) return null;
+    if (approachFormation(member, x, y, frameStep)) {
+      member.settled = true;
+      member.cohort = null;
+    }
+    member.size += (size - member.size) * (1 - Math.exp(-frameStep * 7));
+    member.painted = true;
+    return member;
   }
 
-  function joinSlot(state, owner, x, y, size, coverage) {
-    const q = waveTails[(owner >> 5) - 1];
-    const member = owner & 31;
-    const starts = q.join.started;
-    if (!travelPose(q, member, clock - q.born, state)) return 0;
-    const entryY = q.entryY ?? state.level.combat.spawnY;
-    if (starts[member] < 0) {
-      const clearOfGate = (q.relay?.y ?? entryY) - 28;
-      if (traveller.y > clearOfGate && clock - q.at < 0.26) return 0;
-      starts[member] = clock;
-      if (traveller.y > clearOfGate || y > clearOfGate)
-        q.join.remote |= 1 << member;
-    }
-    const blend = mergeProgress(clock - starts[member]);
-    q.painted |= 1 << member;
-    if (blend === 1) return coverage;
+  function startJoin(state, member) {
+    if (member.x !== undefined) return true;
+    const q = member.cohort;
+    const prior = lastWavePoses.get(q.source)?.[member.index];
+    if (!prior && !travelPose(q, member.index, clock - q.born, state)) return false;
+    member.x = prior?.x ?? traveller.x;
+    member.y = prior?.y ?? traveller.y;
+    member.tint = waveTint(q, member.index);
+    member.phase = q.phase + member.index * 0.91;
+    member.size = clamp(3.95 + member.y * 0.0039, 3.8, 6.15);
+    return true;
+  }
 
-    const moving = tailVisibility(q, member);
-    // Long reserve moves and tiles behind a different gate use an opacity
-    // handoff. A visible cat never traverses the intervening scenery.
-    if (q.join.remote & (1 << member)) {
-      ctx.globalAlpha = moving * (1 - blend);
-      cat(traveller.x, traveller.y, traveller.tint, traveller.size, traveller.phase);
-      return coverage * blend;
+  function receivingBand(q) {
+    // The deepest occupied band ahead of the gate is accessible from the
+    // incoming lane. During a retreat the army can extend past the gates.
+    const gate = q.relay?.y ?? q.entryY ?? Infinity;
+    for (let i = receivingRows - 1; i >= 0; i--) {
+      const band = receivingBands[i];
+      if (band.count && (band.y[0] <= gate - 10 || i === 0)) return band;
     }
-    const py = traveller.y + (y - traveller.y) * blend;
-    const lane = laneHalfWidth(py) - 4;
-    const px = clamp(traveller.x + (x - traveller.x) * blend, 210 - lane, 210 + lane);
-    ctx.globalAlpha = moving * (1 - blend) + coverage * blend;
-    cat(px, py, traveller.tint, traveller.size + (size - traveller.size) * blend, traveller.phase);
-    return 0;
+    return null;
+  }
+
+  function receivingTargets(q, columns) {
+    const band = receivingBand(q);
+    for (let column = 0; column < columns; column++) {
+      const laneX = (q.x ?? 210) + (column - 2) * 7;
+      let x = 210;
+      let y = receivingRear - 6;
+      let closest = Infinity;
+      for (let i = 0; band && i < band.count; i++) {
+        const distance = Math.abs(band.x[i] - laneX);
+        if (distance >= closest) continue;
+        closest = distance;
+        x = band.x[i];
+        y = band.y[i];
+      }
+      receivingX[column] = x;
+      receivingYByColumn[column] = y;
+    }
+  }
+
+  function receiveMember(state, member, column) {
+    if (!startJoin(state, member)) return false;
+    member.receivingAt ??= clock;
+    const x = receivingX[column];
+    const y = receivingYByColumn[column];
+    // Compress the file outside the occupied rank before entering it. A
+    // representative completes only on contact with the live rank geometry.
+    if (!member.docked) {
+      const outsideY = Math.min(708, y + 15 + column);
+      if (approachFormation(member, x, outsideY, frameStep)) {
+        member.docked = true;
+        member.dockedAt = clock;
+      }
+    } else if (approachFormation(member, x, y, frameStep)) {
+      member.aggregatedAt = clock;
+      member.settled = true;
+      return false;
+    }
+    return true;
+  }
+
+  function drawReceiving(state, q) {
+    const columns = waveProfile(q.mult).cols;
+    const marchedGrouped = lastWavePoses.get(q.source)?.grouped;
+    receivingTargets(q, columns);
+    for (let start = 0; start < q.members.length; start += RESERVE_GROUP) {
+      receivingGroup.length = 0;
+      let x = 0, y = 0, docked = 0;
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      const end = Math.min(start + RESERVE_GROUP, q.members.length);
+      for (let i = start; i < end; i++) {
+        const member = q.members[i];
+        if (member.assigned || member.settled || !receiveMember(state, member, member.index % columns)) continue;
+        receivingGroup.push(member);
+        x += member.x;
+        y += member.y;
+        docked += Number(member.docked);
+        minX = Math.min(minX, member.x);
+        maxX = Math.max(maxX, member.x);
+        minY = Math.min(minY, member.y);
+        maxY = Math.max(maxY, member.y);
+      }
+      const count = receivingGroup.length;
+      if (!count) continue;
+      x /= count;
+      y /= count;
+      const compressed = docked === count && maxX - minX <= 24 && maxY - minY <= 16;
+      const packet = 1 << (start / RESERVE_GROUP);
+      if (stamps && (compressed || marchedGrouped || q.grouped || (q.packed & packet) ||
+        receivingDetails + count > RECEIVING_DETAIL_LIMIT)) {
+        q.packed = (q.packed ?? 0) | packet;
+        const overflowWidth = (q.overflow ?? 0) / 16;
+        const width = clamp((maxX - minX + 12 + overflowWidth) / TILE_WIDTH, 0.83, 1.9);
+        const depth = clamp((maxY - minY + 10) / TILE_HEIGHT, 0.83, 1.55);
+        drawReserveTile(x, y, count, 1, Math.floor(clock * 9 + q.phase + start) % TILE_POSES,
+          width, 0, depth);
+      } else {
+        receivingDetails += count;
+        for (const member of receivingGroup)
+          cat(member.x, member.y, member.tint, member.size, member.phase);
+      }
+    }
+  }
+
+  function wavePoses(source) {
+    let poses = lastWavePoses.get(source);
+    if (!poses) lastWavePoses.set(source, poses = []);
+    return poses;
   }
 
   function blueWave(q, age, state) {
-    const limit = Math.min(waveProfile(q.mult).count, q.count);
-    let alpha = 1;
-    if (q.relay) {
-      const ageAfterRelay = age - q.relay.at;
-      const tiles = Math.min(16, Math.floor((q.count - limit) / RESERVE_GROUP), Math.ceil(Math.log2(q.count / 100) * 7));
-      for (let i = tiles - 1; i >= 0; i--) {
-        if (!travelPose(q, i * 2, age, state)) continue;
-        const opacity = tailVisibility(q, i * 2) * smoothStep((ageAfterRelay - i * 0.012) / 0.18);
-        if (opacity <= 0) continue;
-        ctx.globalAlpha = alpha = opacity;
-        const fan = smoothStep(ageAfterRelay / 0.32);
-        const row = Math.floor(i / 5);
-        const y = Math.min(706, traveller.y + 6 + row * 8 * fan);
-        const half = laneHalfWidth(y) - 12;
-        const x = 210 + clamp(traveller.x - 210 + (i % 5 - 2) * 19 * fan, -half, half);
-        drawReserveTile(x, y, RESERVE_GROUP, 1, (Math.floor(clock * 10) + i) % TILE_POSES, 0.95);
-      }
-    }
-    for (let i = 0; i < limit; i++) {
-      if (!travelPose(q, i, age, state)) break;
-      if (q.painted & (1 << i)) continue;
-      const began = q.join?.started?.[i] ?? -1;
-      const blend = began < 0 ? 0 : mergeProgress(clock - began);
-      const opacity = tailVisibility(q, i) * (1 - blend);
-      if (opacity <= 0) continue;
-      if (opacity !== alpha) ctx.globalAlpha = alpha = opacity;
+    const poses = wavePoses(q.source ?? q);
+    if (!q.members) poses.grouped = false;
+    for (let i = 0; i < waveCount(q); i++) {
+      const member = q.members?.[i];
+      if (member && (!member.assigned || member.painted || member.settled)) continue;
+      if (!travelPose(q, i, age, state)) continue;
+      saveWavePose(poses, i, traveller.x, traveller.y);
+      ctx.globalAlpha = waveVisibility;
       cat(traveller.x, traveller.y, traveller.tint, traveller.size, traveller.phase);
     }
-    if (alpha !== 1) ctx.globalAlpha = 1;
+    ctx.globalAlpha = 1;
+  }
+
+  function saveWavePose(poses, i, x, y) {
+    const prior = poses[i] ?? (poses[i] = {});
+    prior.x = x;
+    prior.y = y;
   }
 
   function groupedWave(q, age, state) {
-    const profile = waveProfile(q.mult);
-    const limit = Math.min(profile.count, q.count);
-    for (let i = 0; i < limit; i += RESERVE_GROUP) {
-      if (!travelPose(q, i, age, state)) break;
-      let visible = 1;
-      while (visible < RESERVE_GROUP && i + visible < limit &&
-        age >= waveRelease(profile, i + visible)) visible++;
-      ctx.globalAlpha = tailVisibility(q, i);
-      drawReserveTile(traveller.x, traveller.y, visible, 1,
-        Math.floor(clock * 12 + q.phase) % TILE_POSES, 0.84);
+    if (!stamps) return blueWave(q, age, state);
+    const poses = wavePoses(q);
+    poses.grouped = true;
+    const count = waveCount(q);
+    const stride = Math.floor(clock * 12 + q.phase) % TILE_POSES;
+    for (let i = 0; i < count; i += RESERVE_GROUP) {
+      if (!travelPose(q, i, age, state)) continue;
+      const size = Math.min(count - i, RESERVE_GROUP);
+      for (let j = 0; j < size; j++) saveWavePose(poses, i + j,
+        traveller.x + tileX(j, stride) * 0.84, traveller.y + tileY(j, stride) * 0.84);
+      drawReserveTile(traveller.x, traveller.y, size, 1, stride, 0.84);
     }
-    ctx.globalAlpha = 1;
   }
 
   function blueArmy(state, _surge, contact, tails, gap, flights) {
     waveTails = state.mode === "end" ? [] : tails;
     waveVisibility = victoryWaveVisibility(state.victoryElapsed, state.level.combat.victoryDuration);
-    fieldJoins.fill(0);
-    reserveJoins.fill(0);
-    for (let i = 0; i < waveTails.length; i++) {
-      const q = waveTails[i];
-      q.painted = 0;
-      const join = q.join;
-      if (!join) continue;
-      const owner = (i + 1) << 5;
-      for (let j = 0; j < join.fieldCount; j++) fieldJoins[join.field + j] = owner | j;
-      for (let j = 0; j < join.reserveCount; j++)
-        reserveJoins[join.reserve + j] = owner | (join.fieldCount + j);
-    }
+    receivingRows = receivingDetails = 0;
+    fieldJoins = state.mode === "end" ? null : contact.reinforcements?.field;
+    reserveJoins = state.mode === "end" ? null : contact.reinforcements?.reserve;
+    for (const q of waveTails) for (const member of q.members ?? []) member.painted = false;
     if (!state.blueTotal) updateReceiver(state.front + 13 - advance(state, 0), state);
     army(state, blueScale, false, state.front, contact, gap, flights);
     if (state.mode === "end") return;
 
-    // Already launched ranks continue advancing during the celebration.
-    const crowded = state.blueTotal > LITERAL_ARMY;
-    const detailed = state.squads.length - 6;
-    for (const [i, q] of state.squads.entries()) {
+    const grouped = Math.max(0, state.squads.length - DETAILED_WAVES);
+    for (const [index, q] of state.squads.entries()) {
       const age = (q.marchTime || 0) + state.victoryElapsed;
-      if (crowded && i < detailed && q.count >= 100) groupedWave(q, age, state);
+      if (index < grouped && q.count >= 100) groupedWave(q, age, state);
       else blueWave(q, age, state);
     }
-    for (const q of tails) {
-      const age = clock - q.born;
-      if (crowded && q.count >= 100 && q.join &&
-        !(q.join.fieldCount + q.join.reserveCount)) groupedWave(q, age, state);
-      else blueWave(q, age, state);
+    for (const q of waveTails) {
+      blueWave(q, clock - q.born, state);
+      if (!q.members) continue;
+      ctx.globalAlpha = waveVisibility;
+      drawReceiving(state, q);
     }
+    ctx.globalAlpha = 1;
   }
 
   function airborne(cats) {
@@ -689,6 +786,7 @@ export function createFigures(ctx, ownerDocument) {
 
   return {
     setClock(value) {
+      frameStep = clamp(value - clock, 0, 0.1);
       clock = value;
     },
     redArmy,

@@ -396,25 +396,6 @@ export function createRenderer(state, canvas, motion = createMotion()) {
       }
       ctx.restore();
     }
-
-    const joined = Math.max(motion.arrivals[1], motion.arrivals[2]);
-    const age = state.t - joined;
-    if (!state.redTotal || age > 0.3) return;
-    ctx.save();
-    ctx.globalAlpha = (1 - age / 0.3) * 0.42;
-    ctx.strokeStyle = "#b7e8ff";
-    ctx.lineWidth = 1.8;
-    ctx.beginPath();
-    const half = laneHalfWidth(state.front) * (0.32 + age * 1.1);
-    ctx.moveTo(210 - half, state.front + 12 + age * 23);
-    ctx.quadraticCurveTo(
-      210,
-      state.front + 3 + age * 23,
-      210 + half,
-      state.front + 12 + age * 23,
-    );
-    ctx.stroke();
-    ctx.restore();
   }
 
   function relayGate(gate, clock) {

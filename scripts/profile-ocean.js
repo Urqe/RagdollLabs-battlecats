@@ -4,6 +4,7 @@ import { join } from "node:path";
 
 const engine = process.argv[2] === "webkit" ? webkit : chromium;
 const output = process.argv[3];
+const compound = process.env.PROFILE_COMPOUND === "1";
 const viewport = { width: 390, height: 844 };
 const browser = await engine.launch(engine === chromium ? { executablePath: process.env.CHROMIUM_PATH } : {});
 try {
@@ -17,16 +18,32 @@ try {
     const canvas = document.querySelector("#game");
     const state = createState();
     state.mode = "playing";
-    const renderer = createRenderer(state, canvas, createMotion());
+    const motion = createMotion();
+    const renderer = createRenderer(state, canvas, motion);
     renderer.resize();
-    window.oceanProbe = { state, canvas, renderer, armyScale };
+    window.oceanProbe = { state, canvas, renderer, armyScale, motion };
   });
   if (output) await mkdir(output, { recursive: true });
   const results = [];
-  for (const population of [30, 100, 300, 1000, 3000, 10000, 30000, 100000, 300000]) {
-    results.push(await page.evaluate(async population => {
-      const { state, canvas, renderer, armyScale } = window.oceanProbe;
+  for (const population of compound ? [10000] : [30, 100, 300, 1000, 3000, 10000, 30000, 100000, 300000]) {
+    results.push(await page.evaluate(async ({ population, compound }) => {
+      const { state, canvas, renderer, armyScale, motion } = window.oceanProbe;
       Object.assign(state, { redTotal: population, blueTotal: population });
+      if (compound) {
+        state.t = 2;
+        state.front = 275;
+        motion.step(1.99, 0, state.blueTotal, true, state.level, state);
+        for (let i = 0; i < 9; i++) {
+          const q = { mult: 100, count: 500, volley: Math.floor(i / 3), slot: i % 3 - 1,
+            x: 329, entryY: 565, marchTime: 0.9, phase: i / 2, relay: { y: 465, at: 0.55 } };
+          if (i < 6) state.squads.push(q);
+          else {
+            state.blueTotal += q.count;
+            motion.receive("arrival", state.t, q, state.front);
+          }
+        }
+        motion.step(state.t, 0, state.blueTotal, true, state.level, state);
+      }
       const ctx = canvas.getContext("2d");
       const original = ctx.drawImage;
       const sides = [{ sprites: 0, silhouettes: 0, left: Infinity, right: -Infinity,
@@ -55,6 +72,10 @@ try {
         const timeout = setTimeout(() => { cancelAnimationFrame(request); resolve(); }, 2300);
         function frame(now) {
           const before = performance.now();
+          if (compound) {
+            state.t += 1 / 60;
+            motion.step(state.t, 0, state.blueTotal, true, state.level, state);
+          }
           renderer.draw();
           if (last !== undefined) {
             canvasMs.push(performance.now() - before);
@@ -80,10 +101,10 @@ try {
           density: occupied.size * 64 / ((right - left) * (bottom - top)),
         })),
       };
-    }, population));
+    }, { population, compound }));
     if (output) await page.screenshot({ path: join(output, `${population}.png`), scale: "css" });
   }
-  console.log(JSON.stringify({ engine: engine.name(), version: browser.version(), viewport, results }, null, 2));
+  console.log(JSON.stringify({ engine: engine.name(), version: browser.version(), viewport, compound, results }, null, 2));
 } finally {
   await browser.close();
 }

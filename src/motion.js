@@ -2,6 +2,7 @@ import { arrowSpread, ARROW_AFTERMATH_LIFE, reactToArrows } from "./archer-rende
 import { createAirborneCats, MAX_AIRBORNE_CATS } from "./airborne-cats.js";
 import { clamp } from "./config.js";
 import { LEVEL_ONE } from "./levels.js";
+import { createReinforcementVisual } from "./reinforcement-visual.js";
 import { laneHalfWidth } from "./terrain.js";
 import { impactShape, launchImpactCats } from "./formation.js";
 import { createFormationDynamics, EXCHANGE_DURATION } from "./formation-dynamics.js";
@@ -21,7 +22,7 @@ const profiles = {
     laneOffset: 14,
   },
   25: {
-    count: 20,
+    count: 25,
     cols: 4,
     rankDelay: 0.068,
     spacing: 12,
@@ -64,7 +65,12 @@ export function waveY(entryY, age, level = LEVEL_ONE) {
 
 const FALL_LIFE = 0.38;
 const MAX_FALLS = 12;
-const MAX_TAILS = 12;
+// At most three squads per volley. Leave room for overlapping journeys
+// between both gate planes and the rear formation at the fastest fire rate.
+export const MAX_TAILS = 48;
+
+export const waveCount = (cohort) => Math.min(cohort.count,
+  waveProfile(cohort.mult).count + (cohort.relay ? 16 : 0));
 const EXCHANGE_LANES = [0, -1, 2, -2, 1];
 
 export function createMotion(onReversal = () => {}) {
@@ -87,6 +93,7 @@ export function createMotion(onReversal = () => {}) {
     exchanges: [ { red: true }, { red: false } ],
     redArmy: createArmyPresentation(),
     blueArmy: createArmyPresentation(),
+    reinforcements: createReinforcementVisual(),
   };
   const impact = {};
   let battleFront;
@@ -100,6 +107,7 @@ export function createMotion(onReversal = () => {}) {
     clock = direction = nextDirection = directionTime = 0;
     tails.length = falls.length = 0;
     airborne.reset();
+    contact.reinforcements.reset();
     nextCasualty.fill(0);
     nextKnockback = hitIndex = 0;
     seed = 1729;
@@ -197,11 +205,12 @@ export function createMotion(onReversal = () => {}) {
         if (lastRed > redWithoutSupportLoss)
           showLoss(lastRed, redWithoutSupportLoss, battle.front, true, time);
         if (lastBlue > blue)
-          showLoss(lastBlue, blue, battle.front, false, time);
+          showLoss(lastBlue, blue, battle.front, false, time, oldField);
       }
       lastRed = red;
       lastBlue = blue;
     }
+    contact.reinforcements.setCapacity(contact.blueArmy.target);
     supportLoss = 0;
     const normalized =
       velocity /
@@ -224,7 +233,8 @@ export function createMotion(onReversal = () => {}) {
       direction = sign;
     }
     for (let i = tails.length - 1; i >= 0; i--) {
-      if (tails[i].until <= clock) tails.splice(i, 1);
+      const q = tails[i];
+      if (q.members?.every(member => member.settled)) tails.splice(i, 1);
     }
     while (falls.length && falls[0].at + FALL_LIFE <= clock) falls.shift();
     if (battle?.mode === "end") tails.length = 0;
@@ -248,26 +258,21 @@ export function createMotion(onReversal = () => {}) {
   }
 
   function allocateJoins(field, reserve) {
-    let pending = 0;
-    for (const q of tails) pending += Number(!q.join);
-    if (!pending) return;
+    const pending = tails.filter(q => !q.members).reverse();
     const target = contact.blueArmy.target;
-    for (const q of tails) {
-      if (q.join) continue;
-      const capacity = waveProfile(q.mult).count;
-      const fieldCount = Math.min(capacity, Math.ceil(Math.max(0, target.field - field) / pending));
-      const reserveCount = Math.min(capacity - fieldCount,
-        Math.ceil(Math.max(0, target.reserve - reserve) / pending));
-      q.join = { field, fieldCount, reserve, reserveCount };
-      if (fieldCount + reserveCount)
-        q.join.started = new Float64Array(fieldCount + reserveCount).fill(-1);
-      field += fieldCount;
-      reserve += reserveCount;
-      pending--;
+    for (const [index, q] of pending.entries()) {
+      const remaining = pending.length - index;
+      const limit = {
+        field: Math.min(target.field, field + Math.ceil(Math.max(0, target.field - field) / remaining)),
+        reserve: Math.min(target.reserve, reserve + Math.ceil(Math.max(0, target.reserve - reserve) / remaining)),
+      };
+      contact.reinforcements.admit(q, waveCount(q), field, reserve, limit);
+      field = limit.field;
+      reserve = limit.reserve;
     }
   }
 
-  function showLoss(previous, current, front, red, time) {
+  function showLoss(previous, current, front, red, time, oldField) {
     const lost = previous - current;
     const fraction = lost / previous;
     const count = previous <= LITERAL_ARMY ? Math.min(3, lost)
@@ -279,7 +284,9 @@ export function createMotion(onReversal = () => {}) {
     for (let i = 0; i < count; i++) {
       const slot = (exchangeIndex++ % rank);
       const x = 210 + fieldColumn(slot) * spacing;
-      addFall(x, front, red, time);
+      const member = red ? null : contact.reinforcements.replenish(slot,
+        oldField, contact.blueArmy.target.reserve, contact.blueArmy.target.field);
+      addFall(member?.x ?? x, front, red, time);
       const exchange = contact.exchanges[Number(!red)];
       if (time - exchange.at >= EXCHANGE_DURATION) {
         exchange.at = time;
@@ -380,12 +387,29 @@ export function createMotion(onReversal = () => {}) {
       arrivals[indexOf(value.mult)] = time;
       if ((contact.blueArmy.population ?? 0) < 115)
         contact.blueAnchorTarget = value.x ?? 210;
-      const duration = waveDuration(waveProfile(value.mult));
       const age = value.marchTime;
-      if (tails.length === MAX_TAILS) tails.shift();
+      if (tails.length === MAX_TAILS) {
+        // At exceptional load, grow an approaching column from the same
+        // route without evicting any cats already on their way into ranks.
+        let closest;
+        let score = Infinity;
+        for (const q of tails) {
+          const distance = Math.abs((q.x ?? 210) - (value.x ?? 210))
+            + Math.abs((q.slot ?? 0) - (value.slot ?? 0)) * 10
+            + (q.mult === value.mult && Boolean(q.relay) === Boolean(value.relay) ? 0 : 420)
+            + (q.members?.every(member => member.assigned || member.settled) ? 420 : 0)
+            + (time - q.at) * 104;
+          if (distance < score) {
+            score = distance;
+            closest = q;
+          }
+        }
+        closest.grouped = true;
+        closest.overflow = Math.min(48, (closest.overflow ?? 0) + waveCount(value));
+        return;
+      }
       tails.push({
-        ...value, born: time - age, at: time, until: time + duration + 0.53,
-        join: null, painted: 0,
+        ...value, source: value, born: time - age, at: time, grouped: tails.length >= MAX_TAILS - 12,
       });
     }
     if (kind === "clash") {
@@ -402,6 +426,11 @@ export function createMotion(onReversal = () => {}) {
         const half = Math.floor(Math.max(0, available - 1) / 2);
         exchange.at = time;
         exchange.x = 210 + clamp(lane, -half, half) * 12;
+        if (!exchange.red && contact.blueArmy.population > LITERAL_ARMY) {
+          const column = clamp(lane, -half, half);
+          const slot = column > 0 ? column * 2 - 1 : -column * 2;
+          contact.reinforcements.replenish(slot, contact.blueArmy.target.field, contact.blueArmy.target.reserve);
+        }
       }
     }
   }

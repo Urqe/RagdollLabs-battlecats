@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { LEVEL_ONE } from "../src/levels.js";
-import { breakthroughOffset, createFormationDynamics, formationLag, rankReplenishment } from "../src/formation-dynamics.js";
+import { createFormationDynamics, formationLag, rankReplenishment } from "../src/formation-dynamics.js";
 
 function record(hz) {
   const { pose, step } = createFormationDynamics();
@@ -14,7 +14,7 @@ function record(hz) {
       frames.push({
         front,
         compression: pose.compression,
-        opening: pose.opening,
+        drive: pose.drive,
         ranks: [0, 1 / 3, 2 / 3, 1].map((depth) => front + formationLag(pose, front, depth)),
       });
     }
@@ -41,27 +41,6 @@ test("retreat and counterattack first move the lead, then the supporting ranks",
     assert.ok(Math.abs(y - frames[i].ranks[rank]) < 3);
   }));
 });
-
-test("local openings are bounded, share the winning direction and fade by the sixth rank", () => {
-  for (let i = 0; i < 600; i++) {
-    const time = i / 120;
-    for (let x = 130; x <= 290; x += 5) {
-      for (const pressure of [-1, 0, 1]) {
-        for (const red of [true, false]) {
-          const near = breakthroughOffset(time, x, 0, pressure, red);
-          const behind = breakthroughOffset(time, x, 4, pressure, red);
-          assert.ok(Math.abs(near) <= 15);
-          assert.ok(near * pressure <= 0);
-          assert.ok(Math.abs(behind) <= Math.abs(near));
-          assert.equal(breakthroughOffset(time, x, 6, pressure, red), 0);
-          if (!pressure) assert.equal(near, 0);
-          if (i) assert.ok(Math.abs(near - breakthroughOffset(time - 1 / 120, x, 0, pressure, red)) < 0.7);
-        }
-      }
-    }
-  }
-});
-
 
 test("casualty replenishment travels through the nearby ranks in order", () => {
   const ages = Array.from({ length: 108 }, (_, i) => i / 120);

@@ -8,12 +8,12 @@ export function crowdReach(available, population, retreat = 0) {
   return Math.max(0, available) * depth * (1 - 0.36 * clamp(retreat, 0, 1));
 }
 
-export function crowdSeam(front, lateral, time, balance, activity) {
+export function crowdSeam(front, lateral, balance, activity) {
   if (!activity) return front;
   const x = clamp(lateral, -1, 1);
   const taper = 1 - x * x;
-  return front + activity * taper * (Math.sin(x * 6 - time * 2.8) * 2.4
-    + Math.cos(x * 9 + time * 1.7) * balance * 2.2);
+  return front + activity * taper * (Math.sin(x * 6) * 2.4
+    + Math.cos(x * 9) * balance * 2.2);
 }
 
 export function crowdRank(span, row, rows, bend) {
@@ -21,18 +21,9 @@ export function crowdRank(span, row, rows, bend) {
   return span * (fraction + bend * fraction * (1 - fraction));
 }
 
-// Center-out slots retain their index as ranks deepen. A rotated stride phase
-// and alternate stagger conceal tile seams while keeping the line coherent.
-export function crowdColumn(column, row, pitch, time) {
+// Static center-out offsets keep tile seams irregular without moving ranks.
+export function crowdColumn(column, row, pitch) {
   const slot = (column % 2 ? 1 : -1) * Math.ceil(column / 2);
   const stagger = (row % 2 - 0.5) * pitch * 0.24;
-  return slot * pitch + stagger + Math.sin(row * 1.73 + column * 2.39 + time * 2.1) * 1.4;
-}
-
-// Rank displacement follows the measured direction. The delay increases
-// through the formation and phase varies across its width.
-export function crowdFlow(depth, lateral, time, momentum) {
-  const wave = 0.58 + 0.42 * Math.sin(time * 7 - depth * 8 + lateral * 2.8);
-  const envelope = Math.sin(Math.PI * clamp(depth, 0, 1));
-  return momentum * wave * envelope * 18;
+  return slot * pitch + stagger + Math.sin(row * 1.73 + column * 2.39) * 1.4;
 }
