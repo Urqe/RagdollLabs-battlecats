@@ -1,3 +1,4 @@
+import { retreatProjection } from "./retreat-presentation.js";
 import { ordinaryRed } from "./pawtorians.js";
 import { launchArmorImpact } from "./pawtorian-visual.js";
 import { arrowSpread, ARROW_AFTERMATH_LIFE, reactToArrows } from "./archer-render.js";
@@ -99,6 +100,8 @@ export function createMotion(onReversal = () => {}) {
   };
   const impact = {};
   let battleFront;
+  let projection;
+  let pawtorianOffset;
   const archers = { launch: null, impact: null, aftermath: [] };
   let supportLoss = 0;
   let lastRed = null;
@@ -114,6 +117,8 @@ export function createMotion(onReversal = () => {}) {
     nextKnockback = hitIndex = 0;
     seed = 1729;
     battleFront = undefined;
+    projection = retreatProjection(LEVEL_ONE);
+    pawtorianOffset = 0;
     lastRed = lastBlue = null;
     archers.launch = archers.impact = null;
     archers.aftermath.length = 0;
@@ -161,6 +166,8 @@ export function createMotion(onReversal = () => {}) {
   ) {
     const dt = Math.max(0, time - clock);
     clock = time;
+    projection = retreatProjection(level);
+    pawtorianOffset = level.pawtorians?.contactOffset ?? 0;
     if (battle && battle.mode !== "playing") airborne.reset();
     else {
       if (battle) stepArchers(battle, time);
@@ -171,7 +178,7 @@ export function createMotion(onReversal = () => {}) {
     stepArmyPresentation(contact.blueArmy, blueStrength, dt, true);
     allocateJoins(oldField, oldReserve);
     if (battle) {
-      battleFront = battle.front;
+      battleFront = projection.front(battle.front);
       if (battle.mode !== "playing") {
         archers.launch = archers.impact = null;
         archers.aftermath.length = 0;
@@ -184,7 +191,7 @@ export function createMotion(onReversal = () => {}) {
         const depth = clamp(contact.blueArmy.target.field / 320 + contact.blueArmy.target.reserve / 640, 0, 1);
         const arrivalAt = Math.max(arrivals[0], arrivals[1], arrivals[2]);
         const losses = contact.blue * Math.max(0, 1 - (time - contact.foughtAt) / 0.38);
-        dynamics.step(time, battle.front, level, engaged, arrivalAt, losses, depth);
+        dynamics.step(time, battleFront, level, engaged, arrivalAt, losses, depth);
         contact.formation = dynamics.pose;
       }
       if (battle.mode === "victory") {
@@ -205,9 +212,9 @@ export function createMotion(onReversal = () => {}) {
       if (battle.mode === "playing") {
         const redWithoutSupportLoss = Math.ceil(ordinaryRed(battle) + supportLoss);
         if (lastRed > redWithoutSupportLoss)
-          showLoss(lastRed, redWithoutSupportLoss, battle.front, true, time);
+          showLoss(lastRed, redWithoutSupportLoss, battleFront, true, time);
         if (lastBlue > blue)
-          showLoss(lastBlue, blue, battle.front, false, time, oldField);
+          showLoss(lastBlue, blue, battleFront, false, time, oldField);
       }
       lastRed = red;
       lastBlue = blue;
@@ -247,7 +254,7 @@ export function createMotion(onReversal = () => {}) {
     while (aftermath.length && time - aftermath[0].at >= ARROW_AFTERMATH_LIFE)
       aftermath.shift();
     if (launch && !launch.points)
-      launch.points = arrowSpread(launch, battle.front, battle.redTotal);
+      launch.points = arrowSpread(launch, projection.front(battle.front), battle.redTotal);
     if (!hit) return;
     if (time - hit.at >= ARROW_AFTERMATH_LIFE) {
       archers.impact = null;
@@ -255,7 +262,7 @@ export function createMotion(onReversal = () => {}) {
     }
     if (hit.points) return;
     hit.points = launch?.launchedAt === hit.launchedAt ? launch.points
-      : arrowSpread(hit, battle.front, hit.loss > 0 ? battle.redTotal + hit.loss : 0);
+      : arrowSpread(hit, projection.front(battle.front), hit.loss > 0 ? battle.redTotal + hit.loss : 0);
     reactToArrows(airborne, hit, battle.redTotal);
   }
 
@@ -365,20 +372,24 @@ export function createMotion(onReversal = () => {}) {
   }
 
   function receive(kind, time, value, front, redLoss, blueLoss) {
-    if (kind === "archerLaunch") archers.launch = { ...value };
+    if (kind === "archerLaunch") archers.launch = { ...value, y: projection.position(value.y) };
     if (kind === "archerImpact") {
       const { impact: previous, aftermath } = archers;
       if (previous?.points && time - previous.at < ARROW_AFTERMATH_LIFE) {
         if (aftermath.length === 2) aftermath.shift();
         aftermath.push(previous);
       }
-      archers.impact = { ...value };
+      archers.impact = { ...value, y: projection.position(value.y) };
       supportLoss += value.loss;
     }
     if (kind === "artilleryImpact" && value?.loss > 0) {
       supportLoss += value.loss - (value.armor?.loss ?? 0);
       impactShape(impact, value);
-      if (value.armor?.loss > 0) launchArmorImpact(airborne, impact, value.armor);
+      impact.y = projection.position(value.y);
+      if (value.armor?.loss > 0) {
+        const lead = projection.front(value.armor.lead + pawtorianOffset) - pawtorianOffset;
+        launchArmorImpact(airborne, impact, { ...value.armor, lead });
+      }
       let impactSeed = Math.round(time * 1000) >>> 0;
       const ordinaryImpact = value.armor ? {
         ...impact, loss: Math.max(0, value.loss - value.armor.loss),
@@ -419,7 +430,7 @@ export function createMotion(onReversal = () => {}) {
       });
     }
     if (kind === "clash") {
-      meleeReactions(time, value, front, redLoss, blueLoss);
+      meleeReactions(time, value, projection.front(front), redLoss, blueLoss);
       contact.red = Math.min(1, redLoss / 35);
       contact.blue = Math.min(1, blueLoss / 26);
       contact.foughtAt = time;

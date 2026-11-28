@@ -5,6 +5,7 @@ import { createState } from "../src/state.js";
 import { createFigures } from "../src/figures.js";
 import { LEVEL_ONE, LEVEL_TWO } from "../src/levels.js";
 import { fieldColumn, fieldRow, fieldSpacing } from "../src/army-visual.js";
+import { retreatProjection } from "../src/retreat-presentation.js";
 import { createMotion, MAX_TAILS } from "../src/motion.js";
 import {
   FLAG_CAPTURE_TIME, mergeProgress, receivingY, victoryAdvance, victoryWaveVisibility,
@@ -28,13 +29,16 @@ function renderProbe() {
     blue(state, motion) {
       draws.length = 0;
       figures.setClock(state.t + state.victoryElapsed);
-      figures.blueArmy(state, 0, motion.contact, motion.tails);
+      const front = retreatProjection(state.level).front(state.front);
+      figures.blueArmy({ ...state, front }, 0, motion.contact, motion.tails);
       return draws.slice();
     },
     red(state, motion) {
       figures.setClock(state.t + state.victoryElapsed);
       draws.length = 0;
-      figures.redArmy(state, motion.contact, motion.impact);
+      const projection = retreatProjection(state.level);
+      figures.redArmy({ ...state, front: projection.front(state.front) },
+        motion.contact, motion.impact, null, projection.position);
       return draws.slice();
     },
   };
@@ -129,10 +133,10 @@ test("the relay adds representatives without resetting the first gate's cats", (
   assert.equal(after.length, 48);
 });
 
-test("a representative beyond an obstructed gate travels to its receiving slot", () => {
+test("a reinforcement admitted behind the multiplier line still marches from its gate", () => {
   const state = createState();
   state.mode = "playing";
-  state.front = 536;
+  state.front = 652;
   state.blueTotal = 44;
   state.t = 2;
   const motion = createMotion();
@@ -154,6 +158,7 @@ test("a representative beyond an obstructed gate travels to its receiving slot",
     if (x !== undefined) observed.push([x, y]);
   }
   assert.ok(observed.length > 40);
+  assert.ok(observed[0][1] <= q.entryY && observed[0][1] >= retreatProjection(state.level).front(state.front));
   assert.ok(tail.members[0].settled);
   for (let i = 1; i < observed.length; i++) {
     assert.ok(Math.hypot(observed[i][0] - observed[i - 1][0],
@@ -321,7 +326,7 @@ test("artillery and casualties preserve continuous slot geometry and opposing si
   state.mode = "playing";
   state.front = 399;
   step(motion, state, 0);
-  assert.deepEqual([...motion.contact.formation.anchors], [399, 399, 399]);
+  assert.deepEqual([...motion.contact.formation.anchors], Array(3).fill(retreatProjection(state.level).front(399)));
   assert.equal(motion.contact.formation.compression, 0);
   assert.equal(motion.impact.at, -Infinity);
 });

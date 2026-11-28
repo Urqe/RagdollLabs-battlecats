@@ -106,7 +106,7 @@ function end(won) {
       ? wallTooLate ? "The castle was breached before the Meowrtans locked shields."
         : "Free the Meowrtans before the west flank is overrun."
       : "Reinforce the east while you open barricades."}`
-    : "The enemy reached your castle before you could turn the tide. Reinforce the frontline between volleys at the barricades.";
+    : "The enemy reached your multiplier line before you could turn the tide. Reinforce the frontline between volleys at the barricades.";
   el("resultLevel").textContent = `Level ${level.number} · ${level.title}`;
 }
 

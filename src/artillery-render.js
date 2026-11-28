@@ -123,14 +123,14 @@ export function drawCatapult(ctx, state, figures) {
   ctx.fillRect(x - 23, y + 14, 46 * (shot ? 1 : load), 3);
 }
 
-export function drawArtilleryShot(ctx, state) {
+export function drawArtilleryShot(ctx, state, project = y => y) {
   const { support, level, t } = state;
   const shot = support.shot;
   if (!shot) return;
   const progress = clamp((t - shot.launchedAt) / level.support.flight, 0, 1);
   const x = level.support.x - 14 + (shot.x - (level.support.x - 14)) * progress;
   const floor =
-    level.support.y - 30 + (shot.y - (level.support.y - 30)) * progress;
+    level.support.y - 30 + (project(shot.y) - (level.support.y - 30)) * progress;
   const lift = Math.sin(progress * Math.PI) * 132;
   ellipse(ctx, x, floor + 4, 10 - lift * 0.042, 3.1, "#24233537");
   yarn(ctx, x, floor - lift, 13 - progress * 1.8, progress * 11);
