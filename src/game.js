@@ -1,3 +1,4 @@
+import { redCleared } from "./pawtorians.js";
 import { createState, resetState } from "./state.js";
 import { updateArtillery } from "./artillery.js";
 import { LEVEL_ONE } from "./levels.js";
@@ -75,7 +76,7 @@ export function createGame({
       state.barricadeFlashes[i] = Math.max(0, state.barricadeFlashes[i] - dt);
     updateProjectiles(state, dt, multiply, sprinkle, notify, onEffect);
     updateArtillery(state, onEffect);
-    if (!state.redEntryOpen && state.redTotal === 0) {
+    if (redCleared(state)) {
       end(true);
       return;
     }

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { updateArtillery } from "../src/artillery.js";
 import { barrierIndex } from "../src/barricades.js";
 import { createGame } from "../src/game.js";
-import { LEVELS, LEVEL_ONE, LEVEL_TWO, LEVEL_THREE, LEVEL_FOUR, playableLevel } from "../src/levels.js";
+import { LEVELS, LEVEL_ONE, LEVEL_TWO, LEVEL_THREE, LEVEL_FOUR, LEVEL_FIVE, playableLevel } from "../src/levels.js";
 import { readProgress, saveProgress } from "../src/progress.js";
 import { updateProjectiles } from "../src/projectiles.js";
 import { PURRAPULT_STRATEGIES, simulatePurrapult } from "./helpers/purrapult.js";
@@ -30,17 +30,17 @@ function unlock(game) {
   );
 }
 
-test("four playable levels are available while six registry entries are disabled", () => {
+test("five playable levels are available while five registry entries are disabled", () => {
   assert.equal(LEVELS.length, 10);
   assert.equal(new Set(LEVELS.map(({ id }) => id)).size, 10);
   assert.deepEqual(
     LEVELS.filter(({ id }) => playableLevel(id)),
-    [LEVEL_ONE, LEVEL_TWO, LEVEL_THREE, LEVEL_FOUR],
+    [LEVEL_ONE, LEVEL_TWO, LEVEL_THREE, LEVEL_FOUR, LEVEL_FIVE],
   );
   for (const level of LEVELS.filter(({ status }) => status !== "implemented")) {
     assert.equal(playableLevel(level.id), undefined);
   }
-  for (const level of [LEVEL_ONE, LEVEL_TWO, LEVEL_THREE, LEVEL_FOUR]) {
+  for (const level of [LEVEL_ONE, LEVEL_TWO, LEVEL_THREE, LEVEL_FOUR, LEVEL_FIVE]) {
     const targets = [...level.gates, ...(level.support ? [level.support] : [])];
     const ids = targets.flatMap(({ barricadeId }) =>
       barricadeId ? [barricadeId] : [],
@@ -65,7 +65,7 @@ test("settings keep valid completion records and handle bad or unavailable stora
   assert.deepEqual(readProgress(browser), defaults);
   saveProgress(
     {
-      selected: LEVELS[4].id,
+      selected: LEVELS[5].id,
       completed: [LEVEL_TWO.id, LEVEL_TWO.id, LEVEL_THREE.id, LEVEL_FOUR.id, "missing"],
     },
     browser,

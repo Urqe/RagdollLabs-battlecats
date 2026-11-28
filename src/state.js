@@ -1,3 +1,4 @@
+import { createPawtorians } from "./pawtorians.js";
 import { createDanger } from "./danger.js";
 import { LEVEL_ONE } from "./levels.js";
 export function createState(level = LEVEL_ONE) {
@@ -23,6 +24,7 @@ export function createState(level = LEVEL_ONE) {
   const gates = level.gates.map((gate) => ({ ...gate }));
   return {
     level,
+    pawtorians: createPawtorians(level.pawtorians),
     support: level.support
       ? {
           open: false,

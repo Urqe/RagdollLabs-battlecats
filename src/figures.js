@@ -1,3 +1,5 @@
+import { engagedArmor, ordinaryRed, redQuality } from "./pawtorians.js";
+import { armorDepth, armorExtent, armorPosition, PAWTORIAN_SLOT_START } from "./pawtorian-visual.js";
 import { crowdColumn, crowdRank, crowdReach, crowdSeam } from "./crowd-field.js";
 import { effectiveStrength, redStrength } from "./lane-combat.js";
 import { TAU, clamp } from "./config.js";
@@ -31,6 +33,7 @@ const colors = [
   "#83d9ff",
   "#a9eaff",
   "#ff886f",
+  "#a94a38",
 ];
 const RED = 0;
 const DARK_RED = 1;
@@ -39,6 +42,7 @@ const DARK_BLUE = 3;
 const BRIGHT_BLUE = 4;
 const PROJECTILE = 5;
 const AIR_RED = 6;
+const ARMORED = 7;
 const CELL = 48;
 const spacingNoise = new Float32Array(1232);
 let seed = 1729;
@@ -130,6 +134,21 @@ function paintCat(ctx, color, frame, detail, airborne) {
   }
 }
 
+function paintPawtorian(ctx, frame) {
+  paintCat(ctx, colors[ARMORED], frame, true, false);
+  ellipse(ctx, 0, 1.1, 4.3, 3.25, "#4c4241");
+  ellipse(ctx, 0, -2, 4.5, 3.4, "#564239");
+  ellipse(ctx, 0, -2.45, 4.2, 3.25, "#f5bd68");
+  polygon(ctx, "#8d263a", [-2.25, -4.35, -1.7, -6.95, 1.55, -6.95, 2.25, -4.35, 0, -3.5]);
+  ellipse(ctx, 0, -0.75, 2.72, 1.63, "#f4cfab");
+  ellipse(ctx, -1.13, -1.14, 0.45, 0.57, "#281f23");
+  ellipse(ctx, 1.13, -1.14, 0.45, 0.57, "#281f23");
+  ellipse(ctx, 0, -0.26, 0.41, 0.25, "#84473f");
+  polygon(ctx, "#f3c67d", [-4.65, 0.2, -0.65, -0.35, -0.1, 3.8, -1.65, 5.35, -4.6, 4.65, -5.1, 2.55]);
+  polygon(ctx, "#882637", [-4.24, 0.67, -1.08, 0.21, -0.64, 3.59, -1.82, 4.73, -4.15, 4.13, -4.55, 2.55]);
+  ellipse(ctx, -2.55, 2.46, 0.63, 0.72, "#f3c67d");
+}
+
 export function createFigures(ctx, ownerDocument) {
   // Four stride poses and one simplified distant pose per tint in one atlas.
   const atlas = ownerDocument?.createElement("canvas");
@@ -140,7 +159,8 @@ export function createFigures(ctx, ownerDocument) {
     for (let i = 0; i < colors.length; i++) {
       for (let pose = 0; pose < 5; pose++) {
         sprites.setTransform(3, 0, 0, 3, CELL * (pose + 0.5), CELL * (i + 0.5));
-        paintCat(sprites, colors[i], pose, pose !== 4, i === AIR_RED);
+        if (i === ARMORED) paintPawtorian(sprites, pose);
+        else paintCat(sprites, colors[i], pose, pose !== 4, i === AIR_RED);
       }
     }
   }
@@ -187,7 +207,8 @@ export function createFigures(ctx, ownerDocument) {
       ctx.save();
       ctx.translate(x, y + bob);
       ctx.scale(size / 5, height / 16);
-      paintCat(ctx, colors[tint], pose, detail, tint === AIR_RED);
+      if (tint === ARMORED) paintPawtorian(ctx, pose);
+      else paintCat(ctx, colors[tint], pose, detail, tint === AIR_RED);
       ctx.restore();
     }
   }
@@ -323,7 +344,12 @@ export function createFigures(ctx, ownerDocument) {
   }
 
   function army(state, scale, red, front, contact, gap, flights) {
-    const total = red ? state.redTotal : state.blueTotal;
+    const total = red ? ordinaryRed(state) : state.blueTotal;
+    const wave = red ? state.pawtorians : null;
+    const armored = engagedArmor(state);
+    const armorLead = armored > 0 ? front - state.level.pawtorians.contactOffset : wave?.y;
+    const depthOccupiedByArmor = wave?.count
+      ? armorDepth(armorExtent(wave.count, state.level.pawtorians.population)) : 0;
     const opposing = red ? state.blueTotal : state.redTotal;
     const presentation = red ? contact.redArmy : contact.blueArmy;
     const initialized = state.mode !== "end" && presentation?.population === total;
@@ -348,8 +374,10 @@ export function createFigures(ctx, ownerDocument) {
     const marching = celebrating && state.victoryElapsed < FLAG_CAPTURE_TIME + 0.4;
     const pressure = red ? contact.pressure : -contact.pressure;
     const combat = state.level.combat;
-    const ownPressure = red ? redStrength(total, combat) : effectiveStrength(total, combat.frontage);
-    const enemyPressure = red ? effectiveStrength(opposing, combat.frontage) : redStrength(opposing, combat);
+    const redPressure = redStrength(state.redTotal, combat) * redQuality(state);
+    const bluePressure = effectiveStrength(state.blueTotal, combat.frontage);
+    const ownPressure = red ? redPressure : bluePressure;
+    const enemyPressure = red ? bluePressure : redPressure;
     const balance = encounterBalance(ownPressure, enemyPressure);
     const formation = contact.formation;
     const packed = (formation?.compression ?? 0) * release;
@@ -460,7 +488,16 @@ export function createFigures(ctx, ownerDocument) {
       const within = boundCatY(displaced, seam, red, celebrating ? -3 : engaged ? 6.8 : 1.9);
       const size = clamp(5.15 + within * 0.0027 - Math.min(0.65, row * 0.07), 4.7, 6.4);
       const wall = laneHalfWidth(within) - 6;
-      const drawX = clamp(x, 210 - wall, 210 + wall);
+      let drawX = clamp(x, 210 - wall, 210 + wall);
+      if (depthOccupiedByArmor > 0) {
+        const fromLead = armorLead - within;
+        const overlap = smoothStep((fromLead + 16) / 19) * smoothStep((depthOccupiedByArmor + 8 - fromLead) / 18);
+        const { half } = armorPosition(0, within);
+        const shoulder = Math.min(wall * 0.68, half + 6);
+        const relative = drawX - 210;
+        drawX += Math.sign(relative || (i % 2 ? -1 : 1)) *
+          (1 - Math.abs(relative) / wall) * shoulder * overlap;
+      }
       let alpha = fallen ? retirementOpacity(field, fieldExtent, i, fallPose) : coverage;
       let member = !red && fieldJoins?.[i];
       if (!red && fieldJoins && coverage && !member) {
@@ -493,7 +530,36 @@ export function createFigures(ctx, ownerDocument) {
   }
 
   function redArmy(state, contact, gap, flights) {
-    if (state.mode !== "victory") army(state, redScale, true, state.front, contact, gap, flights);
+    if (state.mode === "victory") return;
+    army(state, redScale, true, state.front, contact, gap, flights);
+    const wave = state.pawtorians;
+    if (!wave?.count) return;
+    const config = state.level.pawtorians;
+    const engaged = wave.arrivedAt !== null;
+    const lead = engaged ? state.front - config.contactOffset : wave.y;
+    const extent = armorExtent(wave.count, config.population);
+    const gapAmount = engaged ? gapStrength(clock - gap?.at) : 0;
+    for (let i = Math.ceil(extent) - 1; i >= 0; i--) {
+      const { x, y, row } = armorPosition(i, lead);
+      if (y < -8) continue;
+      const coverage = slotCoverage(extent, i);
+      const clash = engaged && row < 3 ? exchangeOffset(contact.exchanges[0], clock, x, row, true) : 0;
+      const poseY = Math.min(state.front - 5, y + clash + gapShift(x, y, gap, gapAmount, i));
+      const flight = flights?.[PAWTORIAN_SLOT_START + i];
+      const size = 6.6 + clamp(y / 400, 0, 1) * 0.6;
+      if (flight && clock >= flight.at) {
+        const blend = smoothStep((clock - flight.at) / flight.flight);
+        flight.drawX = flight.x + (x - flight.x) * blend;
+        flight.drawY = flight.y + (poseY - flight.y) * blend;
+        flight.size = size;
+        flight.coverage = coverage;
+        flight.visible = true;
+        continue;
+      }
+      ctx.globalAlpha = coverage;
+      cat(x, poseY, ARMORED, size, i % 3 * 0.44, 0, engaged ? 0.55 : 0.86);
+    }
+    ctx.globalAlpha = 1;
   }
 
   function updateReceiver(target, state) {
@@ -761,7 +827,7 @@ export function createFigures(ctx, ownerDocument) {
       const team = flight.red ? RED : BLUE;
       const tint = flight.defeated ? team + 1
         : flight.rise > 4 ? (flight.red ? AIR_RED : BRIGHT_BLUE) : team;
-      cat(0, 0, tint, size, (flight.slot ?? 0) * 0.71, flight.squash);
+      cat(0, 0, flight.armored ? ARMORED : tint, size, (flight.slot ?? 0) * 0.71, flight.squash);
       ctx.restore();
     }
   }

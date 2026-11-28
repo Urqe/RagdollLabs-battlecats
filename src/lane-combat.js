@@ -1,3 +1,4 @@
+import { redQuality, removeRed } from "./pawtorians.js";
 import { clamp } from "./config.js";
 
 // Linear for sparse ranks, with square-root growth once reserves dominate.
@@ -26,7 +27,7 @@ export function redSupplyRate(time, combat) {
   return ordinary + reserve.rate * clamp(age / 8, 0, 1) * clamp((reserve.duration - age) / 8, 0, 1);
 }
 
-export function casualtyRates(blue, red, combat) {
+export function casualtyRates(blue, red, combat, redQuality = 1) {
   const redInReach = redEngagedPopulation(red, combat);
   const contact = Math.min(blue, redInReach);
   const engagedRed = Math.min(redInReach, contact * combat.redEngagementRatio);
@@ -35,7 +36,7 @@ export function casualtyRates(blue, red, combat) {
   return {
     red: Math.min(combat.maxRedLoss + reserveCapacity, blue * combat.redLossPerBlue),
     blue: Math.min(combat.maxBlueLoss ?? Infinity,
-      engagedRed * combat.blueLossPerRed + contact * combat.blueContactLoss),
+      (engagedRed * combat.blueLossPerRed + contact * combat.blueContactLoss) * redQuality),
   };
 }
 
@@ -46,9 +47,9 @@ export function marchSquad(squad, front, combat, marchSpeed, dt) {
     squad.y <= front + combat.arrivalOffset;
 }
 
-function advanceFront(state, combat, dt, blueSupport) {
+function advanceFront(state, combat, dt, blueSupport, redQuality) {
   const blue = effectiveStrength(state.blueTotal, combat.frontage) + blueSupport;
-  const red = redStrength(state.redTotal, combat);
+  const red = redStrength(state.redTotal, combat) * redQuality;
   state.bluePressure = blue;
   state.redPressure = red;
 
@@ -89,19 +90,20 @@ export function advanceLaneCombat(state, combat, objective, time, dt, blueSuppor
   const redArrived = state.redEntryRate * dt;
   state.redTotal += redArrived;
 
+  if (state.pawtorians) state.pawtorians.ordinaryArrivals += redArrived;
+
   const blue = state.blueTotal;
   const red = state.redTotal;
-  const rates = casualtyRates(blue, red, combat);
+  const rates = casualtyRates(blue, red, combat, redQuality(state));
   // With a live supply line, arriving defenders need time to reach melee.
   const redLossRate = state.redEntryOpen && combat.redLossPerDefender !== undefined
     ? Math.min(rates.red, red * combat.redLossPerDefender)
     : rates.red;
-  const redLost = Math.min(red, redLossRate * dt);
+  const redLost = removeRed(state, redLossRate * dt, "melee");
   const blueLost = Math.min(blue, rates.blue * dt);
-  state.redTotal -= redLost;
   state.blueTotal -= blueLost;
 
-  advanceFront(state, combat, dt, blueSupport);
+  advanceFront(state, combat, dt, blueSupport, redQuality(state));
 
   if (
     state.redEntryOpen &&

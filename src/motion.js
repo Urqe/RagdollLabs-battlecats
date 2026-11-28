@@ -1,3 +1,5 @@
+import { ordinaryRed } from "./pawtorians.js";
+import { launchArmorImpact } from "./pawtorian-visual.js";
 import { arrowSpread, ARROW_AFTERMATH_LIFE, reactToArrows } from "./archer-render.js";
 import { createAirborneCats, MAX_AIRBORNE_CATS } from "./airborne-cats.js";
 import { clamp } from "./config.js";
@@ -176,7 +178,7 @@ export function createMotion(onReversal = () => {}) {
         impact.at = -Infinity;
         falls.length = 0;
       }
-      stepArmyPresentation(contact.redArmy, battle.redTotal, dt);
+      stepArmyPresentation(contact.redArmy, ordinaryRed(battle), dt);
       if (battle.mode === "playing") {
         const engaged = blueStrength > 0 && battle.redTotal > 0;
         const depth = clamp(contact.blueArmy.target.field / 320 + contact.blueArmy.target.reserve / 640, 0, 1);
@@ -198,10 +200,10 @@ export function createMotion(onReversal = () => {}) {
     if (!redEntryOpen) contact.cutoffAt ??= time;
     else if (battle) contact.entryRate = battle.redEntryRate;
     if (battle) {
-      const red = Math.ceil(battle.redTotal);
+      const red = Math.ceil(ordinaryRed(battle));
       const blue = Math.ceil(blueStrength);
       if (battle.mode === "playing") {
-        const redWithoutSupportLoss = Math.ceil(battle.redTotal + supportLoss);
+        const redWithoutSupportLoss = Math.ceil(ordinaryRed(battle) + supportLoss);
         if (lastRed > redWithoutSupportLoss)
           showLoss(lastRed, redWithoutSupportLoss, battle.front, true, time);
         if (lastBlue > blue)
@@ -374,10 +376,14 @@ export function createMotion(onReversal = () => {}) {
       supportLoss += value.loss;
     }
     if (kind === "artilleryImpact" && value?.loss > 0) {
-      supportLoss += value.loss;
+      supportLoss += value.loss - (value.armor?.loss ?? 0);
       impactShape(impact, value);
+      if (value.armor?.loss > 0) launchArmorImpact(airborne, impact, value.armor);
       let impactSeed = Math.round(time * 1000) >>> 0;
-      launchImpactCats(airborne, impact, battleFront ?? impact.y + 32, contact.redArmy, () => {
+      const ordinaryImpact = value.armor ? {
+        ...impact, loss: Math.max(0, value.loss - value.armor.loss),
+      } : impact;
+      if (ordinaryImpact.loss > 0) launchImpactCats(airborne, ordinaryImpact, battleFront ?? impact.y + 32, contact.redArmy, () => {
         impactSeed = (Math.imul(1664525, impactSeed) + 1013904223) >>> 0;
         return impactSeed / 2 ** 32;
       });
